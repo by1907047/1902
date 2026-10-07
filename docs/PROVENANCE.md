@@ -14,6 +14,8 @@ The public Windows source and tests are byte-preserved copies of selected files 
 
 The upstream Linux subtree and its root README, private project notes, credentials, certificates, raw hardware/trace logs and build products are excluded. Legacy upstream `create-and-sign.ps1`, `install-driver.ps1` and `rebuild-driver.ps1` are excluded to avoid exposing unsafe generic certificate/installation automation as this project's setup flow. The stale `.gitmodules` file is omitted because the matching DMF files are vendored.
 
-No later observation-only or link-speed proposal is merged. No compiled driver function is changed for publication. The original working tree, historical artifacts and private rollback materials remain outside this clean public checkout.
+Later public commits change some pinned files; see the CHANGELOG "Unreleased" section. Their snapshot entries were updated with those commits, so `check_snapshot.py` now verifies the current tree, not the archived candidate. To inspect the exact candidate source, check out the `v0.1.0-alpha.1` tag.
+
+The 0.1.0-alpha.1 release merged no later observation-only or link-speed proposal. No compiled driver function is changed for publication. The original working tree, historical artifacts and private rollback materials remain outside this clean public checkout.
 
 The archived driver contains personal build-path strings. A neutral-path rebuild will change artifact identity and needs fresh verification, signatures and hardware tests; it must not inherit the old binary's test status automatically.

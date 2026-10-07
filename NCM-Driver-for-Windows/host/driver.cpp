@@ -133,12 +133,6 @@ UsbNcmHostEvtDevicePrepareHardware(
         DbgPrint("USBNCM: InitializeDevice failed 0x%08X\n", status);
         return status;
     }
-    
-    // Skip adapter creation for placeholder instances
-    if (hostDevice->IsDataInterfaceOnly())
-    {
-        return STATUS_SUCCESS;
-    }
 
     status = hostDevice->CreateAdapter();
     if (!NT_SUCCESS(status))

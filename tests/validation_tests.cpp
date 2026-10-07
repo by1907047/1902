@@ -95,6 +95,29 @@ int main()
     nbad[4]=255; nbad[5]=255; nbad[6]=0;
     nbad[16]=255; nbad[17]=255; nbad[18]=0;
     CHECK(ValidateNtb(nbad.data(),28,1514)); // representable NTB16 upper bound
+    // OUT parameters meeting the old mtu+64+divisor+alignment bound whose
+    // first full-size frame cannot fit: TX would drop every such frame.
+    auto put16=[](std::vector<unsigned char>& v,size_t o,unsigned x){v[o]=x&0xff;v[o+1]=x>>8;};
+    auto put32=[&](std::vector<unsigned char>& v,size_t o,unsigned x){put16(v,o,x&0xffff);put16(v,o+2,x>>16);};
+    CHECK(FirstDatagramNtbSize(true,1514,512,511,4)==2556);
+    CHECK(FirstDatagramNtbSize(false,1514,4,0,4)==1544); // NTH16 12 + 2 pad + 1514 + NDP16 8 + 2 DPE16
+    nbad=ntb; put32(nbad,16,1514+64+512+4); put16(nbad,20,512); put16(nbad,22,511);
+    CHECK(!ValidateNtb(nbad.data(),28,1514));
+    put32(nbad,16,2555); CHECK(!ValidateNtb(nbad.data(),28,1514));
+    put32(nbad,16,2556); CHECK(ValidateNtb(nbad.data(),28,1514));
+    // IN parameters are not checked against the host TX layout.
+    nbad=ntb; put32(nbad,4,1514+64+512+4); put16(nbad,8,512); put16(nbad,10,511);
+    CHECK(ValidateNtb(nbad.data(),28,1514));
+    // Link speed: each capability means "this speed or faster".
+    using C=Capability;
+    for (C high : {C::Supported,C::NotSupported,C::QueryFailed})
+        CHECK(LinkSpeedFromCapabilities(C::Supported,high)==5000000000ull);
+    for (C high : {C::Supported,C::NotSupported,C::QueryFailed})
+        CHECK(LinkSpeedFromCapabilities(C::QueryFailed,high)==UnknownLinkSpeed);
+    CHECK(LinkSpeedFromCapabilities(C::NotSupported,C::Supported)==480000000ull);
+    CHECK(LinkSpeedFromCapabilities(C::NotSupported,C::NotSupported)==12000000ull);
+    CHECK(LinkSpeedFromCapabilities(C::NotSupported,C::QueryFailed)==UnknownLinkSpeed);
+    CHECK(UnknownLinkSpeed==0xffffffffffffffffull);
     // Single-byte mutations exercise parser bounds under ASan/UBSan; not all mutations are invalid.
     for (size_t offset=0;offset<good.size();++offset)
         for (unsigned byte=0;byte<256;++byte) {

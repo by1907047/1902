@@ -114,42 +114,48 @@ UsbNcmHostDevice::SetDeviceFriendlyName(
 
     RtlZeroMemory(friendlyName, friendlyNameByteCount);
 
-    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
-        WdfUsbTargetDeviceQueryString(
-            m_WdfUsbTargetDevice,
-            nullptr,
-            nullptr,
-            friendlyName,
-            &manufacturerStringLength,
-            deviceDescriptor.iManufacturer,
-            0),
-        "WdfUsbTargetDeviceQueryString failed");
+    // The buffer is parented to the long-lived WDFDEVICE; delete it on every
+    // path so repeated PrepareHardware does not accumulate copies.
+    NTSTATUS status = WdfUsbTargetDeviceQueryString(
+        m_WdfUsbTargetDevice,
+        nullptr,
+        nullptr,
+        friendlyName,
+        &manufacturerStringLength,
+        deviceDescriptor.iManufacturer,
+        0);
 
-    friendlyName[manufacturerStringLength] = L' ';
-    
-    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
-        WdfUsbTargetDeviceQueryString(
+    if (NT_SUCCESS(status))
+    {
+        friendlyName[manufacturerStringLength] = L' ';
+
+        status = WdfUsbTargetDeviceQueryString(
             m_WdfUsbTargetDevice,
             nullptr,
             nullptr,
             &friendlyName[manufacturerStringLength + 1],
             &productStringLength,
             deviceDescriptor.iProduct,
-            0),
-        "WdfUsbTargetDeviceQueryString failed");
- 
-    WDF_DEVICE_PROPERTY_DATA propertyData;
-    WDF_DEVICE_PROPERTY_DATA_INIT(&propertyData, &DEVPKEY_Device_FriendlyName);
-    propertyData.Flags = PLUGPLAY_PROPERTY_PERSISTENT;
+            0);
+    }
 
-    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
-        WdfDeviceAssignProperty(
+    if (NT_SUCCESS(status))
+    {
+        WDF_DEVICE_PROPERTY_DATA propertyData;
+        WDF_DEVICE_PROPERTY_DATA_INIT(&propertyData, &DEVPKEY_Device_FriendlyName);
+        propertyData.Flags = PLUGPLAY_PROPERTY_PERSISTENT;
+
+        status = WdfDeviceAssignProperty(
             m_WdfDevice,
             &propertyData,
             DEVPROP_TYPE_STRING,
             friendlyNameByteCount,
-            friendlyName),
-        "WdfDeviceAssignProperty failed");
+            friendlyName);
+    }
+
+    WdfObjectDelete(friendlyNameMemory);
+
+    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(status, "Friendly name query/assignment failed");
 
     return STATUS_SUCCESS;
 }
@@ -196,7 +202,6 @@ UsbNcmHostDevice::InitializeDevice(
     {
         return STATUS_NOT_SUPPORTED;
     }
-    m_IsAppleDevice = TRUE;
 
     // Check what interfaces Windows gave us
     BYTE numInterfaces = WdfUsbTargetDeviceGetNumInterfaces(m_WdfUsbTargetDevice);
@@ -270,13 +275,6 @@ UsbNcmHostDevice::InitializeDevice(
         return status;
     }
 
-    status = RetrieveInterruptPipe();
-    if (!NT_SUCCESS(status))
-    {
-        DbgPrint("USBNCM: RetrieveInterruptPipe FAILED 0x%08X\n", status);
-        return status;
-    }
-
     status = RetrieveDataBulkPipes();
     if (!NT_SUCCESS(status))
     {
@@ -288,12 +286,6 @@ UsbNcmHostDevice::InitializeDevice(
     if (!m_DataBulkInPipe || !m_DataBulkOutPipe)
     {
         DbgPrint("USBNCM: Missing bulk pipes - cannot function\n");
-        return STATUS_DEVICE_HARDWARE_ERROR;
-    }
-    
-    if (!m_IsAppleDevice && !m_ControlInterruptPipe)
-    {
-        DbgPrint("USBNCM: Missing interrupt pipe for non-Apple device\n");
         return STATUS_DEVICE_HARDWARE_ERROR;
     }
 
@@ -435,15 +427,25 @@ UsbNcmHostDevice::SelectConfiguration(
 
     RtlZeroMemory(pDescriptors, sizeDescriptors);
 
-    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
-        WdfUsbTargetDeviceRetrieveConfigDescriptor(
-            m_WdfUsbTargetDevice,
-            pDescriptors,
-            &sizeDescriptors),
-        "WdfUsbTargetDeviceRetrieveConfigDescriptor failed");
-
+    // Only the parsed result is kept; release the copy before any other exit
+    // so repeated PrepareHardware does not accumulate WDFDEVICE children.
     Apple1902::Configuration validated = {};
-    if (!Apple1902::ParseConfiguration((const unsigned char*)pDescriptors, sizeDescriptors, validated))
+    bool parsed = false;
+    status = WdfUsbTargetDeviceRetrieveConfigDescriptor(
+        m_WdfUsbTargetDevice,
+        pDescriptors,
+        &sizeDescriptors);
+    if (NT_SUCCESS(status))
+    {
+        parsed = Apple1902::ParseConfiguration((const unsigned char*)pDescriptors, sizeDescriptors, validated);
+    }
+
+    WdfObjectDelete(descriptorMemory);
+    pDescriptors = nullptr;
+
+    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(status, "WdfUsbTargetDeviceRetrieveConfigDescriptor failed");
+
+    if (!parsed)
     {
         DbgPrint("Sideline1902: invalid or unsupported configuration descriptor\n");
         return STATUS_DEVICE_CONFIGURATION_ERROR;
@@ -477,8 +479,6 @@ UsbNcmHostDevice::SelectConfiguration(
     // SelectConfig deletes the previous pipe objects. The PnP/power path
     // has quiesced them; clear cached handles before a fallible reconfigure
     // so failure cleanup cannot stop an already deleted pipe.
-    m_ControlInterruptPipe = nullptr;
-    m_ControlInterruptPipeMaxPacket = 0;
     m_DataBulkInPipe = nullptr;
     m_DataBulkOutPipe = nullptr;
     m_DataBulkOutPipeMaximumPacketSize = 0;
@@ -641,59 +641,6 @@ UsbNcmHostDevice::SelectSetting(
 PAGEDX
 _Use_decl_annotations_
 NTSTATUS
-UsbNcmHostDevice::RetrieveInterruptPipe(
-    void
-)
-{
-    PAGED_CODE();
-
-    // Apple devices don't have an interrupt endpoint - skip
-    if (m_IsAppleDevice)
-    {
-        return STATUS_SUCCESS;
-    }
-
-    WDF_USB_PIPE_INFORMATION pipeInfo;
-    WDF_USB_PIPE_INFORMATION_INIT(&pipeInfo);
-
-    NCM_RETURN_NT_STATUS_IF_FALSE_MSG(
-        WdfUsbInterfaceGetNumConfiguredPipes(m_ControlInterface) == 1,
-        STATUS_DEVICE_HARDWARE_ERROR,
-        "Bad NCM control interface");
-
-    m_ControlInterruptPipe = WdfUsbInterfaceGetConfiguredPipe(
-        m_ControlInterface,
-        0,
-        &pipeInfo);
-
-    NCM_RETURN_NT_STATUS_IF_FALSE_MSG(
-        pipeInfo.PipeType == WdfUsbPipeTypeInterrupt,
-        STATUS_DEVICE_HARDWARE_ERROR,
-        "Bad NCM control pipe type");
-
-    WdfUsbTargetPipeSetNoMaximumPacketSizeCheck(m_ControlInterruptPipe);
-    m_ControlInterruptPipeMaxPacket = pipeInfo.MaximumPacketSize;
-
-    WDF_USB_CONTINUOUS_READER_CONFIG readerConfig;
-    WDF_USB_CONTINUOUS_READER_CONFIG_INIT(
-        &readerConfig,
-        UsbNcmHostDevice::ControlInterruptPipeReadCompletetionRoutine,
-        this,
-        m_ControlInterruptPipeMaxPacket);
-
-    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
-        WdfUsbTargetPipeConfigContinuousReader(
-            m_ControlInterruptPipe,
-            &readerConfig),
-        "WdfUsbTargetPipeConfigContinuousReader failed for interrupt pipe");
-
-    return STATUS_SUCCESS;
-}
-
-
-PAGEDX
-_Use_decl_annotations_
-NTSTATUS
 UsbNcmHostDevice::RetrieveDataBulkPipes(
     void
 )
@@ -761,6 +708,31 @@ UsbNcmHostDevice::RetrieveDataBulkPipes(
     return STATUS_SUCCESS;
 }
 
+_IRQL_requires_(PASSIVE_LEVEL)
+static
+Apple1902::Capability
+QueryConnectionCapability(
+    _In_ WDFUSBDEVICE usbDevice,
+    _In_ const GUID * capability
+)
+{
+    const NTSTATUS status = WdfUsbTargetDeviceQueryUsbCapability(
+        usbDevice,
+        capability,
+        0,
+        nullptr,
+        nullptr);
+
+    if (NT_SUCCESS(status))
+    {
+        return Apple1902::Capability::Supported;
+    }
+
+    return status == STATUS_NOT_SUPPORTED
+        ? Apple1902::Capability::NotSupported
+        : Apple1902::Capability::QueryFailed;
+}
+
 PAGEDX
 _Use_decl_annotations_
 NTSTATUS
@@ -770,54 +742,31 @@ UsbNcmHostDevice::EnterWorkingState(
 {
     PAGED_CODE();
 
-    // Placeholder instances don't need power management
-    if (m_IsDataInterfaceOnly)
-    {
-        return STATUS_SUCCESS;
-    }
-
     if (previousState != WdfPowerDeviceD3Final)
     {
         NCM_RETURN_IF_NOT_NT_SUCCESS(SelectSetting());
         NCM_RETURN_IF_NOT_NT_SUCCESS(RetrieveDataBulkPipes());
     }
 
-    if (m_IsAppleDevice)
+    // The 1902 control interfaces have no notification endpoint
+    // (ParseConfiguration enforces this), so force link up here.
+    if (m_NcmAdapterCallbacks != nullptr)
     {
-        // Apple devices don't have status notifications - force link up with speed
-        if (m_NcmAdapterCallbacks != nullptr)
-        {
-            m_NcmAdapterCallbacks->EvtUsbNcmAdapterSetLinkState(m_NetAdapter, TRUE);
-            
-            // Query actual USB connection speed and set link speed accordingly
-            WDF_USB_DEVICE_INFORMATION usbInfo;
-            WDF_USB_DEVICE_INFORMATION_INIT(&usbInfo);
-            WdfUsbTargetDeviceRetrieveInformation(m_WdfUsbTargetDevice, &usbInfo);
-            
-            // WDF only tells us High Speed vs not-High Speed
-            // If not High Speed on a modern Apple device, assume SuperSpeed
-            ULONG32 linkSpeed;
-            const char* speedStr;
-            if (usbInfo.Traits & WDF_USB_DEVICE_TRAIT_AT_HIGH_SPEED)
-            {
-                // USB 2.0 High Speed = 480 Mbps
-                linkSpeed = 480000000UL;
-                speedStr = "480 Mbps (USB 2.0)";
-            }
-            else
-            {
-                // Not High Speed = likely SuperSpeed (USB 3.x)
-                // Use 1 Gbps as practical network speed (ULONG32 max is ~4.3 Gbps)
-                linkSpeed = 1000000000UL;
-                speedStr = "1 Gbps (USB 3.x)";
-            }
-            DbgPrint("USBNCM: Link speed: %s\n", speedStr);
-            m_NcmAdapterCallbacks->EvtUsbNcmAdapterSetLinkSpeed(m_NetAdapter, linkSpeed, linkSpeed);
-        }
-    }
-    else
-    {
-        NCM_RETURN_IF_NOT_NT_SUCCESS(StartPipe(m_ControlInterruptPipe));
+        static_assert(Apple1902::UnknownLinkSpeed == NDIS_LINK_SPEED_UNKNOWN,
+                      "unknown link speed must match NDIS");
+
+        const ULONG64 linkSpeed = Apple1902::LinkSpeedFromCapabilities(
+            QueryConnectionCapability(
+                m_WdfUsbTargetDevice,
+                &GUID_USB_CAPABILITY_DEVICE_CONNECTION_SUPER_SPEED_COMPATIBLE),
+            QueryConnectionCapability(
+                m_WdfUsbTargetDevice,
+                &GUID_USB_CAPABILITY_DEVICE_CONNECTION_HIGH_SPEED_COMPATIBLE));
+        DbgPrint("USBNCM: Link speed %I64u bps\n", linkSpeed);
+
+        // Record the speed first so the link-up indication carries it.
+        m_NcmAdapterCallbacks->EvtUsbNcmAdapterSetLinkSpeed(m_NetAdapter, linkSpeed, linkSpeed);
+        m_NcmAdapterCallbacks->EvtUsbNcmAdapterSetLinkState(m_NetAdapter, TRUE);
     }
 
     return STATUS_SUCCESS;
@@ -832,64 +781,10 @@ UsbNcmHostDevice::LeaveWorkingState(
 {
     PAGED_CODE();
 
-    // Placeholder instances don't need power management
-    if (m_IsDataInterfaceOnly)
-    {
-        return STATUS_SUCCESS;
-    }
-
-    if (!m_IsAppleDevice && m_ControlInterruptPipe != nullptr)
-    {
-        StopPipe(m_ControlInterruptPipe);
-    }
     // Covers partial power-up and removal as well as normal queue shutdown.
     StopReceive(m_WdfDevice);
     StopTransmit(m_WdfDevice);
     return STATUS_SUCCESS;
-}
-
-_Use_decl_annotations_
-VOID
-UsbNcmHostDevice::ControlInterruptPipeReadCompletetionRoutine(
-    WDFUSBPIPE,
-    WDFMEMORY memory,
-    size_t numBytesTransfered,
-    WDFCONTEXT context
-)
-{
-    UsbNcmHostDevice * ncmDevice = (UsbNcmHostDevice *)context;
-
-    if (numBytesTransfered < sizeof(USB_CDC_NOTIFICATION))
-    {
-        return;
-    }
-
-    PUSB_CDC_NOTIFICATION cdcNotification =
-        (PUSB_CDC_NOTIFICATION)WdfMemoryGetBuffer(memory, nullptr);
-
-    switch (cdcNotification->bNotificationCode)
-    {
-        case USB_CDC_NOTIFICATION_NETWORK_CONNECTION:
-        {
-            ncmDevice->m_NcmAdapterCallbacks->EvtUsbNcmAdapterSetLinkState(
-                ncmDevice->m_NetAdapter,
-                !!cdcNotification->wValue);
-            break;
-        }
-        case USB_CDC_NOTIFICATION_CONNECTION_SPEED_CHANGE:
-        {
-            PCDC_CONN_SPEED_CHANGE cdcSpeedChange =
-                (PCDC_CONN_SPEED_CHANGE) cdcNotification;
-
-            ncmDevice->m_NcmAdapterCallbacks->EvtUsbNcmAdapterSetLinkSpeed(
-                ncmDevice->m_NetAdapter,
-                cdcSpeedChange->USBitRate,
-                cdcSpeedChange->DSBITRate);
-            break;
-        }
-        default:
-            break;
-    }
 }
 
 _Use_decl_annotations_

@@ -77,11 +77,9 @@ void UsbNcmAdapterDestory(NETADAPTER);
 struct UsbNcmHostDevice{
  WDFDEVICE m_WdfDevice=nullptr;NETADAPTER m_NetAdapter=nullptr;
  const USBNCM_ADAPTER_EVENT_CALLBACKS* m_NcmAdapterCallbacks=nullptr;
- bool m_IsDataInterfaceOnly=false,m_IsAppleDevice=true;void* m_ControlInterruptPipe=nullptr;
  void DestroyAdapter();NTSTATUS LeaveWorkingState();
  static void StopReceive(WDFDEVICE d){StopRx(d);}static void StopTransmit(WDFDEVICE d){StopTx(d);}
 };
-static void StopPipe(void*){events.push_back(0);}
 '''
 main = r'''
 int main(){
@@ -107,7 +105,6 @@ int main(){
  std::puts("producer quiescence and repeated destroy PASS");
  events.clear();rxActive=txActive=true;assert(host.LeaveWorkingState()==STATUS_SUCCESS);
  assert(!rxActive&&!txActive&&(events==std::vector<int>{1,2}));++checks;
- events.clear();host.m_IsDataInterfaceOnly=true;host.LeaveWorkingState();assert(events.empty());++checks;
  NcmAdapter parent(nullptr,&params,&callbacks,nullptr);
  NcmRxQueue oldRx{&parent},newRx{&parent};NcmTxQueue oldTx{&parent},newTx{&parent};
  parent.m_RxQueue=&newRx;parent.m_TxQueue=&newTx;

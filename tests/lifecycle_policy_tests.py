@@ -49,9 +49,16 @@ class LifecyclePolicyTests(unittest.TestCase):
             for assignment in ('m_DataBulkInPipe = nullptr;', 'm_DataBulkOutPipe = nullptr;',
                                'm_DataBulkOutPipeMaximumPacketSize = 0;'):
                 self.assertIn(assignment, before)
-        config = function_body('SelectConfiguration')
-        self.assertLess(config.index('m_ControlInterruptPipe = nullptr;'),
-                        config.index('status = WdfUsbTargetDeviceSelectConfig('))
+
+    def test_link_speed_precedes_link_up_and_uses_capabilities(self):
+        # KMDF's AT_HIGH_SPEED trait is also set at SuperSpeed.
+        body = function_body('EnterWorkingState')
+        self.assertNotIn('WDF_USB_DEVICE_TRAIT_AT_HIGH_SPEED', body)
+        self.assertIn('GUID_USB_CAPABILITY_DEVICE_CONNECTION_SUPER_SPEED_COMPATIBLE', body)
+        self.assertIn('GUID_USB_CAPABILITY_DEVICE_CONNECTION_HIGH_SPEED_COMPATIBLE', body)
+        self.assertLess(body.index('EvtUsbNcmAdapterSetLinkSpeed('),
+                        body.index('EvtUsbNcmAdapterSetLinkState('),
+                        'The first link-up indication must carry the queried speed')
 
 
 if __name__ == '__main__':

@@ -2781,23 +2781,23 @@
     },
     {
       "Path": "NCM-Driver-for-Windows/host/apple1902_validation.h",
-      "Bytes": 5935,
-      "SHA256": "1b19a84cf1e5ca1352a6bdb5a2f8ec7aca247f00118e866f7784382fc0e457ec"
+      "Bytes": 7779,
+      "SHA256": "339ca367d247e01960ca1ad47ee57c937e276754914377d9c9015945caa4484e"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.cpp",
-      "Bytes": 30233,
-      "SHA256": "4cc3e19100891afc9487621669a33c0dc8819131761af64d6fa9d5f863675c23"
+      "Bytes": 27146,
+      "SHA256": "d0557b2c7c565c02191ed10d9d565845786cb7ad1edbc23dfe8c75838b6d49e2"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.h",
-      "Bytes": 4469,
-      "SHA256": "a6e08d5ef2a262e9df62d88691cdcad3c246167e2efe5754b574957ed33eaf27"
+      "Bytes": 3406,
+      "SHA256": "e5d6a102bd858867710bc40ce5e74bf155a142f2bbdc0d33a4911f850264aafe"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/driver.cpp",
-      "Bytes": 5210,
-      "SHA256": "c4daef17b0344bafaaa964c2917a601dbd62db7161a53f68b48d917e7fc747f1"
+      "Bytes": 5064,
+      "SHA256": "fee498a62e8879d88ebf835baf1dab05eba19cc8187ddddcfef813abd7e6d01d"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/driver.h",
@@ -2876,8 +2876,8 @@
     },
     {
       "Path": "tests/adapter_lifecycle_probe.py",
-      "Bytes": 7490,
-      "SHA256": "cae4a38944cecda85d9890afff013a13afbc340de68bf7c794250260cbea88fb"
+      "Bytes": 7241,
+      "SHA256": "cab4351e4831f0b146add1b991e02c733a0840c60c0f9d92227d9c13d1911089"
     },
     {
       "Path": "tests/buffer_creation_probe.py",
@@ -2896,8 +2896,8 @@
     },
     {
       "Path": "tests/lifecycle_policy_tests.py",
-      "Bytes": 2651,
-      "SHA256": "bca58a37e0f9a8da69449e5048f0163dc427ed19ff877ca7a81f6bc4371e20df"
+      "Bytes": 3100,
+      "SHA256": "e9eb2853335413be8983ac5bd8a2c377cb5aa069ac1953855001b50c7c37c0ae"
     },
     {
       "Path": "tests/ntb_review_probe.py",
@@ -2931,8 +2931,8 @@
     },
     {
       "Path": "tests/validation_tests.cpp",
-      "Bytes": 5473,
-      "SHA256": "e6446a017e7e0aacdd1576e74b9652ef8aa025d7db7ba09174c4bd6b7eb31ae2"
+      "Bytes": 7130,
+      "SHA256": "2d403cb9ebd205a5290fd57954bc4332d3a35248e7e1a3bf5263b6126594373f"
     }
   ]
 }

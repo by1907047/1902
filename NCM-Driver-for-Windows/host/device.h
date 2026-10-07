@@ -74,14 +74,6 @@ public:
         void
     );
 
-    BOOLEAN
-    IsDataInterfaceOnly(
-        void
-    ) const
-    {
-        return m_IsDataInterfaceOnly;
-    }
-
     PAGED
     void
     DestroyAdapter(
@@ -101,16 +93,6 @@ public:
     );
 
 private:
-
-    _IRQL_requires_max_(DISPATCH_LEVEL)
-    static
-    VOID
-    ControlInterruptPipeReadCompletetionRoutine(
-        _In_ WDFUSBPIPE pipe,
-        _In_ WDFMEMORY memory,
-        _In_ size_t numBytesTransfered,
-        _In_ WDFCONTEXT context
-    );
 
     _IRQL_requires_max_(DISPATCH_LEVEL)
     static
@@ -163,12 +145,6 @@ private:
 
     PAGED
     NTSTATUS
-    RetrieveInterruptPipe(
-        void
-    );
-
-    PAGED
-    NTSTATUS
     RetrieveDataBulkPipes(
         void
     );
@@ -188,9 +164,6 @@ private:
     WDFUSBDEVICE
         m_WdfUsbTargetDevice = nullptr;
 
-    ULONG
-        m_UsbDeviceTraits = 0;
-
     WDFUSBINTERFACE
         m_ControlInterface = nullptr;
 
@@ -198,16 +171,10 @@ private:
         m_DataInterface = nullptr;
 
     WDFUSBPIPE
-        m_ControlInterruptPipe = nullptr;
-
-    WDFUSBPIPE
         m_DataBulkInPipe = nullptr;
 
     WDFUSBPIPE
         m_DataBulkOutPipe = nullptr;
-
-    ULONG
-        m_ControlInterruptPipeMaxPacket = 0;
 
     ULONG
         m_DataBulkOutPipeMaximumPacketSize = 0;
@@ -220,24 +187,6 @@ private:
 
     BOOLEAN
         m_Use32BitNtb = FALSE;
-
-    BOOLEAN
-        m_IsAppleDevice = FALSE;
-
-    // True if this driver instance is for a data interface only (placeholder)
-    BOOLEAN
-        m_IsDataInterfaceOnly = FALSE;
-
-    // For Apple devices where Windows only gives us control interface,
-    // we store the data interface endpoint addresses and use raw URBs
-    BYTE
-        m_DataInterfaceNumber = 0xFF;
-        
-    BYTE
-        m_DataBulkInEndpoint = 0;
-        
-    BYTE
-        m_DataBulkOutEndpoint = 0;
 
     UINT16
         m_MaxDatagramSize = 0;
