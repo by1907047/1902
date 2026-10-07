@@ -1,0 +1,9 @@
+* text=auto
+# Preserve the exact archived source bytes across platform checkouts.
+NCM-Driver-for-Windows/** -text
+tests/** -text
+*.pdf binary
+*.docx binary
+*.pptx binary
+*.png binary
+*.jpg binary

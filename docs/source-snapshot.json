@@ -1,0 +1,2938 @@
+{
+  "schema": 1,
+  "candidate": "d522ef2-dirty-469555eaf6648073",
+  "internal_base_commit": "d522ef239f613747155dc4a30db55447e6de5e59",
+  "original_archive_sha256": "d506a9cc587f4dac4ebc2d3b5e3b670064ea6f450c375450fbe531faa7c85b2f",
+  "files": [
+    {
+      "Path": "NCM-Driver-for-Windows/.gitignore",
+      "Bytes": 4195,
+      "SHA256": "a6204c2b9a5c667c5f337f4613aba9d2e5e2da9d8aeb80003d6ff52f48991779"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/LICENSE",
+      "Bytes": 1162,
+      "SHA256": "27ebda9d51f0a56b7e281ccd8230a27236dcb51c05f64b07869ecf6e965d68b0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/README.md",
+      "Bytes": 1397,
+      "SHA256": "e82f0a81bc54125b78f80b8056a2c54d20fd0949b990e589a6d2b5dd893a690e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/SECURITY.md",
+      "Bytes": 624,
+      "SHA256": "79f36de9e8e1119a6b52cb70e624aa7972fc249b73ad14fbf7e1c970bb99918f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/adapter/adapter.cpp",
+      "Bytes": 9881,
+      "SHA256": "44ad4a74ba12c5daa57798635ee9c8157b0b9855e18ad3f89bd2c0245b74b161"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/adapter/adapter.h",
+      "Bytes": 3412,
+      "SHA256": "ff131d823a6d6365fd04614d2a4be4308e0de2374a1a6e321fe3ae8ebd774a47"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/adapter/rxqueue.cpp",
+      "Bytes": 8251,
+      "SHA256": "cc551b29d28fb76a8686f8608def0c18f79cc482684575291e2cb1eb6d039d32"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/adapter/rxqueue.h",
+      "Bytes": 3544,
+      "SHA256": "a9977bb6a2ca379860b7cbac79e11fd835e96c3099d4d97737405cbd7526984e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/adapter/txqueue.cpp",
+      "Bytes": 6428,
+      "SHA256": "987b5289a9f219ec803783214a3ad0d5bb9071843593823d81d722316d0c9a45"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/adapter/txqueue.h",
+      "Bytes": 2702,
+      "SHA256": "cb5153438ab08c5e098081bd158ccbf8cb04006c0a3efae505c9e4504294adfb"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/common/buffers.cpp",
+      "Bytes": 7584,
+      "SHA256": "a2b3398c712829a05b9fd3c080ebf7f980dacbd01d1e1ce6f4bcb777d86eae14"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/common/ntb.cpp",
+      "Bytes": 16630,
+      "SHA256": "d72c70d6228fa14731d197151f820343fb0685f00d84c7cd7609a7fc91c9451f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/.gitignore",
+      "Bytes": 5646,
+      "SHA256": "86f9f5cabd7478a150258f585740c2e32f402e82adb3f1d9ff34565e714ebc5e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf.sln",
+      "Bytes": 19981,
+      "SHA256": "c841e868bcc913e05554bc112f522d8c48b41b2f9b956434701f31712db7a98c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/DmfVersion.h",
+      "Bytes": 212,
+      "SHA256": "bb430d316b46b6ca395ad1f4ee3589b051dcdcb66e3d2d889f0cd6108862430c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Documentation/DMF Modules Overview.docx",
+      "Bytes": 63942,
+      "SHA256": "d1caece11d411194bc77a89ae8ea5b74d39be581b131fb1b8370ab61dfd504f3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Documentation/DmfGit-v1.0.pdf",
+      "Bytes": 1851698,
+      "SHA256": "cb407e6a1992bf43bb3bba27eaf3ccd24d27344390735a5e6c8ca01b3f29c35a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Documentation/DmfGit-v1.0.pptx",
+      "Bytes": 4839588,
+      "SHA256": "3af5d0f284a2522f161656b046acc9053f44eedc0b3c426735a9a196b3b73bdc"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Documentation/Driver Module Framework.md",
+      "Bytes": 325122,
+      "SHA256": "8498ff5b769ff1241ed133a87f1f61c54833138acc1b8adefb956d4a39442cd2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Documentation/Images/DmfDriver.png",
+      "Bytes": 71178,
+      "SHA256": "a50c37c482965f1e1e573040c26d238c0e2ce8f126cac4391ff0a9212958c019"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Documentation/Images/TraditionalDriver.png",
+      "Bytes": 112766,
+      "SHA256": "4591a06584f73140dcb4982f06a8e67ad7c39a176a1d3d58b9e101a991e52e31"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfBranchTrack.c",
+      "Bytes": 4925,
+      "SHA256": "a86d7c3734232511066b7a096df0789865a1ea8359bffd2b7a7bb4fb5afeae91"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfCall.c",
+      "Bytes": 104883,
+      "SHA256": "f44d5d29a04fc0a67b3289ccd464ee6ab018c004ef5071568c9d8bee242e6bc3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfContainer.c",
+      "Bytes": 50589,
+      "SHA256": "34eecea1038d45d9703ce9b26e9ddcca6f3dba9916f888518a5884ff9ff13f9e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfCore.c",
+      "Bytes": 65082,
+      "SHA256": "e2d2973ce2fe809dbdecee8496f7dff5a4f20d937d1c50925993738cc38fd580"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfDefinitions.h",
+      "Bytes": 95295,
+      "SHA256": "d59a47758ad8c81ca2dd0f6764b82f951f16d66a6fba667393315359c13f580b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfDeviceInit.c",
+      "Bytes": 37482,
+      "SHA256": "f3d07040f39956b46cf1df30153ea9f3e98ce07d2555da2d9c38e7103056de66"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfFilter.c",
+      "Bytes": 14055,
+      "SHA256": "2ba3bd9b8470530388780aebbd1ee999a5c662d154a8350284ea6f173d2a8d0f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfGeneric.c",
+      "Bytes": 66988,
+      "SHA256": "c912cc89288c1dd5833429ed16ae8b4767fd114c0f4ff0fe6a8e1e68828eac51"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfHelpers.c",
+      "Bytes": 18969,
+      "SHA256": "34cf27a7f4b29eaccf71e4d92dc29c02b797699a315259c02d0c27b52c3fbe4e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfIncludeInternal.h",
+      "Bytes": 45256,
+      "SHA256": "ddb47631f437d2574fac34a46d3c1ab50f722f440a275b92f000011b591e1f43"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfIncludes.h",
+      "Bytes": 1255,
+      "SHA256": "6c130b5f597043c606de91e7684ac931c1c9c5150b0b067df7b721beaef59db0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfIncludes_KERNEL_MODE.h",
+      "Bytes": 5199,
+      "SHA256": "abb9519304c347827864be26b1813d3e5024f52724004b60f067183043d392d9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfIncludes_USER_MODE.h",
+      "Bytes": 6061,
+      "SHA256": "bca691522ea351c7f568d20519c12f5ed82e48816b32f07256748697e0ca3f99"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfInterfaceInternal.c",
+      "Bytes": 32420,
+      "SHA256": "7877cbc4998171f8f21fa968a9b080c939876370d5ff2d2763383383197d68d0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfInternal.c",
+      "Bytes": 44290,
+      "SHA256": "42e859c873b8c7287aa891f1e4952708847b4cee04b71b56bfdedafb6cddf012"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfLiveKernelDump.c",
+      "Bytes": 6486,
+      "SHA256": "2eda9e1252408e3469de48f34815fd17c5b8e579d6b1941c23ddaeb7e07fa880"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfModule.h",
+      "Bytes": 33388,
+      "SHA256": "af242d6690da546062025804c976a31eeea3ba344589730d26099693fcbdc592"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfModuleCollection.c",
+      "Bytes": 135227,
+      "SHA256": "055969ed50d43fdcbf759c9ac1d338d4a2f9f8345cc1c17396a40da456e4ceef"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfPortable.c",
+      "Bytes": 21852,
+      "SHA256": "d4c11f6be55f4d04bbf12cd543ea0f2505d3e47b7bb1394b3174aa5b320ccb96"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfTrace.h",
+      "Bytes": 3844,
+      "SHA256": "db9bdc5fefab62a26942b00d2a275e49479702c2ebd8264ff7105a6668a356c2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfUtility.c",
+      "Bytes": 16668,
+      "SHA256": "d6f434342d007c6db1c9c65a4b969356d8b73f766e3314a88f0d56bb93f0ef82"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/DmfValidate.c",
+      "Bytes": 15029,
+      "SHA256": "94463bfff3e82d09ed3dc926a7ab794c251426daf4b0dc3629f9ef3430559cb2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/DMF_String.c",
+      "Bytes": 29751,
+      "SHA256": "5453acf92f42319604ad7a3d2423abe5f3c996209d6e43e492677e3694762534"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/DMF_String.h",
+      "Bytes": 4347,
+      "SHA256": "009ec8da3f97ce463e6925cc06f140dab963b058bfc2019b8dd692ffa88ee788"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/DMF_String.md",
+      "Bytes": 11966,
+      "SHA256": "68352f778f65debde9caf6ccac32a3e78698e6739bf2ba0286c4de7f2eb47572"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/DmfModules.Core.Public.h",
+      "Bytes": 710,
+      "SHA256": "39b2f119deca9a4b46f1a0cc64de065b841cab3cd02f556b49e1b8efc0dfafcf"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/DmfModules.Core.Trace.h",
+      "Bytes": 948,
+      "SHA256": "073494f8f99adca699b9ad7963a131d361ca2627e5431d9069bc05fb6f183eb7"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/DmfModules.Core.h",
+      "Bytes": 1095,
+      "SHA256": "18967359fa86ee92fb6467902b91de6337f6286aa9d59bfcadb1f40781255226"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_BranchTrack.c",
+      "Bytes": 57216,
+      "SHA256": "67c163703d4d76ddfc103986573f09da09c7274d61909c6db10010f11e280717"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_BranchTrack.h",
+      "Bytes": 24047,
+      "SHA256": "f5f73661a6aaa0549bb5543d81c82e4193edfad82fe0a09ccf9e0911538e6166"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_BranchTrack_Public.h",
+      "Bytes": 3607,
+      "SHA256": "ca0e0cdf68ffbeeab7185c4c7e3889b0f0acc8e06749cc2b598f0989a8b1ca82"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_Bridge.c",
+      "Bytes": 67979,
+      "SHA256": "6559fb0b8820225740fcf7da9b8d80aeb82b88e0eef3c8027f391d2996ebc4a2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_Bridge.h",
+      "Bytes": 2557,
+      "SHA256": "cd2e032cc92fe6beb6fb6b2d462c92808de97f2742dac5328675d6e0050bcb23"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_BufferPool.c",
+      "Bytes": 73102,
+      "SHA256": "ef2c669cb1d2f2c43711af30fa029b766375264396c1035d3c2aaeec7f714b19"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_BufferPool.h",
+      "Bytes": 6241,
+      "SHA256": "037cb7558cad955dda0537dc432cccec57e92c4cd4037f77df68e8bb8cfb95c1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_BufferPool.md",
+      "Bytes": 32450,
+      "SHA256": "dfc76cc41fe86625fa9196a0a9410f20b701fabe874e380a844b837a3d7b0758"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_BufferQueue.c",
+      "Bytes": 15373,
+      "SHA256": "f0c4e032e3eb2956aa651b478e4489734cdba00de3f4e66440cb754c32fbd4a2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_BufferQueue.h",
+      "Bytes": 2303,
+      "SHA256": "085d2cf539b7a4b11ed836edafb6ae1327115aff3a34d772d70f208cf9d059a0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_BufferQueue.md",
+      "Bytes": 15475,
+      "SHA256": "fe71cebab937b82ed629d330d3f235c8e8e1dfa4cf97854eb4a62e649d61ea30"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_HashTable.c",
+      "Bytes": 31420,
+      "SHA256": "b43db3b1ab6aea01a8502b1e9a7d2c9da6f61b0266c18421e2efd954491363a2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_HashTable.h",
+      "Bytes": 4218,
+      "SHA256": "5a93fb28608c6edcacc270d32eb0aecd079e9f9ee5d566f0f07659556188f3d6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_HashTable.md",
+      "Bytes": 12871,
+      "SHA256": "cc372a60b8ed2f3b1f95cb66407a29a2dab7134cf866675ef14b13455f233895"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_IoctlHandler.c",
+      "Bytes": 40713,
+      "SHA256": "f23e1dab09733dabd421568f4d149423b7ff7480442264a934c38497d966e8bb"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_IoctlHandler.h",
+      "Bytes": 7459,
+      "SHA256": "9cfdb49971022633fb7847ffc1a9acf7d0df440ebf54b989dadcde42b90161cb"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_IoctlHandler.md",
+      "Bytes": 13761,
+      "SHA256": "8c18fabba59e33dd54c2a1462746bb414075355fd9f7f4575479702f94f5f818"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_LiveKernelDump.c",
+      "Bytes": 39730,
+      "SHA256": "0b82ae37c9cc0fb160f51170fd06a0baa503070a42da5f01e88e21634cd360a5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_LiveKernelDump.h",
+      "Bytes": 13762,
+      "SHA256": "124241337a517a769f59540d632330e2120e625251e51d596c0a84989acc9b29"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_LiveKernelDump.md",
+      "Bytes": 15345,
+      "SHA256": "8378c3a8a70ae4e2a454177c810ab2828166419d8e0f1223d7ca2178619c3928"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_LiveKernelDump_Public.h",
+      "Bytes": 1806,
+      "SHA256": "9ea0aefa7f4b850492cf1220b5389461b1f455b6e29c7360384b8061ab42b4fe"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_RingBuffer.c",
+      "Bytes": 38780,
+      "SHA256": "b89f68ba349e2cfb3d4085ba7fdc1f48e9064a51687500671fe6342f963f1b03"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_RingBuffer.h",
+      "Bytes": 3921,
+      "SHA256": "69df5084f7357f74f83e4ea3c14b2b48678ef94cc3a6c2c1f28baba66233e144"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/Dmf_RingBuffer.md",
+      "Bytes": 16235,
+      "SHA256": "ee263c69fc8a5f881347e4bc200ca4e2c1fa2802a10be187757bafbe4350e787"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/images/DMF_BufferPool-1.png",
+      "Bytes": 196968,
+      "SHA256": "b2eb3c3a13db7a28a6df547a0b2e2aa39e280efd93ad933eb3ccecc13342ed80"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/images/DMF_BufferPool-2.png",
+      "Bytes": 225993,
+      "SHA256": "a0f5849c4b5c6089644a7bd8289bee1803d910ae4a3e2debeda5179ac74defc1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/images/DMF_BufferPool-EnumerationExample-RemoveAndStop.png",
+      "Bytes": 63122,
+      "SHA256": "358f72b3d6e25301321506927d3c5134629987061673068327c5e97a62f5276a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/images/DMF_BufferPool-EnumerationExample-RemoveAndStop.txt",
+      "Bytes": 2134,
+      "SHA256": "da31e0b2cd0c3c26743ee1503d6fc218d739acf80f2858570fc237eea67acfc3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/images/DMF_BufferPool-EnumerationExample-Stop.png",
+      "Bytes": 62306,
+      "SHA256": "246fe19eebab10362265f766cc53be3336d7cd906432d4c5332e8a10060ef623"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/images/DMF_BufferPool-EnumerationExample-Stop.txt",
+      "Bytes": 2145,
+      "SHA256": "6822d23f0a49ed192f76fda65ad95f9128b49f41dd9f06cf2437b2ee62bebc7f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Framework/Modules.Core/images/DMF_BufferQueue-1.png",
+      "Bytes": 329054,
+      "SHA256": "668d962c2f01aaeb4360883335c09a9a7bc26ea875d1171d301304ecfc20713c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/LICENSE.txt",
+      "Bytes": 1329,
+      "SHA256": "4b7923d1dcd1506b890b17f86736119eca2e257e8612f3ea6d72af0da53174e3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/DmfModules.Library.Tests.Public.h",
+      "Bytes": 985,
+      "SHA256": "fe074798d6f842203d8dde4c9941aebb6f2b079112e8f575f1d51cb2886c8d8f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/DmfModules.Library.Tests.Trace.h",
+      "Bytes": 405,
+      "SHA256": "4e9258f987f2f109e6fd548eb7165682ac3a46d19badaba747267f6835c6bf6d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/DmfModules.Library.Tests.h",
+      "Bytes": 1620,
+      "SHA256": "450b9bafbe93a7f76d940c5ba548cbc0a53c1c25d5e8f39a7233411ae5f1c693"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_AlertableSleep.c",
+      "Bytes": 13193,
+      "SHA256": "1fe4e348a7c4365d2d8bbbda00497adb8a47e0fcbe3e7c20ecfa978d7a6dea90"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_AlertableSleep.h",
+      "Bytes": 519,
+      "SHA256": "d0e8d50196256f2f0cd75e1c0c17c6614648fad89bcafbd4cbfd47253a34b125"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_BufferPool.c",
+      "Bytes": 26276,
+      "SHA256": "45bc79a6d2dcad8e44253af300f3be79b534270b1ea838fd3c70ca9653a3b094"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_BufferPool.h",
+      "Bytes": 498,
+      "SHA256": "73cad460647b29fa23ea3886c9412985a681afa4c49db4e5b26143394ec62661"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_BufferQueue.c",
+      "Bytes": 18171,
+      "SHA256": "c2ad156d956aeebc834049a7589ee90993527bb7919b8d05125d6ab69ac3eb28"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_BufferQueue.h",
+      "Bytes": 504,
+      "SHA256": "311039c6e064148f27acf61fb5d853aad355a15a31a1817be3ebfa6ee4ddec6b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_DefaultTarget.c",
+      "Bytes": 54725,
+      "SHA256": "e6e7248b5453613d34bbd90d30b2f220d68e93d48a7771b796dffac56f36bbe2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_DefaultTarget.h",
+      "Bytes": 516,
+      "SHA256": "18d2b4e79368aaad55e8d981c0f656072c619aba0663d90fda307d7d22084d7a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_DeviceInterfaceMultipleTarget.c",
+      "Bytes": 78699,
+      "SHA256": "cfcc1c1f4e8fe7dc14c325dc950eaa47cea956cf2634077817f6a7c0d2561600"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_DeviceInterfaceMultipleTarget.h",
+      "Bytes": 612,
+      "SHA256": "86942a3dfebcac29c7f399f1d9f37ecbc3980944c9f6f59bfeb352ba5eeff8ba"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_DeviceInterfaceTarget.c",
+      "Bytes": 86979,
+      "SHA256": "b8cf795a4e9ef558381640405fbd6529bd67af3aff8fce7ec4f2205f9fadfccc"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_DeviceInterfaceTarget.h",
+      "Bytes": 564,
+      "SHA256": "65ba83783110f20b39beb4e4209bb4f84137122cf0aa23969eee292a649a161b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_HashTable.c",
+      "Bytes": 24129,
+      "SHA256": "c5235f44027d89febc2cd8aff0475cb46a90e62e07371d444665a357fd0982be"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_HashTable.h",
+      "Bytes": 492,
+      "SHA256": "741c37529f154690b12ba9eeabf2c2ad8b72d243b8e9eb9e2af3dd29e7615f84"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_IoctlHandler.c",
+      "Bytes": 29305,
+      "SHA256": "691ab9e93ba86a0287273b4b26039318decd9794415486bb808f25119470ee74"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_IoctlHandler.h",
+      "Bytes": 771,
+      "SHA256": "f29741ddc766eaf3e46e5debbbbc4259b61b0040484eacf22a896faa1c14d6c9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_IoctlHandler_Public.h",
+      "Bytes": 991,
+      "SHA256": "5c230160af4ee17464d46a686d2ef4e78e3b0e0ae3d16a6bd8e35bed66e2fab4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_Pdo.c",
+      "Bytes": 21640,
+      "SHA256": "a757dc413d3d6f2e5abc0a8e46ff1161bc47750e9b26229c4cf02501c9af9198"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_Pdo.h",
+      "Bytes": 456,
+      "SHA256": "e1b957a7be2933983f4a41124b107919a920040de38b50222134f0569631d089"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_PingPongBuffer.c",
+      "Bytes": 18594,
+      "SHA256": "17da5b844da8eea8cb05902093cfe6570c380788c411edac8d00133a8f7b1617"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_PingPongBuffer.h",
+      "Bytes": 510,
+      "SHA256": "2248f5dcc595173760eeea510241c6387465293c605fe79f9fa2ced44d2b0f64"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_Registry.c",
+      "Bytes": 87725,
+      "SHA256": "44421bb0b880d149af51f4f8828427ae13ba57e6c21ef77fb6cf81d95252a61f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_Registry.h",
+      "Bytes": 455,
+      "SHA256": "9591b810e6eea40f162dee2b4ece716ab2167401a8bb1e10d3b84bb3f61593e6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_RingBuffer.c",
+      "Bytes": 19812,
+      "SHA256": "13cdab06fb9f5e2eabf9e6694292c9a5fad45944f845519aac4d18144ae64a3c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_RingBuffer.h",
+      "Bytes": 499,
+      "SHA256": "bbf9aeb339d58eb03f15b1dcd3691135b816e7c33f5749b02c7b6a04bd15659d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_ScheduledTask.c",
+      "Bytes": 24748,
+      "SHA256": "5ea46bf65d1df1080754726969ad0e69ae21bee0d1c0999a2c9db3f16891d508"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_ScheduledTask.h",
+      "Bytes": 516,
+      "SHA256": "ba99212ec0d6d0ff10abc8b9f5ee7e45b33c4cccbe3ff93280f59617e1fad185"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_SelfTarget.c",
+      "Bytes": 27575,
+      "SHA256": "3d4f746672887be138ffb8e6996d9bd8bf2490c3dbf64cae0b84901d0295efb4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_SelfTarget.h",
+      "Bytes": 498,
+      "SHA256": "40722b514f2e48e78eb24ac2e9369c2ad12a888e51beb7f0e091400be9775677"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_String.c",
+      "Bytes": 35272,
+      "SHA256": "a58f0a3c2cbb24c4121307f21026b47fa64044e390ea9ac6ba9c5d634d92b1b5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/Dmf_Tests_String.h",
+      "Bytes": 479,
+      "SHA256": "115bd81b85cbcf27715bef4f1cc55d559d4885f8a6ece75639d5fd39fd649b00"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/TestsUtility.c",
+      "Bytes": 6694,
+      "SHA256": "761abd099b6d50df79ad6bd9cdd9188100f1f53b44865865f708ee892e3ab71f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library.Tests/TestsUtility.h",
+      "Bytes": 758,
+      "SHA256": "883d25ba67a8661ae4d13bb4b4a6df3d3a1d127fdd70794d5219b5e6941c8ab6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/DmfModules.Library.Public.h",
+      "Bytes": 839,
+      "SHA256": "953a84c550b7df126313eacd0bac4f121a5caaf31b21c8ce8c898de1935c17a8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/DmfModules.Library.Trace.h",
+      "Bytes": 391,
+      "SHA256": "d760dcdea7c3da4742748cb76a5b6eba2f6d2591e2ce7e75bc45ffc371922de3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/DmfModules.Library.h",
+      "Bytes": 3057,
+      "SHA256": "059c65e949bc8620fca0be8833ea10496187ecb73913e798343bca91b4fd47c2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_AcpiNotification.c",
+      "Bytes": 12150,
+      "SHA256": "9471f75574fdceda68fe10209d3411482c18a266c76496e126b620d216336dc5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_AcpiNotification.h",
+      "Bytes": 1399,
+      "SHA256": "7d29bd1c0f67be2b58efe7a12e81de82088571e760bd0fe5c0aa3cf1b87440a2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_AcpiNotification.md",
+      "Bytes": 4529,
+      "SHA256": "8e02168a4a5897143ea72ba56d65081ef6189da9faf07434b6715a79462f1da2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_AcpiTarget.c",
+      "Bytes": 34503,
+      "SHA256": "980d74d099d2483ed36ac73bea7a4b35dfd8a8ea6377d26523402383256ef2b2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_AcpiTarget.h",
+      "Bytes": 1987,
+      "SHA256": "800922e4bfe6d8ede900212eadc9cd00f32bd2b581cf30a79df7090eec09a089"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_AcpiTarget.md",
+      "Bytes": 7315,
+      "SHA256": "703dab1fd1ab5df2ea052740a9583534c19cb3e286fb4bfefa121879e9eb3215"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_AlertableSleep.c",
+      "Bytes": 14899,
+      "SHA256": "fe984133653049c85d37a0520e5d4c202a9427e64f9d0e02cb60a49c446036ed"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_AlertableSleep.h",
+      "Bytes": 1357,
+      "SHA256": "192a7825c6ea7b807cd157adf69dd93b8db25a376d21bbcf5c27855b2ae8f0ed"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_AlertableSleep.md",
+      "Bytes": 5611,
+      "SHA256": "22cee37ed101c89bc9c715033de10e5cc5b63aba7605b4bf4881859460061393"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_CmApi.c",
+      "Bytes": 43885,
+      "SHA256": "ede7feea342c4cad47c0c850b23efb046ec29ebe4d4d81151e891edd7ed0956d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_CmApi.h",
+      "Bytes": 3251,
+      "SHA256": "c6909f8603893fc27de18c0748aac24f131da1d38f21964ababd446ddfe6c4fb"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_CmApi.md",
+      "Bytes": 11888,
+      "SHA256": "7bda1cb349e0668e164f16d74028f2828471d89faf76510a5ae7844388827492"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ComponentFirmwareUpdate.c",
+      "Bytes": 203120,
+      "SHA256": "b744d692387ba488512d614d1b2fc424022b191069c9c0f1079b64b624995e0b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ComponentFirmwareUpdate.h",
+      "Bytes": 3808,
+      "SHA256": "f5bd249ceb3528d4f44870841fd01060e1285ae94e2de5ec8a44a27e34543a72"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ComponentFirmwareUpdate.md",
+      "Bytes": 8656,
+      "SHA256": "8c4590529257df838d90131a5b29965c2cd971ca6bee09e5ebc85112788a978a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ComponentFirmwareUpdateHidTransport.c",
+      "Bytes": 37178,
+      "SHA256": "501f44a0a11fae8a148bf3ddbbb246e2d3743f98c5994453504043fc25895997"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ComponentFirmwareUpdateHidTransport.h",
+      "Bytes": 1248,
+      "SHA256": "a80c98b8b13ee82f22ff92d55f633c542b110cfa75858d7f4de41526d9533ed6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ComponentFirmwareUpdateHidTransport.md",
+      "Bytes": 3592,
+      "SHA256": "a7e4c3ca62c3c2d5386ef05f5dd8e579e55ae6af0dd5068839142fac637fc83b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ContinuousRequestTarget.c",
+      "Bytes": 108159,
+      "SHA256": "b452ee0a0381501bdca5ec4b0567e91f11e4a648e3a308332c515a6f61d16281"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ContinuousRequestTarget.h",
+      "Bytes": 10092,
+      "SHA256": "007c92a8d799079bf3041d7dfa5827e0932d9aa5406012318820a39d02de4e49"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ContinuousRequestTarget.md",
+      "Bytes": 27951,
+      "SHA256": "ec88f39909bbcae3118ed97555fda282e3871477fe9142d5a668e916fa6d3928"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_CppContainer.cpp",
+      "Bytes": 15876,
+      "SHA256": "e625869ac19747587d6c995a4d8aed0bfaea904e11ee7434273aa6a623cb6ebf"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_CppContainer.h",
+      "Bytes": 980,
+      "SHA256": "e07e4e79eb842150e1ccb9f56bb313b6b396c29cdb82d54a3c61c40bb29e8a47"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_CrashDump.c",
+      "Bytes": 107942,
+      "SHA256": "759d67674af3b3fbe5086aafe35538a2e3ed3516404b9e948f2ffa09b0505bc9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_CrashDump.h",
+      "Bytes": 3152,
+      "SHA256": "167e0c1c78ea81ff8f3d642dd7a4d0c06ad1341750b2ab2690f5cecec1d5ae3b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_CrashDump.md",
+      "Bytes": 9220,
+      "SHA256": "920fb07bff3deaa1c11f173687fd9b5984fad7f08cf8494cfaaa0622af4d7746"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_CrashDump_Public.h",
+      "Bytes": 2492,
+      "SHA256": "c76d72df8422baf56ca4cfb347640e1fa11870a0118059d63d0b852e6983160f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_DefaultTarget.c",
+      "Bytes": 46815,
+      "SHA256": "86e64d47a735e23f903dd3b8f94825e40c87c7e78afc4b5cdbec9bc505186102"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_DefaultTarget.h",
+      "Bytes": 3177,
+      "SHA256": "5b482589f07f1fa76dc5ad4ecfa4eee2cfadd4d69b864f9692f9ba42570515cf"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_DefaultTarget.md",
+      "Bytes": 13863,
+      "SHA256": "b2ccb60ce05dfc7dd2458ca6f7fdb3f70919395fbc6f278bd80d27e63d4230db"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_DeviceInterfaceMultipleTarget.c",
+      "Bytes": 111704,
+      "SHA256": "d86a192fcb83f60b886eeebbfec96ed9da25d43054d416c527bfee602dddf1f0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_DeviceInterfaceMultipleTarget.h",
+      "Bytes": 6919,
+      "SHA256": "1f7ae2b197847808fb521f1ea0dfbb4cca8764195dc9b8689efed08c6613d7a8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_DeviceInterfaceMultipleTarget.md",
+      "Bytes": 20625,
+      "SHA256": "25de995903f551234b8d011f0688dfbca1726d5a5f347b8562ce9dbda30758c0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_DeviceInterfaceTarget.c",
+      "Bytes": 92530,
+      "SHA256": "abc317e42e4fd716f38e4ced3c135ce66f47fb3507d7949adf749c4b7603769f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_DeviceInterfaceTarget.h",
+      "Bytes": 5501,
+      "SHA256": "d9c62c3f941f20a3382c596c578c260cdcc6fbc09a29f6e25cddc1cca5f97a5d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_DeviceInterfaceTarget.md",
+      "Bytes": 19309,
+      "SHA256": "aae9c5a6be98ab2f64debf4daa2e965c32f2b6bb109edc8a5e913dc123b23c61"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Doorbell.c",
+      "Bytes": 10315,
+      "SHA256": "bc89bdf85ee8df2b0d49e47d39690375228c2ccada8bde4b3fdfcb2d92688e65"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Doorbell.h",
+      "Bytes": 911,
+      "SHA256": "0262176b472da2d2479a131239f2e44e64eee7f5bbe72d7e94a64296ccc96c5e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Doorbell.md",
+      "Bytes": 4454,
+      "SHA256": "f4272076cea55eb52117532cf19258bd78a7158707c392626408764b456c05a6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_EyeGazeIoctl.c",
+      "Bytes": 16841,
+      "SHA256": "643fd1b1a86dd76969b6a16b3cf00950e4a185c6292f5ddbe0fd717c35f70749"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_EyeGazeIoctl.h",
+      "Bytes": 706,
+      "SHA256": "c6f1486be764a2251c5ca1e07f1ef2eb98bc98f4c8fdff01ec0e20461020fc0e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_EyeGazeIoctl.md",
+      "Bytes": 3906,
+      "SHA256": "c7ef64ce311468afaa0da910021ffe2d7554880b2f5f58e9e753d2a139c781b5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_EyeGazeIoctl_Public.h",
+      "Bytes": 2558,
+      "SHA256": "9c80749a4fc1fb650df0c90d31a72ac1c6b2af98e5b56973b1562afe6d27b1e9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_File.c",
+      "Bytes": 18127,
+      "SHA256": "1658ec164a4bb0d36a72246215ea3003f431ce65732b8c18fc280325a9fe9686"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_File.h",
+      "Bytes": 1069,
+      "SHA256": "056ca8a38fb9606fdeac6c1a9376a5a85b7e3c2139c611d8857aa1a4cbadc21d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_File.md",
+      "Bytes": 5179,
+      "SHA256": "8fd2beb6629853c9cfe285ac75a09c873fcdacad8c48ff6a26f1005409bc5b0b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_GpioTarget.c",
+      "Bytes": 31291,
+      "SHA256": "f332b143a6600bce8a54407d6b5f476b43363b36959d93e050f159bbaf80a6b7"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_GpioTarget.h",
+      "Bytes": 2279,
+      "SHA256": "140ab86f0c6d425b340c6450b5db67cf79a920503424052285e95d2eea35d0bc"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_GpioTarget.md",
+      "Bytes": 10265,
+      "SHA256": "6d313381e27c22aafe6fbd4f250691eab014cdea70cdd986fcd5c2611d10ec19"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_HidPortableDeviceButtons.c",
+      "Bytes": 47987,
+      "SHA256": "38cabd8e8068a45466dc06620222b37538b245f9a8412b6c33d1c1df785934e1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_HidPortableDeviceButtons.h",
+      "Bytes": 2199,
+      "SHA256": "540d1c5959cea7e7ab87de652a88fc228cb0a900eae0aed2aff3b7a29271b84d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_HidPortableDeviceButtons.md",
+      "Bytes": 6502,
+      "SHA256": "54be6a9e850fd439cdf0797f785acf196d553fb73e73ac22d11f2d23d490f063"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_HidTarget.c",
+      "Bytes": 139657,
+      "SHA256": "b8261641e441d122a9f2cfa945a174fa08d19dd29b8a25d177e1e0054ac50592"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_HidTarget.h",
+      "Bytes": 5841,
+      "SHA256": "3bdac2124054cfe8f0e9eea9b5a823ad94dd43cad955d41725407613ee8c7ad3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_HidTarget.md",
+      "Bytes": 20335,
+      "SHA256": "e24bc8c9a62964e0841f84cce626479d09d9ac74fc16343be283a65b382956e2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_HingeAngle.cpp",
+      "Bytes": 43334,
+      "SHA256": "ca4717539a14e615ce08f283faaf9b58365503b51fb49829c7279c2c8aee111b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_HingeAngle.h",
+      "Bytes": 1799,
+      "SHA256": "1fb7593b368b5dcf8a167f21cdf56ebd506bc91581d31a3ca2e6c1de7c1acf4f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_HingeAngle.md",
+      "Bytes": 6557,
+      "SHA256": "3b99110d77f0dedf8e110a061f24c681fb34d5f5318f7e25d1de7c1b658d18fd"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_I2cTarget.c",
+      "Bytes": 32632,
+      "SHA256": "ed75bcfcda396cda04b2c3a57f7d47904fa5a9f30c7498358f8798fb6a7d73c8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_I2cTarget.h",
+      "Bytes": 2329,
+      "SHA256": "403a57da52e47e39e3c09bae3209ea14df7c1193c971ed3a27bc32757263b668"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_I2cTarget.md",
+      "Bytes": 8058,
+      "SHA256": "eeb61483d898de2386935f9e65116d39de13571fc4e2cd93846ead913eb7ed6b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Interface_BusTarget.c",
+      "Bytes": 15143,
+      "SHA256": "ee5eae2a3c1924db10b3c0726780ea4deaea69e87352477adb446b23f8b6216c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Interface_BusTarget.h",
+      "Bytes": 7275,
+      "SHA256": "45b5b8fe1227be39496f5e6cec01cbc22c955239048e5964b0bb63eb31f84a04"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Interface_ComponentFirmwareUpdate.c",
+      "Bytes": 21866,
+      "SHA256": "7996898cb107396fed43e89906afcddd39b6b9f7615885f17d1ab44becce33b0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Interface_ComponentFirmwareUpdate.h",
+      "Bytes": 19562,
+      "SHA256": "5422ad35ef469964068567e4af36fa5f3e155c70c06375eb9e8f63c606e15442"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Interface_ComponentFirmwareUpdate.md",
+      "Bytes": 20832,
+      "SHA256": "5e64f1184075a6f8d232f2682ca30ecceba8392605e705a57070600618837e6a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_InterruptResource.c",
+      "Bytes": 27061,
+      "SHA256": "199c969364b9bcb209ab550cce478f97099dedd25ed68a91b8f96bf6b8be272c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_InterruptResource.h",
+      "Bytes": 3395,
+      "SHA256": "8f339a8ea8ce17d736fb69973bcee75fae272cb3c95f8fa51e86fdb81e57c34c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_InterruptResource.md",
+      "Bytes": 7838,
+      "SHA256": "c78a9fee49e797452d3144718841724139724f7570bf45f42f4c7db9b4b11a40"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_MobileBroadband.cpp",
+      "Bytes": 43234,
+      "SHA256": "3bccd37dbe6cb9a420b447473749b9a448f557017dba82ae01c4fc022af9da9a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_MobileBroadband.h",
+      "Bytes": 2529,
+      "SHA256": "8c132ac9658b2f737bad0b712595465a23f2dd0157ce8bbe79cebc974530c856"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_MobileBroadband.md",
+      "Bytes": 9224,
+      "SHA256": "c1015b8d2a40031b9299e6452218e3068d87009349f7120e93794a788fb93e2a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_NotifyUserWithEvent.c",
+      "Bytes": 14335,
+      "SHA256": "d0f179a44e0e53ef5e0c6209869498fd1683ae0a70e182654d0a9f2dfc3de669"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_NotifyUserWithEvent.h",
+      "Bytes": 1585,
+      "SHA256": "3cee76734b1e5bb284b96cf637161b46fc999fb47f3be7998876ea89b17facf3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_NotifyUserWithEvent.md",
+      "Bytes": 4668,
+      "SHA256": "c37efb015e2a9feed4762c34ac468cd3fc9495e7b7875ad5ca5561fb4b948afa"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_NotifyUserWithRequest.c",
+      "Bytes": 34999,
+      "SHA256": "c92e2070a61c26ffbe13a07a9b23124a667803831d7a8aaf537cb15b825dbf9a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_NotifyUserWithRequest.h",
+      "Bytes": 3224,
+      "SHA256": "568c2ed3c72a14c9037cb2a2713c2735be401e1319c67e26cfc7fb06b08a5dad"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_NotifyUserWithRequest.md",
+      "Bytes": 12565,
+      "SHA256": "7081f08486cee089598577c252ee8f4398185b3ed1d993d5374d873a322abce8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_NotifyUserWithRequestMultiple.c",
+      "Bytes": 41403,
+      "SHA256": "b77267f5a9a2b140a63a4048e9ac690c8940c7a0f4e4ad4d32b5bc617b08e3f5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_NotifyUserWithRequestMultiple.h",
+      "Bytes": 3805,
+      "SHA256": "5db6185f5eff63131a62d8c8550159a79fb58f5cb7ce6a29bc428a2a671e845f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_NotifyUserWithRequestMultiple.md",
+      "Bytes": 10968,
+      "SHA256": "c8c692fc17bf18185e817b9a0db3671a8ad6274a3aa3664c1242e107f26c92b5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Pdo.c",
+      "Bytes": 45620,
+      "SHA256": "9eee0f35fa71f84428e145ed7f3a8ea701db721e9be88ab8fde1178c90d0865f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Pdo.h",
+      "Bytes": 8989,
+      "SHA256": "685aae37e29c60fb0fff89f8d2cfb4a429b2da65c875a8dce2d9981f4d26a73e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Pdo.md",
+      "Bytes": 19386,
+      "SHA256": "17820b3011c468810ff39a276697fed09286c94365f7b835a47865c7d9189c0b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_PingPongBuffer.c",
+      "Bytes": 28924,
+      "SHA256": "1fc8f079e37a1e67e30fec7d2f13b4f8d2d41a288922dd0b4308e04094f12290"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_PingPongBuffer.h",
+      "Bytes": 1725,
+      "SHA256": "e921fa3e03de8051cdfe9dfe570d33ca6d92f52dc1b6586363122a7f1304e264"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_PingPongBuffer.md",
+      "Bytes": 7417,
+      "SHA256": "3afc5b3c78319db5f2847937f4f13efa005c0c54fc95cbebf09034b9d8b71cfa"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_QueuedWorkItem.c",
+      "Bytes": 17884,
+      "SHA256": "7044f6d67bd673bd771f2e943694eab574904d4879e6cd53b34694ad48ebb896"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_QueuedWorkItem.h",
+      "Bytes": 1867,
+      "SHA256": "534530a5daf4d5b04849914341e2582612667187ee0e37e1db9434485a9f8d74"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_QueuedWorkItem.md",
+      "Bytes": 8269,
+      "SHA256": "5c8ee7b5922e474d5bc047324318be34fdb7626d548d1e74315ef99455b0fa81"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Registry.c",
+      "Bytes": 141569,
+      "SHA256": "5a8263659e2a34e58da70b0506464cc6106e0493ccd78defed3210e4a43da2c3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Registry.h",
+      "Bytes": 17074,
+      "SHA256": "eec779e3b3cda7e56980739d8ff833243e57ac0853370918c256a89ab073e020"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Registry.md",
+      "Bytes": 53533,
+      "SHA256": "cc5aa5b08ae353567ab0df18b526c4bd0a0455f1f5ec44f51a3bb637e46b26ef"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_RequestTarget.c",
+      "Bytes": 55096,
+      "SHA256": "a92195b8f0dcaa35cb36a7093347ac082ff11a25dc79c7d9f5486a6214a6be68"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_RequestTarget.h",
+      "Bytes": 3407,
+      "SHA256": "88bce19a4db1caa278633a5876c9d625b4ff8c9fce90635efb73c1cd8bd022b8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_RequestTarget.md",
+      "Bytes": 13618,
+      "SHA256": "21523a419f61ea8862663370e2ea36d6be6c237183547f1181d02a43255b2242"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ResourceHub.c",
+      "Bytes": 43106,
+      "SHA256": "6415feca37fbfea0cb7e6563ef85cf3807cafeb96372600bb17b458868330eb4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ResourceHub.h",
+      "Bytes": 1706,
+      "SHA256": "a57460ece40691a1cf3c7e9404c0e3b40fa98073ba2e306275c334af18d4a717"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ResourceHub.md",
+      "Bytes": 4989,
+      "SHA256": "5249d4f3509a893daaa087f79f130a99c28c48a6c3edab4fae8c87906575798f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Rundown.c",
+      "Bytes": 13540,
+      "SHA256": "0b361818ed711dcdb4a318e007b5a6725bb1fd643b2ed85d428c452dca3246a7"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Rundown.h",
+      "Bytes": 909,
+      "SHA256": "362d47329d9282a3a036db0fe361ca7b565b53625d4c44494d4606eefe13ef1a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Rundown.md",
+      "Bytes": 5448,
+      "SHA256": "705f74f328832b44e7393770488167fb708fdf78181a29bff8f8a5b51905efcc"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ScheduledTask.c",
+      "Bytes": 38975,
+      "SHA256": "4b41f34c3afcaefcc7dfe0a818de07d7dc153a66ab806935caa7a757c4d1023f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ScheduledTask.h",
+      "Bytes": 4132,
+      "SHA256": "da1f27addf19d426996c49c53983937249869e03a76eef2e990a8ad5f431f25f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ScheduledTask.md",
+      "Bytes": 14364,
+      "SHA256": "8f3a8f5f1310df2892d667962e9d8ef61ee8a08b2cb55d130101c9cb1b993d23"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SelfTarget.c",
+      "Bytes": 13897,
+      "SHA256": "236c6d66010bbd26b06090d4ca8f121b78ec2d77f0ba5cfa942b841b44650df4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SelfTarget.h",
+      "Bytes": 1698,
+      "SHA256": "ea86de239bbbbf8ba40f0195e6ef34bfd40b96b93dfbacd4e0dce8c54b90e2dc"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SelfTarget.md",
+      "Bytes": 6925,
+      "SHA256": "b8da949bccf3c07f3f62032dde711390659fdaaa4d4af852ab3c3a61caa2755e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SerialTarget.c",
+      "Bytes": 46530,
+      "SHA256": "0b3627424ce33c207beea37cacff5b48651532265f51efdc5337bdda9d2dda40"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SerialTarget.h",
+      "Bytes": 4970,
+      "SHA256": "279512d33d7f1814dd6273e4170eb8983884eeadd3bc775281d4ab7e902125a5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SerialTarget.md",
+      "Bytes": 12228,
+      "SHA256": "744d44d350de72051c56533e684a80afeca03a5ee9698eadb8511953869589cf"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SimpleOrientation.cpp",
+      "Bytes": 45195,
+      "SHA256": "c3c856e81ca6f9996ae320c28b48b6965e3fba6b7a7cad2809b881b933ee4f80"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SimpleOrientation.h",
+      "Bytes": 2411,
+      "SHA256": "2348ddcaa21bf1d2a09b8777d16607853b95579de45166972140c32277c3fb5d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SimpleOrientation.md",
+      "Bytes": 6784,
+      "SHA256": "bcab76c801478e1fda423f1e1c7b7188c685d4db3b5a38f6f744ceb55e151d16"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SmbiosWmi.c",
+      "Bytes": 30332,
+      "SHA256": "bace96d278ddb49af11953e95ba11cf35aa3a1bf2977738660f4d4619a6089e6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SmbiosWmi.h",
+      "Bytes": 1748,
+      "SHA256": "18f1ef9a484352968a6804927bdd70fe1af3805cadf504f9f2ada2ca65d423c5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SmbiosWmi.md",
+      "Bytes": 7433,
+      "SHA256": "41f1cf8b3543679aefd11c157ecf828ca428544e1bbd29c3d6f7244ad65fd8d8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SpbTarget.c",
+      "Bytes": 48708,
+      "SHA256": "7ecb7f11987f41d38793b7ca4bb31470f7147e9cb5742e153470cd174a1771b3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SpbTarget.h",
+      "Bytes": 3813,
+      "SHA256": "df417e4f237978953f7a918c5bf3c0865afaa1acbdd194f52e30ca9f44d06a93"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SpbTarget.md",
+      "Bytes": 10708,
+      "SHA256": "fc9dc43fa0ed3718adb907bd5ce177500ad349db3b13c8b9fc4d8a360eb8ab7e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SpiTarget.c",
+      "Bytes": 29375,
+      "SHA256": "b6c57c5b349fc720cd7147e5de1302f0b924739c3700dd2666f74c6d1e905eee"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SpiTarget.h",
+      "Bytes": 2359,
+      "SHA256": "d364105949eba35026b7224e1663c70f8b5938373d9d5dc3f957ac23f15635e4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SpiTarget.md",
+      "Bytes": 7493,
+      "SHA256": "0f5f1fed45173db7226b3b2737adcf5f8f3e8f648894c324f23452b58da55195"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SymbolicLinkTarget.c",
+      "Bytes": 9598,
+      "SHA256": "05d664fa6d772624d96dbdfc96e7fe2cf70cc0a713ddfc662799197f7ca77730"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SymbolicLinkTarget.h",
+      "Bytes": 1368,
+      "SHA256": "8cacd80c7a2cb99d12214cfff5bb2e6c46a9f7d30f64bf9818f93ecd0235c48b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_SymbolicLinkTarget.md",
+      "Bytes": 3691,
+      "SHA256": "d46d3e6181ee4a6638705b4da124fd8b2be8e456d056f4e54c91bbc8890ebd72"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ThermalCoolingInterface.c",
+      "Bytes": 10398,
+      "SHA256": "70599f87f3795daa698b1d3d1e1dab7dea3431091ac778350e6226ca8fbf30e2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ThermalCoolingInterface.h",
+      "Bytes": 1894,
+      "SHA256": "eb1385c9292f637f004a4d1b592ad7e00f4b4b7657078d2ee1e12cfed574d210"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ThermalCoolingInterface.md",
+      "Bytes": 4789,
+      "SHA256": "8c092e25ec3c11de001b16e9ed52665228a312a3b0148b2cc9efa15b247101ae"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Thread.c",
+      "Bytes": 21974,
+      "SHA256": "37bd127f63547966bd28548af3b8042ce7bb929cac438a3c7ffc8d816e5d01ae"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Thread.h",
+      "Bytes": 2702,
+      "SHA256": "f3fe9a020f35b59cdca6d53e0230378e6988b1bd9363d67caade4a577614da20"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Thread.md",
+      "Bytes": 13493,
+      "SHA256": "a4d3ae5ff8625f9cf1e940e38a8fdd8be11ce892318b329051274c421f41e937"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ThreadedBufferQueue.c",
+      "Bytes": 23851,
+      "SHA256": "889b51427ff522a5c8e9d7fa63c7c713059139a15d5b0570c28e8d22890e7aa9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ThreadedBufferQueue.h",
+      "Bytes": 3546,
+      "SHA256": "5f0aa8bb172c9882ff9abf434d7a3c30996012b4d8400d5b6976b562c4532a1f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_ThreadedBufferQueue.md",
+      "Bytes": 14701,
+      "SHA256": "89c96326f99a47341facf98dc77cdcd631a037ec52d221b2d9a7a85558bde8f3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualAmbientLightSensor.md",
+      "Bytes": 6884,
+      "SHA256": "cf3a7294e1115b903494c04db9b0699985578e5feeb3a95d14029ac6c4a0f601"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualEyeGaze.c",
+      "Bytes": 33057,
+      "SHA256": "0c1f967f2d2cd51724c5c09ca833ea6306f1c21e31e2d748881249f18d1d2d72"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualEyeGaze.h",
+      "Bytes": 1624,
+      "SHA256": "ce0b86cbfe710d9d4c0d5559318ef29d1b44414ea8b3a2bbe0ce65d6acf90860"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualEyeGaze.md",
+      "Bytes": 6952,
+      "SHA256": "ad9ff5e80afc395a459dd79358d207a1f0805392c0d37b636e78f541ead4b6c0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidAmbientColorSensor.c",
+      "Bytes": 26004,
+      "SHA256": "f94c8b6f467c3b9e420a599b91c9d54ce5d5aad9212ecfcb1a2c288f3fde6ce8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidAmbientColorSensor.h",
+      "Bytes": 3973,
+      "SHA256": "9f53affb254f4174ddf838bc5c3b5d36812a7cccc3974fad6f07951c60b18f3b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidAmbientColorSensor.md",
+      "Bytes": 8727,
+      "SHA256": "18494b382762572a45f14460446d78c9da388ba8ca958c791f9cab0d3a91eba4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidAmbientLightSensor.c",
+      "Bytes": 23952,
+      "SHA256": "03034deb7fa3bd0414a3dc4cb9f9b46f15ea66e57023932e32f6e0a0dc904f17"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidAmbientLightSensor.h",
+      "Bytes": 4281,
+      "SHA256": "ee69a978f103a7c1af055ee8991212c64fd44856862b4c31bfee2015f2d41ec5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidAmbientLightSensor.md",
+      "Bytes": 8394,
+      "SHA256": "af9801bec4560d96cc827cd317d5ab70b723ed332a0bc800bdb0d62f007bf9de"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidDeviceVhf.c",
+      "Bytes": 11026,
+      "SHA256": "b2b8d947828c558846ca7a93da18791c18c38d2a6b58785d8284ad94780f2fc3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidDeviceVhf.h",
+      "Bytes": 86506,
+      "SHA256": "e17aaf9e28cc57a90c881c2beb2a5633cfc8035cb63fae883d800f3c0028b2dd"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidDeviceVhf.md",
+      "Bytes": 7031,
+      "SHA256": "b2ac0a55101a7815c24a078b7e86591acd5f3b9ab16e3fa83e5773a16cafad7a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidKeyboard.c",
+      "Bytes": 31214,
+      "SHA256": "599f9f1f4c9b2ebc21f5487e7ba0be397ccf684b4902c8ba3af487a3438f2152"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidKeyboard.h",
+      "Bytes": 2167,
+      "SHA256": "2e758f4e9fb1873bb8b383612f64eed79ef733e7f7b765b872d6077b409dfd06"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidKeyboard.md",
+      "Bytes": 6674,
+      "SHA256": "601f11941912c6cb6f4ba5c1ff211963fab4967ce04b259b42b923d6ad0ac542"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidMini.c",
+      "Bytes": 44598,
+      "SHA256": "ac04432401b525252f8e803ae6cf4a79164e7fa7151c02576dd520433e1ef98a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidMini.h",
+      "Bytes": 6624,
+      "SHA256": "a4458ba93224ed54ca1c94ea136f17b9531985d218715ed65a86f401a3c59f3e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_VirtualHidMini.md",
+      "Bytes": 11681,
+      "SHA256": "77c3a0386f7c9efddcc3133d17d6f1b22c59d6cd37a8bdc0a34c3a8e8d20a6fa"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Wmi.c",
+      "Bytes": 6697,
+      "SHA256": "0abdb90e2cc7424496d492815ca78b7d0f3b4045f4aaecbfba982a2908f36820"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Library/Dmf_Wmi.h",
+      "Bytes": 1348,
+      "SHA256": "ecc63af184588a372c0f3787fde150ee7d2238ab022d6e4fcdee08848dfee652"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/DmfModules.Template.Public.h",
+      "Bytes": 1050,
+      "SHA256": "ef14c39acac6dbf21f307a50d3037be672fdbcb4126c03c8506991f14cc771bb"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/DmfModules.Template.Trace.h",
+      "Bytes": 390,
+      "SHA256": "d840ca0539b57503902cd87ba2b96bd6839c505f078875fcddd71ca621354292"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/DmfModules.Template.h",
+      "Bytes": 1859,
+      "SHA256": "bc3de1875ca9e8d34be294ce5fbec0e93db6a7783b26df2f96a27ef75fae3cac"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Interface_SampleInterface.c",
+      "Bytes": 9181,
+      "SHA256": "0a53434d952e459b3763a8a9b361ea479a66ce27570c740b4fc281cc0580b4f1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Interface_SampleInterface.h",
+      "Bytes": 5252,
+      "SHA256": "d3bfc86ca0960c4c8afb2e5d0fb15fd2037c69a2d4effcf6a3baac89d86c29c0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Interface_SampleInterface.md",
+      "Bytes": 10658,
+      "SHA256": "68d718de8b874f6b62cce141bd55c3e0d39aff5dc627897dc2c2da17f133fafb"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Interface_SampleInterfaceLower.c",
+      "Bytes": 9456,
+      "SHA256": "2de34bbf7205df4f5e1e4224b95b267ce12c1fe8ed555750e3252d81de8fb990"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Interface_SampleInterfaceLower.h",
+      "Bytes": 5502,
+      "SHA256": "8f1557095ed2940bed6822abbccb6de26111fcdca5534f8caebdddf17b7ecb0b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Interface_SampleInterfaceUpper.c",
+      "Bytes": 9456,
+      "SHA256": "eb117935d2bd11afec104bc0a4c7d5d751fcbb03ea3ba0f980a0f2e5c0871ef5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Interface_SampleInterfaceUpper.h",
+      "Bytes": 5502,
+      "SHA256": "c8759bdc56fcb7ad63c55922bb4e7695f365ca0daaff36c932cad3d11e052fe9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_LegacyProtocol.c",
+      "Bytes": 6545,
+      "SHA256": "6269858229960c8186ba54a5c1fa33f57a4ccd0e52fa1343aa45e0f209565ae8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_LegacyProtocol.h",
+      "Bytes": 877,
+      "SHA256": "383b5f774b875aa4ec5ccad66d0961413254b25bc1d20ac2a2815bcad1496b44"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_LegacyProtocol.md",
+      "Bytes": 3869,
+      "SHA256": "747c614caecfb21e302e68c527a97f8b012f35a0b49b619851e96ac124c24357"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_LegacyTransportA.c",
+      "Bytes": 8566,
+      "SHA256": "e97f58d68fa9185de07063e9ceabfb3a91d84b6643b21e240f64f3a12df648f1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_LegacyTransportA.h",
+      "Bytes": 498,
+      "SHA256": "1ae951435e216905565997f99374d392cc4a3c15c1413cd1a2b1f90550b87512"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_LegacyTransportA.md",
+      "Bytes": 3200,
+      "SHA256": "4ee47ac321d735f2241e6b786f1f969eedbd6608f6ea01858c914f056a117dd9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_LegacyTransportB.c",
+      "Bytes": 8566,
+      "SHA256": "5b7f557e4642729fcbeaa417bf43b46056f898070d002e85403baf94e3ae9817"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_LegacyTransportB.h",
+      "Bytes": 498,
+      "SHA256": "ae2ed95586cd11fa23a861044508245c83fa069537ae26eb31ffbe485804b35e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_LegacyTransportB.md",
+      "Bytes": 3200,
+      "SHA256": "5772e42662266e36ecee4f8dcf3317135d18bee9f035cb991bd2e2fde22a2426"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_NonPnp.c",
+      "Bytes": 10951,
+      "SHA256": "213e2b721add9a46b7c6726579f19e137f7bd107a35a4f2c2ee174f77105e18e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_NonPnp.h",
+      "Bytes": 438,
+      "SHA256": "2b37d85b6acf1a15e986c15c409c5d9b8b1834a3a252220823883de9d3270482"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_NonPnp.md",
+      "Bytes": 12854,
+      "SHA256": "e3e42ef807b2dd96baea51112f9450187b0ffd4fcb4abe42aa2e486354af5c2a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_NonPnp_Public.h",
+      "Bytes": 829,
+      "SHA256": "cb7a828efdd332c1bb022ac274de9708bc7ee239c11bc4a243fe9f12ee9a7494"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_OsrFx2.c",
+      "Bytes": 79417,
+      "SHA256": "d2f8ec320ffc2f984a474ddec5ad84d72466613a73651c7d6b3d1e16ccca8ccd"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_OsrFx2.h",
+      "Bytes": 3283,
+      "SHA256": "5a54eb965a1c2f015ff46362660a19468091db77c881fa0dbb31552348a7d913"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_OsrFx2.md",
+      "Bytes": 12854,
+      "SHA256": "b6f6f052d3cbc5ca4c4d625091b9d241243c5181f98bb0fb3ee3f8016671ecf1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_OsrFx2_Public.h",
+      "Bytes": 5276,
+      "SHA256": "54469a6c30061e675b2e7ecc958df623c32dbd409b70ad9ac652c367bf153457"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceLowerProtocol.c",
+      "Bytes": 17295,
+      "SHA256": "b5c2c35d425905559c493d0aecb8280df395d1a2c907ea26092b5604fbf4dab2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceLowerProtocol.h",
+      "Bytes": 1173,
+      "SHA256": "f9fba5d32831723645ad6523e77be8e93563fc9cd032634bebfde38faf7b489d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceLowerTransport1.c",
+      "Bytes": 16309,
+      "SHA256": "d70e1515ff383b0aba4da3a631b83c37b34ca60015413cfdf8d2898e1677cfa4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceLowerTransport1.h",
+      "Bytes": 868,
+      "SHA256": "681d9528479612af862fe76885e9cdbe3b0978a679b31f398c113459008ee078"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceLowerTransport2.c",
+      "Bytes": 16309,
+      "SHA256": "d928ed5fdaa9bb3f10a48b81ac639398d3eaa56e2d4a71af421e0373d4d3a3f1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceLowerTransport2.h",
+      "Bytes": 868,
+      "SHA256": "5956e0bf6d2ec1ef1dc09ef1e1e2a5189d2583714d70c1a6a59a6c28facbca9a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceProtocol1.c",
+      "Bytes": 17074,
+      "SHA256": "0f35acb2c641515ffd11e793c69796f2e714f49b8bc2d0e1097f344ff4d78481"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceProtocol1.h",
+      "Bytes": 1137,
+      "SHA256": "360849b455249bbcfcee2549b109cb601646df7fb426fc24c3f1afa5ee8de82b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceProtocol1.md",
+      "Bytes": 4383,
+      "SHA256": "bd35d6869b6b33a221b744a73eb74aedea17828b6d450043daddb636b62e829a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceTransport1.c",
+      "Bytes": 15227,
+      "SHA256": "88c957026faf97a05ac7183f85502e60b5cd524ef4315e9d33b801d5af181881"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceTransport1.h",
+      "Bytes": 828,
+      "SHA256": "d8c58cf1cab25b25437a5ff1e4a660ffe760037734acde1658f97236914665a5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceTransport1.md",
+      "Bytes": 3727,
+      "SHA256": "a360c8076e0980add54f77ac12455e719fe10a0794a9fb9961282763abeb5a0d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceTransport2.c",
+      "Bytes": 15234,
+      "SHA256": "a6f5264f5f968d2d93d9ab32c5388b97e992833d8d97855a9a5af34d589d60dc"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceTransport2.h",
+      "Bytes": 828,
+      "SHA256": "c4188cf1b8d5ccbcb1d1cd0e4a3965240dc75a6bc9f042767f655c7c183711d9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceTransport2.md",
+      "Bytes": 3778,
+      "SHA256": "7573f6753ed27907595a38da7602c7dbef87724ffbd8d0a4f2e0956698cdccbf"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceUpperProtocol.c",
+      "Bytes": 17260,
+      "SHA256": "8462dc3bab000715cc40a915b0b8507144a265721f3bc80703f9898cf6d89a45"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceUpperProtocol.h",
+      "Bytes": 1339,
+      "SHA256": "2308876cc589b569186c605e25c91679081e7999c5aeebd75942c7bda3c8424b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceUpperTransport1.c",
+      "Bytes": 20469,
+      "SHA256": "45d339ac7fe0fc9b90504de064b88c8c6a88fbe0f4bb191be2d601f189339565"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceUpperTransport1.h",
+      "Bytes": 986,
+      "SHA256": "dafbdd1672e37713d721e45c09b24c9762973f37da2a13531d0156614195aba2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceUpperTransport2.c",
+      "Bytes": 20469,
+      "SHA256": "818d5e9a7db18932516cea0c743f1bd6ead0a3905295b45e5ea1c3741b6a54fb"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_SampleInterfaceUpperTransport2.h",
+      "Bytes": 986,
+      "SHA256": "df4133e4c456e6041db01165f7445ebca48652348ddc7329d14d39e1d6e005e7"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Template.c",
+      "Bytes": 27426,
+      "SHA256": "aa606d3ad0815d54b348d1fe3e3290b19f18c614dcf8001a63dd3b25846653ef"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Template.h",
+      "Bytes": 1487,
+      "SHA256": "3a56668e67a7365641dc7338087dfd33e59e4432bfcfb0753e3d1ca610fd6aa1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_Template.md",
+      "Bytes": 3833,
+      "SHA256": "59a5849c0e5ec96e9b6a78a2c43ce338ef2f166dc64f28ea7b714996a7863364"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_ToasterBus.c",
+      "Bytes": 24490,
+      "SHA256": "f2fad04a47f87d029af2d7fcfd4c3a658aa6a4fb0fed1324dc0e7e06da199ce3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_ToasterBus.h",
+      "Bytes": 1367,
+      "SHA256": "009820e6bdc46746b955770ba59fecc933f493d0115f5ba9f4f6bc2823851115"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_ToasterBus.md",
+      "Bytes": 3251,
+      "SHA256": "f0452821e4ca07a2f6d3accb1172100753c2752bc8f42c579104bc3c0db1be36"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_ToasterBus_Public.h",
+      "Bytes": 4362,
+      "SHA256": "be372e2f58007b60c24ef82885a2ad031333f4b25954cf255888c25cb8c15b7a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_VirtualHidMiniSample.c",
+      "Bytes": 30987,
+      "SHA256": "92492e0c39d4a41f9c8c2ada6f58eef2f810b589fd25aed7de14c3db5e82c867"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_VirtualHidMiniSample.h",
+      "Bytes": 764,
+      "SHA256": "9e53ea272c0883eebcdb88d7ae52d4e860e7a9953f3cd1f5aabeb7387415f3e4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Modules.Template/Dmf_VirtualHidMiniSample.md",
+      "Bytes": 3789,
+      "SHA256": "02d391e6bb897105490392fc5659db66f69dcd3df79c44aa5abbd8672f0f0210"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfK/DmfK.c",
+      "Bytes": 214,
+      "SHA256": "4a1ef8a7d2f0c92755a45c8e8ba072a95daa4ad18bf1fb031a6565d40a52c27b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfK/DmfK.vcxproj",
+      "Bytes": 16615,
+      "SHA256": "dada617f6500d0dcd9601465f369999bc14fd80d4f77ee49be4318e6ae1adba3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfK/DmfK.vcxproj.filters",
+      "Bytes": 205,
+      "SHA256": "5b21babe8f72181b48820c0988215e25784039917542775c6b5c2c3c946f9a2e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfKFramework/DmfKFramework.vcxproj",
+      "Bytes": 18963,
+      "SHA256": "fd236132c612fd0c8a1bcc231daff380f052faa2b2eca3ff500b651801707553"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfKFramework/DmfKFramework.vcxproj.filters",
+      "Bytes": 9156,
+      "SHA256": "87d5ede65a9153b530143eb2f5d355487037e624bc318f01989039a1054ca0be"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfKModules.Library.Tests/DmfKModules.Library.Tests.vcxproj",
+      "Bytes": 18111,
+      "SHA256": "588d4591db0cb8bc3223573a4cee6ed8d1e00f651d116001a0ae851239f906e6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfKModules.Library.Tests/DmfKModules.Library.Tests.vcxproj.filters",
+      "Bytes": 5328,
+      "SHA256": "aa168b2c8951e228deea753addc56c653019bcca5060a65c0e224ff9db64377f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfKModules.Library/DmfKModules.Library.vcxproj",
+      "Bytes": 24845,
+      "SHA256": "9c792ad1589342cfae4a60b591a451a63817cd333aae8da455292163807b4a05"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfKModules.Library/DmfKModules.Library.vcxproj.filters",
+      "Bytes": 20464,
+      "SHA256": "883028778b680c2dadc1f4d9fa25d44afd2ec50286cd514d388def4bf9b71d58"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfKModules.Template/DmfKModules.Template.vcxproj",
+      "Bytes": 16383,
+      "SHA256": "78a457dab16b696099eb27b4ff64ac96fe0a2cbb5518434a82e9f3f29cc868e0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfKModules.Template/DmfKModules.Template.vcxproj.filters",
+      "Bytes": 7763,
+      "SHA256": "d90365159fba33671277fd04399a0bffbaf91806c176d58859701a7954692e4f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfU/DmfU.c",
+      "Bytes": 185,
+      "SHA256": "545a44ed10135932aecd4f7fb55e24ad5bed196981807c1fe2f8ccbcf9af533c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfU/DmfU.vcxproj",
+      "Bytes": 14064,
+      "SHA256": "503b859ee03a32c4b263594504ba5aa2cf0776feef9fbd1f982d96bbcec3fe4a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfU/DmfU.vcxproj.filters",
+      "Bytes": 205,
+      "SHA256": "010ac8aace7cc039dd0c5050d4183455ea6eb6d241c7b012ea0ddbc5e72ebf6c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfUFramework/DmfUFramework.vcxproj",
+      "Bytes": 13608,
+      "SHA256": "240a67ad00572107355c78485a6f5237d0655fa8845b3cdd938271013c5d6acd"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfUFramework/DmfUFramework.vcxproj.filters",
+      "Bytes": 8896,
+      "SHA256": "06852a58264c1c8c3457279c9b9180fe733e71d8d50033384811bcb97be12ac5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfUModules.Library.Tests/DmfUModules.Library.Tests.vcxproj",
+      "Bytes": 15597,
+      "SHA256": "13d31b020490b532e9efa0ab02db632b6fec5f6363961adaaa12abfbc921e46a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfUModules.Library.Tests/DmfUModules.Library.Tests.vcxproj.filters",
+      "Bytes": 4911,
+      "SHA256": "89a5a6b22c2317e177f6085579511851261ce72acfb4c1642e106a7f2df26b25"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfUModules.Library/DmfUModules.Library.vcxproj",
+      "Bytes": 18869,
+      "SHA256": "534b71acb5c61ba9cf2086e2ba321db806ce424d0afef50a836d9a98d7271e2c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfUModules.Library/DmfUModules.Library.vcxproj.filters",
+      "Bytes": 17345,
+      "SHA256": "688f84dd6f57a229ea8078c3f56ded3bb04315137c59e628787eb593492535ba"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfUModules.Template/DmfUModules.Template.vcxproj",
+      "Bytes": 6524,
+      "SHA256": "75a976d9a270e4e17592ffb2a6091cf9a3a12965322c6ca58c8ffdfa547a2f7b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/Dmf/Solution/DmfUModules.Template/DmfUModules.Template.vcxproj.filters",
+      "Bytes": 1845,
+      "SHA256": "0eff34b3bc05ede769fd5a92ddbca74752789892828e09f0093c65d88707548f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/DmfSamples.sln",
+      "Bytes": 18379,
+      "SHA256": "4f59013e365003e697f6c67a2b2338f4f315068801e84b40faf862df0b0f4366"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Comparison.html",
+      "Bytes": 19484,
+      "SHA256": "61e5eaef3dce56bf73de32be28d21350035974bbd4405dc27d26351c3ce7595d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/deviceMetadata_B4D697F5-1C56-4807-ACCD-B28C09D37FF0.devicemetadata-ms.html",
+      "Bytes": 3062665,
+      "SHA256": "274144dac0221c35828c093dc8678556b10aa3c64d5f91bd9b673aabf223a930"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_Device.c.html",
+      "Bytes": 502203,
+      "SHA256": "8ab1828141ffd59e8e49990aac5bba34a791898f4d34c7217b6c14ba05190a8c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_README.md.html",
+      "Bytes": 104002,
+      "SHA256": "b6d847fbbe91966565d277acfb83dcfc5bae97c8d7acd18e04f423f0495934ee"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_bulkrwr.c.html",
+      "Bytes": 186627,
+      "SHA256": "b2ff18fa8b655bbd73e228ff54a688d4607e13f2b1234dd50ae36852626f94cf"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_driver.c.html",
+      "Bytes": 102099,
+      "SHA256": "f56bb75359cbee1b1e9b51d75ba3f48effd4bc9b486c15922a38dc9e6f2cde3d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_interrupt.c.html",
+      "Bytes": 69051,
+      "SHA256": "ac03c6adfdf2812287456dadf01cddee68b2e409a5cea3db2f3a34cc5157ae43"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_ioctl.c.html",
+      "Bytes": 465184,
+      "SHA256": "db49e01473ed561147043859b867aab425f8335104e0811f3982308fd0f122f7"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_osrusbfx2.h.html",
+      "Bytes": 129366,
+      "SHA256": "6feb5e335be372cdce1c34ad73b75bf2dff55f383b00b98e873818953248692a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_osrusbfx2.inx.html",
+      "Bytes": 28877,
+      "SHA256": "90d3ac541b71acfb33bd9c06ab99b3e8baff81b83ff60552f27cef5e82889ac9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_osrusbfx2.man.html",
+      "Bytes": 90721,
+      "SHA256": "5faa2ad2da9365d63adc12e493b7694cf39a96ddc9d95f157e3baf6cd1a7aac8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_osrusbfx2.rc.html",
+      "Bytes": 6389,
+      "SHA256": "849a545492325bea6166137e776e635a8eb90519c1261f3fa68b3f5a3cb2fceb"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_osrusbfx2.vcxproj.Filters.html",
+      "Bytes": 19113,
+      "SHA256": "81206ce26c3cafbda2cf65bb6b2d78eba62edcbe852ea1801c07e34f120d2306"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_osrusbfx2.vcxproj.html",
+      "Bytes": 86092,
+      "SHA256": "19bcb7a832977ff56199558fa21582ff996940be1971e3993f4cc1ab2d453824"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/driver_trace.h.html",
+      "Bytes": 49294,
+      "SHA256": "a1cacbc34c2ea54098225c45b4eb235e2e1f2dc120fc09566304d51955b34382"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/exe_dump.c.html",
+      "Bytes": 169424,
+      "SHA256": "94b848bc314e6e7e420597fff91a80e3460d1e49ef12c7798956a4b0c061918f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/exe_osrusbfx2.vcxproj.Filters.html",
+      "Bytes": 10330,
+      "SHA256": "65339a2b5647fc6fdd75f3198daec3698445300f4f9bcab2019c3d188f7d18e2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/exe_osrusbfx2.vcxproj.html",
+      "Bytes": 57570,
+      "SHA256": "19169d2852019585b27af03470b8f5a511d9eac895ef32959f4825209090ca4f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/exe_test.cmd.html",
+      "Bytes": 3657,
+      "SHA256": "a2535296f4d46bc2d72ee2dde4767efb1759d3cd9968fae93fa13730e348ec3e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/exe_testapp.c.html",
+      "Bytes": 611867,
+      "SHA256": "a840fc6d10a9bfc5dcd915499e2d6a1a9f85c51efe842f8bd89b41ab3eeee553"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/exe_testapp.rc.html",
+      "Bytes": 5127,
+      "SHA256": "11ab8c94213c5386ab560153e3d8f04f5b9845781dc53a43cc52c7f313627167"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/root_README.md.html",
+      "Bytes": 200538,
+      "SHA256": "d233650ba429c78ce8c9e8a28311c3e2ece637e7091db51174a0d76a3e0f13dd"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/root_kmdf_fx2.sln.html",
+      "Bytes": 22228,
+      "SHA256": "65ad6d8ef5b255d00a8061c66ebaf22cdfad343b66c1ebd25aa406055a58eb1b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/Documentation/Compare-kmdf_fx2-to-kmdf_fx2_dmf/Files/root_usb-kmdf-fx2.yaml.html",
+      "Bytes": 7066,
+      "SHA256": "d00a87bddb232106a4dd693f63af03b22aa7f37d82c02ecc6c06b6fd053edd36"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/EyeGazeIoctl/DmfInterface.c",
+      "Bytes": 2755,
+      "SHA256": "2d4860f63459444cd3239b58aa438c1df1a87de14c7982a4e816c5e0d1af7f43"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/EyeGazeIoctl/EyeGazeIoctl.inx",
+      "Bytes": 6338,
+      "SHA256": "02b3074f7cf2295d34903984633f234c858043a07f693a1b9b2f14f67703202f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/EyeGazeIoctl/EyeGazeIoctl.rc",
+      "Bytes": 337,
+      "SHA256": "39163cf991f64ea07e983d3636000e7f223c6def521806767894983d81d7e34c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/EyeGazeIoctl/EyeGazeIoctl.vcxproj",
+      "Bytes": 8946,
+      "SHA256": "d5420ad33b1edbd585b9a2b659db93e9658836bcc09802fae9d1ac19793ac90f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/EyeGazeIoctl/EyeGazeIoctl.vcxproj.filters",
+      "Bytes": 1232,
+      "SHA256": "3b79555894da8b73bca91444c9d90df743e27bb19ddf14c5dde3c4bfb9cacc7a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/EyeGazeIoctl/README.md",
+      "Bytes": 1331,
+      "SHA256": "16ece0b84e2ff3035d83f36a81b5dc9c93510c79a0c27d0d5e39764b18ed2895"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/EyeGazeIoctl/trace.h",
+      "Bytes": 1272,
+      "SHA256": "0eaafa1ba4e44d43c206214bdfef988be62a1f8892d06075fbe0fe37de92d2a2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample1/DmfInterface.c",
+      "Bytes": 14420,
+      "SHA256": "2f8c5ed29da282bdff9c6ad220d42cb5b93452ca8aa23af559a2297c1e2dfe98"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample1/InterfaceSample1.inx",
+      "Bytes": 7748,
+      "SHA256": "7c7366786b7602bba12c4823fec1542786ba39e04165302f8b6dab2a4faa8f4e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample1/InterfaceSample1.rc",
+      "Bytes": 371,
+      "SHA256": "fba36526a99361d22284c3b103b005dee825c1d1688bb14b5e50379f419018d6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample1/InterfaceSample1.vcxproj",
+      "Bytes": 8775,
+      "SHA256": "09f6c6a24d0a94a02dad2c591dc10b8dd2cbb39f2319461a21dcb50b37faddb5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample1/InterfaceSample1.vcxproj.Filters",
+      "Bytes": 1568,
+      "SHA256": "819ee7b6019f57afa1cccf8f4e9df872f2d81db550aefc0e85c46f3374e4deef"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample1/README.md",
+      "Bytes": 43969,
+      "SHA256": "74489b62e84843b0542aadda6468d4a3ce8d3ab4750cfd3357fb3f95d322234e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample1/trace.h",
+      "Bytes": 1739,
+      "SHA256": "cb8991c507ce942f52ee14f20311f6338d5557391d476de3e5742dd14381642c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample2/DmfInterface.c",
+      "Bytes": 18019,
+      "SHA256": "26df24cb924df7a27986710af9f738764d2744b3d464d9071e1b922adf3b6490"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample2/InterfaceSample2.inx",
+      "Bytes": 10812,
+      "SHA256": "80684066c327e44da7bd8be0e675fe364a55865662c1163ba0b4b1a9e6317f9f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample2/InterfaceSample2.rc",
+      "Bytes": 371,
+      "SHA256": "c1539ed48dc45cb877b1c33e85bd544925a54f6318319f152b49ae1d4794d460"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample2/InterfaceSample2.vcxproj",
+      "Bytes": 9255,
+      "SHA256": "bc6eb7012d995a08af05b09300c9b0aceb115726865d17c3f21076f640d7fd57"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample2/InterfaceSample2.vcxproj.filters",
+      "Bytes": 1260,
+      "SHA256": "b3c700f973dea1089c06f51fc75331a86f71073ffbb759844d8d2eb0c0c54139"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample2/README.md",
+      "Bytes": 48867,
+      "SHA256": "cac7984763afa5c89cd867457ebd8a1cb277ebc2e9ccb1617ab5f7b92b9ac95b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/InterfaceSample2/trace.h",
+      "Bytes": 1739,
+      "SHA256": "cb8991c507ce942f52ee14f20311f6338d5557391d476de3e5742dd14381642c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/LegacyProtocolTransport/DmfInterface.c",
+      "Bytes": 11665,
+      "SHA256": "7ea18aea2db3bf13936938e835605e0b463fd275d19c12917b654be49dc1b43f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/LegacyProtocolTransport/LegacyProtocolTransport.inx",
+      "Bytes": 8172,
+      "SHA256": "e237bed9cdaf59035ce1c8f1439c0c790eefc4105a448dd18b87fd1cefc013e7"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/LegacyProtocolTransport/LegacyProtocolTransport.rc",
+      "Bytes": 371,
+      "SHA256": "fba36526a99361d22284c3b103b005dee825c1d1688bb14b5e50379f419018d6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/LegacyProtocolTransport/LegacyProtocolTransport.vcxproj",
+      "Bytes": 12578,
+      "SHA256": "5a652c436b662b7605adef12010003eac1077f2cafd3b5f205042338b39c562c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/LegacyProtocolTransport/LegacyProtocolTransport.vcxproj.Filters",
+      "Bytes": 1582,
+      "SHA256": "6efee773870b64df80782db9a41106e5f01f3049b2fb699d512a7be43196e3c9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/LegacyProtocolTransport/README.md",
+      "Bytes": 27320,
+      "SHA256": "bc164716e39edcd50d042443a86c7b0e3f15af409525ff70fb7b594b396a1262"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/LegacyProtocolTransport/trace.h",
+      "Bytes": 1739,
+      "SHA256": "cb8991c507ce942f52ee14f20311f6338d5557391d476de3e5742dd14381642c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/exe/NonPnp1Exe.c",
+      "Bytes": 2950,
+      "SHA256": "2ffe474c36465d2e84b0571ec059e8630ca5f6ae80cb94516a9e065dd3e52c1d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/exe/NonPnp1Exe.vcxproj",
+      "Bytes": 8287,
+      "SHA256": "a1c8945ffdb597e97a276a5d23a94887eb8da0235a74a6831d33fa1436a58df4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/exe/NonPnp1Exe.vcxproj.Filters",
+      "Bytes": 1035,
+      "SHA256": "52193ad4446147fc3d3706ce29d3291aaa1c7e0466f1a982be52dc846d56e396"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/exe/install.c",
+      "Bytes": 14170,
+      "SHA256": "efaaf3e6232fde401e087a4ab164aace2cb4f34985a11c0319d8d6cccff022c7"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/sys/DmfInterface.c",
+      "Bytes": 9980,
+      "SHA256": "b758d6b4f6c533da702fe0be69610f76eddadfbfe1e875729a357de67c6dd004"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/sys/NonPnp1.rc",
+      "Bytes": 371,
+      "SHA256": "4db8047515bfc7f348fcae5899c5719b6717926fe0e04d9520bacdc84449fb16"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/sys/NonPnp1.vcxproj",
+      "Bytes": 12844,
+      "SHA256": "872f8d11b408a6260dd18a649a6ff258487ae7f9c19490d0044b08d0f6acca0d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/sys/NonPnp1.vcxproj.Filters",
+      "Bytes": 1442,
+      "SHA256": "724c8ce724ad75d1cf9da3e342d852d8d89884717369f7fdaa41fea5474f2fb5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/sys/README.md",
+      "Bytes": 23637,
+      "SHA256": "78ce549e469ec72630b460765411c8e2af7dc4afb1675c3450e766302b2a08f8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/NonPnp1/sys/trace.h",
+      "Bytes": 1739,
+      "SHA256": "49ebb1b160f2a66b3a6e4391d0a61b5b6b2586e88320fff8320129c23c8aaf33"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar/DmfInterface.c",
+      "Bytes": 11836,
+      "SHA256": "38230a89882de092df5e35484fc2e9b7b74c4684c61f73b4a897b1b9bb354fd6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar/README.md",
+      "Bytes": 33489,
+      "SHA256": "de59b3db95df568b287810a4c66f9cc9a9d136d2b3473a2379bcb2d6903a4ec0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar/SwitchBar.rc",
+      "Bytes": 368,
+      "SHA256": "26e076f4d2c6fb3ab0a6efa4be06cf9e54f823324187468991a70e1f1161f834"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar/SwitchBar.vcxproj",
+      "Bytes": 12774,
+      "SHA256": "2f87d4333a2cb285cf3bc3023890d69ed41771964a2dfc01bc93cdf342cf9c0c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar/SwitchBar.vcxproj.Filters",
+      "Bytes": 1555,
+      "SHA256": "61701344b942d10075dcfab9eb7fb8011b56b3a03e45753a5f40b59556c5ea74"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar/SwitchBar1.inx",
+      "Bytes": 5264,
+      "SHA256": "b94ef6be9619a61743a3a8e033adcd4ddc717c1d748c35fb30060e29c73f6cbd"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar/trace.h",
+      "Bytes": 1739,
+      "SHA256": "60b773fdc6e436f0a464e69ffc5a49c92e5d9a2215ed111f5a1ea051c80ed461"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar2/DmfInterface.c",
+      "Bytes": 11192,
+      "SHA256": "f3d2cf64bbc722a2b13600c62f302eac4490e84e645dc50d7fd1c01921ef20dd"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar2/README.md",
+      "Bytes": 32220,
+      "SHA256": "bee0fa0cc57806cfc96285515942d6fa9d01897e369a8a8e024b2a9371da7ec1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar2/SwitchBar.rc",
+      "Bytes": 371,
+      "SHA256": "a6f961853aa1574258ba62a411d394c1b32d5cbfc6289820456abfe9f12c8de2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar2/SwitchBar2.inx",
+      "Bytes": 5272,
+      "SHA256": "1041e1e89af8a9bc960e3fcc7c074a95efb4024b0e59d6e7588bcd5d2f0c2bf4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar2/SwitchBar2.vcxproj",
+      "Bytes": 12774,
+      "SHA256": "4c23aee891bf03c5625797930781716ae478e58bb698d7184d493e6c78ca6f11"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar2/SwitchBar2.vcxproj.Filters",
+      "Bytes": 1555,
+      "SHA256": "9cb9304967ff69396a60801a51c4f3153ee07a7b9424eb765e720aef036158d8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar2/trace.h",
+      "Bytes": 1739,
+      "SHA256": "87cf856f48b8220267a1fa4d459e16abed1b19403d865194248a1d3e4354e2b0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar3/DmfInterface.c",
+      "Bytes": 18398,
+      "SHA256": "a301be0c26981be5fadd109027b9fb46f0c47eace9f464786765745944062269"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar3/README.md",
+      "Bytes": 47290,
+      "SHA256": "60b58f897eb05134f9621c39f5586c585f51927eb0f6dfe32e4c62c3cf968ab5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar3/SwitchBar.rc",
+      "Bytes": 371,
+      "SHA256": "4db8047515bfc7f348fcae5899c5719b6717926fe0e04d9520bacdc84449fb16"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar3/SwitchBar3.inx",
+      "Bytes": 7550,
+      "SHA256": "d9ade86334f7931fc1d82a310e39d050d32b8b5c3c19427aff2cd796ffb11905"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar3/SwitchBar3.vcxproj",
+      "Bytes": 12466,
+      "SHA256": "ce409bdf27527c1cb4b0cfcfaa8acdf100c729d06fbdd44644c5579374b56d57"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar3/SwitchBar3.vcxproj.Filters",
+      "Bytes": 1555,
+      "SHA256": "b19a85d961086833877959fe8a510d0ceb34f7b3e7693394282428f63960f95b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar3/trace.h",
+      "Bytes": 1739,
+      "SHA256": "1ccb44207f12bfff8b6507be076986bc9a379753ca1643689e4e57a6d91404a7"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar4/DmfInterface.c",
+      "Bytes": 17544,
+      "SHA256": "9a708b1099bc53757850074f3ef4cbfa4e9dfeae4ebaec37993f1cd15474d392"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar4/README.md",
+      "Bytes": 46263,
+      "SHA256": "8a221342792b02098f351e72fc43ae7ecda80ff2232f301fa5cd43cde267cf83"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar4/SwitchBar.rc",
+      "Bytes": 371,
+      "SHA256": "4db8047515bfc7f348fcae5899c5719b6717926fe0e04d9520bacdc84449fb16"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar4/SwitchBar4.inx",
+      "Bytes": 7554,
+      "SHA256": "811d8f076a210526728a2bee9df91d5477e07fb77992d49ce9283679be13ae91"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar4/SwitchBar4.vcxproj",
+      "Bytes": 12466,
+      "SHA256": "aefd80bab323e7213dede948f396c002e6741a8e305701bf654bc3193c38601f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar4/SwitchBar4.vcxproj.Filters",
+      "Bytes": 1555,
+      "SHA256": "0ec50166fd5c1b2d9554bc1761f8ff43331a30e0cd42f48588475eb6eb8d185b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar4/trace.h",
+      "Bytes": 1739,
+      "SHA256": "49ebb1b160f2a66b3a6e4391d0a61b5b6b2586e88320fff8320129c23c8aaf33"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar5/DmfInterface.c",
+      "Bytes": 15475,
+      "SHA256": "7762155db2e3ecf6d11cd57299f1936acfad33cc68d850eeff6607b7f919418a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar5/README.md",
+      "Bytes": 37968,
+      "SHA256": "ecd5bd7bbbcb99aef74974b965905261c01e4fc1a53c8026769fec7870888159"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar5/SwitchBar.rc",
+      "Bytes": 371,
+      "SHA256": "4db8047515bfc7f348fcae5899c5719b6717926fe0e04d9520bacdc84449fb16"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar5/SwitchBar5.inx",
+      "Bytes": 7554,
+      "SHA256": "b995420ed01477a4c89570d6bc0583cfd580951b03547510ff34722c631b1dee"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar5/SwitchBar5.vcxproj",
+      "Bytes": 12466,
+      "SHA256": "46063be95c5dcabb042060b6ce6bad60c54a94a7c3b93e56773f3a31983b2ee6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar5/SwitchBar5.vcxproj.Filters",
+      "Bytes": 1555,
+      "SHA256": "025892deeb2952757a99bafce8cd6c165df4aa4d9b3734b4c84c5f7027e7e61f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/SwitchBar5/trace.h",
+      "Bytes": 1739,
+      "SHA256": "49ebb1b160f2a66b3a6e4391d0a61b5b6b2586e88320fff8320129c23c8aaf33"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/Kernel/DmfInterface.c",
+      "Bytes": 5257,
+      "SHA256": "5c9d5cd893c8fa026b88e8df45726079f7ce0c9c11fa5d39186f85fc11ab06ff"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/Kernel/VHidMIni2DmfK.vcxproj.Filters",
+      "Bytes": 1500,
+      "SHA256": "3640540a9314849c3b1c06f5ade1f92d422ef43bbc474d7abac8a82f5f300237"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/Kernel/VHidMini2DmfK.inx",
+      "Bytes": 4956,
+      "SHA256": "4f0731dd19ef64c0cdc1ec7b4af3444d5229af81c229e537a29c015e4d96f118"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/Kernel/VHidMini2DmfK.rc",
+      "Bytes": 604,
+      "SHA256": "1cfb686dbd58035c332eb3798f15ad3280ddc1b09f6d5b3e722611a7653ac9f0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/Kernel/VHidMini2DmfK.vcxproj",
+      "Bytes": 12702,
+      "SHA256": "207f8a944149a3adfad1a267bc673bc773a7f91f91d8fe6dc4cb56e86d307fc6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/Kernel/trace.h",
+      "Bytes": 1739,
+      "SHA256": "350d164a1e7f83643a49870ba783ec36d25f667b1ca2769c42a723856948f5d9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/README.md",
+      "Bytes": 2443,
+      "SHA256": "cd48096a167f1a6a4bb642bc7b77c6a04446ad8bce9925c4b3a67d6e089ad25e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/User/DmfInterface.c",
+      "Bytes": 5094,
+      "SHA256": "01b4290f7313b50924b61981c6bc18fab828efa72923313fa77ff09dc16c3abe"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/User/VHidMIni2DmfU.vcxproj.Filters",
+      "Bytes": 1500,
+      "SHA256": "c1f561747692676ae4bfc0481296c6ef019ab6cb1c12f30033eed93dd5db3542"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/User/VHidMini2DmfU.inx",
+      "Bytes": 5522,
+      "SHA256": "7455875f19a4f55d367fd9d50355a6db21a1c8cbdddb866cf19471d61f2c911d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/User/VHidMini2DmfU.rc",
+      "Bytes": 541,
+      "SHA256": "e765fde68404bcbad679cdc261af5bfe2493d83df57788cabbb595eeee6383c8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/User/VHidMini2DmfU.vcxproj",
+      "Bytes": 12328,
+      "SHA256": "1155b852fafc3234a87f2553699b81165e19f3970c8e35d25f79e3e9b8d1114c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/VHidMini2Dmf/User/trace.h",
+      "Bytes": 1739,
+      "SHA256": "924f53bd3e38129fb7eafdd092b8c6d5b32d0bf5614da7b0c5b6fa7fbec4d18d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/deviceMetadata/B4D697F5-1C56-4807-ACCD-B28C09D37FF0.devicemetadata-ms",
+      "Bytes": 105893,
+      "SHA256": "a0ea1512face838e47adf69dd5c3c4f0fc673d0631c3da88e75ce20df3ba95b4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/README.md",
+      "Bytes": 7314,
+      "SHA256": "129cfadd234dfd6ec20c3912329a3c536a09d2ff87c31ddb7cbaf318edd4e418"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/bulkrwr.c",
+      "Bytes": 12046,
+      "SHA256": "6528c295c731d042c49d53bf9727d06bfe2b54a999543ef9444dbf9a01eee7e0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/device.c",
+      "Bytes": 39488,
+      "SHA256": "f591f31ee23a3b6f9470b2272af2f429d40e5a1a5da1d5d7176e7a2a9a7a20d9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/driver.c",
+      "Bytes": 6977,
+      "SHA256": "12affce128b2a408d6c297c7360f2c18222bc1e13223e1ecb5fbd18ceb230250"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/interrupt.c",
+      "Bytes": 5086,
+      "SHA256": "4e379c30dfe25d62de064e42eac177fdb0bbb511699d2cd0a0b3c899eeee2905"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/ioctl.c",
+      "Bytes": 30913,
+      "SHA256": "17d2be573ec563aae9730c3da37f65f9bde63b435bcfaa72902c155aa88c7fa0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/osrusbfx2.h",
+      "Bytes": 7650,
+      "SHA256": "ab1facb2b2ce0f70e0719c99a5730cd9b83c72c14cc89d709e9a119b747597a0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/osrusbfx2.man",
+      "Bytes": 10527,
+      "SHA256": "5f4557163893418edcb96d090d971ff46e4ad011fa0baf5abeee0ba8df1508db"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/osrusbfx2.rc",
+      "Bytes": 470,
+      "SHA256": "8e095404b4f68f340e6ddd865d3825e3713885e3d4fe93cd169a77dfaca3f6ae"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/osrusbfx2dmf1.inx",
+      "Bytes": 7746,
+      "SHA256": "3cce139515dbb3a68ac268e39a6f6e4c4ef56cab23c1515856da7d18533f27db"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/osrusbfx2dmf1.vcxproj",
+      "Bytes": 14283,
+      "SHA256": "0a16884f6d8777c5748ab252616e7c08afb932b4aa9ca038a780fc7917597060"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/osrusbfx2dmf1.vcxproj.Filters",
+      "Bytes": 2103,
+      "SHA256": "66dc9334fd45e77804951ecd2642fa09b4e092ddcbd3851b088fc8c289fc1792"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_1/trace.h",
+      "Bytes": 2912,
+      "SHA256": "b51ea085910633af319fbaeef1e3256256c7aeed758b81df2cabd12f86a7d339"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/README.md",
+      "Bytes": 3944,
+      "SHA256": "ec96b021d4b9f6c43b25fe5fa6880a52d4c50b804a8e734f00510706d1991705"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/bulkrwr.c",
+      "Bytes": 12046,
+      "SHA256": "6528c295c731d042c49d53bf9727d06bfe2b54a999543ef9444dbf9a01eee7e0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/device.c",
+      "Bytes": 35984,
+      "SHA256": "543d038dd3d36b18e4becf475e2db261575c31511b560332aea51b8ca720b47b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/driver.c",
+      "Bytes": 6539,
+      "SHA256": "961381ae1bdaf3419db7003c39b90980030ec107ff556b24d2c7c96d3ce48ad8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/interrupt.c",
+      "Bytes": 5086,
+      "SHA256": "4e379c30dfe25d62de064e42eac177fdb0bbb511699d2cd0a0b3c899eeee2905"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/ioctl.c",
+      "Bytes": 30697,
+      "SHA256": "ef2b6eec7c233bafe01063112b908cd3f686c670eb30b53a32c1f7423f3ee17a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/osrusbfx2.h",
+      "Bytes": 7263,
+      "SHA256": "25c9a01c22de7bb4ccc8eff0724af660798e28ea0c4744a7134d45f11ec7db3a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/osrusbfx2.man",
+      "Bytes": 10527,
+      "SHA256": "5f4557163893418edcb96d090d971ff46e4ad011fa0baf5abeee0ba8df1508db"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/osrusbfx2.rc",
+      "Bytes": 470,
+      "SHA256": "8e095404b4f68f340e6ddd865d3825e3713885e3d4fe93cd169a77dfaca3f6ae"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/osrusbfx2dmf2.inx",
+      "Bytes": 7746,
+      "SHA256": "ea1cbdee2cec299d9f57314595ca9b5549cd86c2e83da80979c20b7b7b116e24"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/osrusbfx2dmf2.vcxproj",
+      "Bytes": 14324,
+      "SHA256": "1cecee67cc632ebff786a9b1b8fbbdc58fdb295950eb99390adccc245993cae9"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/osrusbfx2dmf2.vcxproj.Filters",
+      "Bytes": 2103,
+      "SHA256": "c4ad286d8c2f2d3401f50986d034021a186656ca126ca6331b978717cc7be15e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_2/trace.h",
+      "Bytes": 2915,
+      "SHA256": "34f6e93973abac23beaeadbd48d525659fd10a6d664609d2804ac62627330f34"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/Interrupt.c",
+      "Bytes": 1142,
+      "SHA256": "68ebf38beb865ecdf8b7d4297a73c902385daf2084d465dfbe6aec4c3d8d37fd"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/README.md",
+      "Bytes": 9795,
+      "SHA256": "e4a6f904bbb07342e1adf81d5e595570ba163e05e62da384348eb9ec1cc83f93"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/device.c",
+      "Bytes": 14915,
+      "SHA256": "0a677ea3d5f5faa8ddcdbdc43c0e92d24c28ce91f74f50ecb41687468734d969"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/driver.c",
+      "Bytes": 6138,
+      "SHA256": "fd229d3776a0fe1d95be52c6540b4a94929fd9eafa05bc0f972fb0f5b7508c18"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/ioctl.c",
+      "Bytes": 6681,
+      "SHA256": "97b069375558a6a3ca9be993b17d2e97016f7070c7af698b2ff3407df629eede"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/osrusbfx2.h",
+      "Bytes": 2465,
+      "SHA256": "be1837943b6bcf0f4121fc015e8df7d9efee0d442737c506c7ad69be566d5013"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/osrusbfx2.man",
+      "Bytes": 10527,
+      "SHA256": "5f4557163893418edcb96d090d971ff46e4ad011fa0baf5abeee0ba8df1508db"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/osrusbfx2.rc",
+      "Bytes": 470,
+      "SHA256": "8e095404b4f68f340e6ddd865d3825e3713885e3d4fe93cd169a77dfaca3f6ae"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/osrusbfx2dmf3.inx",
+      "Bytes": 7746,
+      "SHA256": "115bfd39717f33db2428b0902888ac2ba750ddf1c70fc46f89f265f1975c879a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/osrusbfx2dmf3.vcxproj",
+      "Bytes": 14503,
+      "SHA256": "c5d949da21aaa85236d1f7b89c53f51183d479455560c662d0cf190b4c65237a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/osrusbfx2dmf3.vcxproj.Filters",
+      "Bytes": 2637,
+      "SHA256": "9f3a0b094cc3e607d406b2cc24698cf6e99e2752afb9bcad3f2d6ca0f702aaa1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_3/trace.h",
+      "Bytes": 2912,
+      "SHA256": "b51ea085910633af319fbaeef1e3256256c7aeed758b81df2cabd12f86a7d339"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/Interrupt.c",
+      "Bytes": 2635,
+      "SHA256": "9bb710b239aa17a83a7192a01b925c92edfd0fbb536d1e8fb3fa949005534e92"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/README.md",
+      "Bytes": 3107,
+      "SHA256": "e2730356b750d386fcb27793638fe73e783fe5eec28c09643c8b611b449fcda8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/device.c",
+      "Bytes": 13188,
+      "SHA256": "dc48e56ecffc7fc801e897133c2dc62f9ac026c3351ac266e98e4a1a98839e01"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/driver.c",
+      "Bytes": 6138,
+      "SHA256": "fd229d3776a0fe1d95be52c6540b4a94929fd9eafa05bc0f972fb0f5b7508c18"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/ioctl.c",
+      "Bytes": 6715,
+      "SHA256": "4d84ef763ec3dcc516af94c689bf482cd0de0f0ec3eb45222ee7aca06108fbc5"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/osrusbfx2.h",
+      "Bytes": 2356,
+      "SHA256": "13fbf8dba691576b1acfdc7ad37b4f4f20fda15f68721bdbb2a079dbe73e162b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/osrusbfx2.man",
+      "Bytes": 10527,
+      "SHA256": "5f4557163893418edcb96d090d971ff46e4ad011fa0baf5abeee0ba8df1508db"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/osrusbfx2.rc",
+      "Bytes": 470,
+      "SHA256": "8e095404b4f68f340e6ddd865d3825e3713885e3d4fe93cd169a77dfaca3f6ae"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/osrusbfx2dmf4.inx",
+      "Bytes": 7746,
+      "SHA256": "af74e7baa28030a196c1256f37adca18a779f8128801d8e15f8f8bf743f7e87d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/osrusbfx2dmf4.vcxproj",
+      "Bytes": 14177,
+      "SHA256": "e42cf0163e7b4dc6a7895e8d6d4fcebc941b26f532be5bc262d6da767145fb5f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/osrusbfx2dmf4.vcxproj.Filters",
+      "Bytes": 2106,
+      "SHA256": "4fcc63c4cece5f9faa107c01e79ad60c1fa8761291046ad0f48737deb62136f0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/driver_dmf_4/trace.h",
+      "Bytes": 2915,
+      "SHA256": "34f6e93973abac23beaeadbd48d525659fd10a6d664609d2804ac62627330f34"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/exe/dump.c",
+      "Bytes": 9238,
+      "SHA256": "f9675ccfbb8dbadcdf69951774ecd2a77f549d4b55a8af67df0a9a0c7c11005c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/exe/osrusbfx2.vcxproj",
+      "Bytes": 10234,
+      "SHA256": "5e5488bd98a5acc13c2a0befc03d7d6586e1eaf058f0a39451fe086e5062edaf"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/exe/osrusbfx2.vcxproj.Filters",
+      "Bytes": 1162,
+      "SHA256": "91b98dee03196aad5110ecca5c9f0096c1410b775aabfdf66c0f6add6675eb10"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/exe/test.cmd",
+      "Bytes": 82,
+      "SHA256": "1a8b14a2ec31f5625e5e6bc38e24d25059304acf64fb58df56689d1c09a52d0f"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/exe/testapp.c",
+      "Bytes": 33195,
+      "SHA256": "f08949ac44bfd07c6b62ce9d2cb01519afd73efd078dfa89c1a2028151f92203"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/exe/testapp.rc",
+      "Bytes": 325,
+      "SHA256": "a7696f508c5b0b9e404968b247df5e617b823504e36983b2d1aa35200804af96"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/inc/prototypes.h",
+      "Bytes": 456,
+      "SHA256": "b09213e10882e57d9ce6604bf8c5ef18f5d37e5be1fe02c6f68da8178f733892"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/inc/public.h",
+      "Bytes": 5399,
+      "SHA256": "e947e3de041d91809eb11f1f228b653b057dfb3ea76cb399b70ac932f66b1e32"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfSamples/kmdf_fx2_dmf/usb-kmdf-fx2.yaml",
+      "Bytes": 288,
+      "SHA256": "b4febb83a93692d866440ac236a19932d35ea6555d12ca98defc723125e07214"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfKTest/pkg/DmfKTestPackage.vcxproj",
+      "Bytes": 3556,
+      "SHA256": "3d1d97ef8bb096b80b5b4f0710493a7d0ee5e865b1fa8747c5f4fac170f4c3ac"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfKTest/sys/DmfInterface.c",
+      "Bytes": 9904,
+      "SHA256": "cdbea4e6728225f22da0b948f47922322f5a02a16f71c71a5915d6dd561b40c8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfKTest/sys/DmfKTest.inx",
+      "Bytes": 3373,
+      "SHA256": "e46960f2826f89e56951a5e84f04773f6236fa4d7db5b8bf40f885714ed77ed6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfKTest/sys/DmfKTest.rc",
+      "Bytes": 995,
+      "SHA256": "5784daf648e53da11c8a2305183b635f6b389e7c40eb41fe9fd4c60368a944ce"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfKTest/sys/DmfKTest.vcxproj",
+      "Bytes": 4518,
+      "SHA256": "93cc9c1010d2dc8fffbe20ee48a876b08bbdab0fe25bda7e34bcb1ab7727000d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfKTest/sys/DmfKTest.vcxproj.filters",
+      "Bytes": 1134,
+      "SHA256": "3e4be805d0ed0b3da05b0e04d795adec541f989cc0f0ebe913f8a680569be9c2"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfKTest/sys/Trace.h",
+      "Bytes": 2751,
+      "SHA256": "5b34e6f8d33b2b14a0f062a7f997d62857debcf71fd8f0c947ede723ac19360c"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfTest.sln",
+      "Bytes": 6106,
+      "SHA256": "9794ed3e15be7da2e17cb2d0bc5fe9662d29740302274866aa58be9f8624d773"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfUTest/pkg/DmfUTestPackage.vcxproj",
+      "Bytes": 2774,
+      "SHA256": "1bc331f8f10fb5add7e9d3e5d460149c3673d87d624d6f33fbeb7b984f9f48fb"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfUTest/sys/DmfInterface.c",
+      "Bytes": 9099,
+      "SHA256": "a1190352cd3b9a9d97e0b926d908888302cb4848ce69c714cb27f96c0c81c538"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfUTest/sys/DmfUTest.Filters",
+      "Bytes": 1500,
+      "SHA256": "c1f561747692676ae4bfc0481296c6ef019ab6cb1c12f30033eed93dd5db3542"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfUTest/sys/DmfUTest.inx",
+      "Bytes": 7696,
+      "SHA256": "59fe1faea5993abe685e237cb4929537f2dc1ba011670dbba2284400a0502570"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfUTest/sys/DmfUTest.rc",
+      "Bytes": 995,
+      "SHA256": "f7ad92ea34bd18ea86e05efde05e3a0414c9c6c25392914ae40baafe40456836"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfUTest/sys/DmfUTest.vcxproj",
+      "Bytes": 6324,
+      "SHA256": "a76555522b1fa08d94262cf3239ed436efeff1f79f85530ebd5459d3dd0ce2b6"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/DmfTest/DmfUTest/sys/trace.h",
+      "Bytes": 2563,
+      "SHA256": "5812cd83b8fa2ed12af21fa5b8ae9125f332030f02ee4ac6b5ac3bbed0579ec4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/LICENSE",
+      "Bytes": 1162,
+      "SHA256": "27ebda9d51f0a56b7e281ccd8230a27236dcb51c05f64b07869ecf6e965d68b0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/README.md",
+      "Bytes": 2670,
+      "SHA256": "2501f22c147c0762c4e83d119ac96cf7e068efbe8e0298c2e87f8bf05d65af9d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/build/GitVersion.yml",
+      "Bytes": 1635,
+      "SHA256": "d51ded64b49c80b4882c4da7de40d6905385fbc11ffa3747cdda50e90b46bcf0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/build/azure-pipelines.github.yml",
+      "Bytes": 85,
+      "SHA256": "51ac5db7125da84fbdbf96c2613ad72f1670e55e99a9565768a46acf5ba60a32"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/build/build.ps1",
+      "Bytes": 12638,
+      "SHA256": "fc08fef2a024fb92103def9bb736f2c60012baa88cc2adb8eeaa9cc9eed0b223"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/dmf/build/build.yml",
+      "Bytes": 3804,
+      "SHA256": "9bbe649e83d0a63f096ad31ca6840bd520f89ff47e01fa11216a798890f74ee0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/function/UsbNcmFnSample.inf",
+      "Bytes": 9000,
+      "SHA256": "ae805c6d28475bed4367554ec0c4150883fc1fd204f5beac1e454b28e90a5285"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/function/device.cpp",
+      "Bytes": 35798,
+      "SHA256": "06be1adb038c67bd9e98caddf6e6058cd071a5ef127adc82f6d389a85da4c327"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/function/device.h",
+      "Bytes": 6156,
+      "SHA256": "c9bbdb053ff4b9fe7022fdfa79dc5c143fd38f4057ed94ca358b17cd75127ecf"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/function/driver.cpp",
+      "Bytes": 4490,
+      "SHA256": "2e33ed6a739c67f0c090974a3e9699297f14611908f408f0cdab2afd575c5cd4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/function/driver.h",
+      "Bytes": 802,
+      "SHA256": "324ebebfda3c6bdb990cfba12af1ab020fa1a77a1e1eb7b2d0c4343b7c9a85be"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/SidelineAppleNcm1902.inf",
+      "Bytes": 1582,
+      "SHA256": "c427581a19869312e3cf6e615df6d2b1046cf852fab3dead73eb6a888db92959"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/UsbNcmSample.inf",
+      "Bytes": 7380,
+      "SHA256": "2cdedb473b16fb2fe6e3f267bd2fa1996ed71752c0f915303f657a79a5c10857"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/apple1902_validation.h",
+      "Bytes": 5935,
+      "SHA256": "1b19a84cf1e5ca1352a6bdb5a2f8ec7aca247f00118e866f7784382fc0e457ec"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/device.cpp",
+      "Bytes": 30233,
+      "SHA256": "4cc3e19100891afc9487621669a33c0dc8819131761af64d6fa9d5f863675c23"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/device.h",
+      "Bytes": 4469,
+      "SHA256": "a6e08d5ef2a262e9df62d88691cdcad3c246167e2efe5754b574957ed33eaf27"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/driver.cpp",
+      "Bytes": 5210,
+      "SHA256": "c4daef17b0344bafaaa964c2917a601dbd62db7161a53f68b48d917e7fc747f1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/driver.h",
+      "Bytes": 722,
+      "SHA256": "bfd2949c394c905df7c7650bcb37cad7cec60c4fb0f12770832d3e34a0f52d09"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/NetPacketLibrary.h",
+      "Bytes": 2838,
+      "SHA256": "61f9afb343889efc6e2b6bd51a5cbc1dfb2f5069282d952e18f97b7ea2ecdce1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/buffers.h",
+      "Bytes": 1944,
+      "SHA256": "5b0da70a9b63f21e498ebdae382feb567a61d7f5ac265206b3bd365af743230e"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/callbacks.h",
+      "Bytes": 3388,
+      "SHA256": "77bedee24ef18627a37c71414813c48462b456ada371e7bbf5f105aee56b2f3d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/mac.h",
+      "Bytes": 4635,
+      "SHA256": "0ef597df1a0135168e2c87d4e760b3869f2b7f5ab61ae5f857e513730a05d627"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/ncm.h",
+      "Bytes": 11381,
+      "SHA256": "83830b107ffeea379d7e386c87c75b097a5e12a3c4e0058833d5e2fd973c5483"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/ncmringiterator.h",
+      "Bytes": 6293,
+      "SHA256": "754ad2c305bc65837b9e3e7831f6dbe400ccf093e7d5b2fe78fd08daa5fb0c49"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/ntb.h",
+      "Bytes": 1191,
+      "SHA256": "6653b671d5b0a078cdbca9dc38dd30df9e5e5b734037c003fd7dfdd56a455cd4"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/trace.h",
+      "Bytes": 6473,
+      "SHA256": "f029efd3423de48063005caf6d82c236208389f69b0785386d75ea86359d136b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/projects/adapter/adapter.vcxproj",
+      "Bytes": 13299,
+      "SHA256": "4707e060a114c830e96f52bf7bbe938fdfff7e41f4e7bdbb897469f019ea25ca"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/projects/common/common.vcxproj",
+      "Bytes": 13142,
+      "SHA256": "fd9489005f73708ab1bf89e581a12102c57160b094a4fa2751e4304ada2a4ab1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/projects/function/function.vcxproj",
+      "Bytes": 13536,
+      "SHA256": "98737ef36ae381989d4e72f79bca993065216b5792d7ae360c4f9cb4cb7ba50b"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/projects/host/host.vcxproj",
+      "Bytes": 12579,
+      "SHA256": "77e9f926a40320e71352c1500e5c426b32d0d0c1e541f0281aa570e6838b38d0"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/scripts/build-1902.cmd",
+      "Bytes": 743,
+      "SHA256": "27d809ecf9d5369553f12e1f33f0b9525b8efa76d06d770d5aa445049a6fd672"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/usbncm.sln",
+      "Bytes": 12435,
+      "SHA256": "90a3f5ed45e703fd0cd2b4786d428617cda2440709b952bc829cd580fd3025cf"
+    },
+    {
+      "Path": "tests/adapter_lifecycle_probe.py",
+      "Bytes": 7490,
+      "SHA256": "cae4a38944cecda85d9890afff013a13afbc340de68bf7c794250260cbea88fb"
+    },
+    {
+      "Path": "tests/buffer_creation_probe.py",
+      "Bytes": 8498,
+      "SHA256": "06d3fc15d2d721576c7244ae08eb55a086d27ff4441bc2cb234eaad60eb38d03"
+    },
+    {
+      "Path": "tests/build_policy_tests.py",
+      "Bytes": 1848,
+      "SHA256": "c89f837330099486c10117f9da921668938248cc2a68fcfe329c2cdc54479049"
+    },
+    {
+      "Path": "tests/host_reprepare_probe.py",
+      "Bytes": 4824,
+      "SHA256": "1ec5810eccdaae87237c7f1459d41b363ae08e84b5727906d6bfc1dc16465eb5"
+    },
+    {
+      "Path": "tests/lifecycle_policy_tests.py",
+      "Bytes": 2651,
+      "SHA256": "bca58a37e0f9a8da69449e5048f0163dc427ed19ff877ca7a81f6bc4371e20df"
+    },
+    {
+      "Path": "tests/ntb_review_probe.py",
+      "Bytes": 11036,
+      "SHA256": "7f495211febfcea5a7d08dda5e7ea6365c07a7c003c44cac5931317cd81e6ade"
+    },
+    {
+      "Path": "tests/package_tests.py",
+      "Bytes": 4434,
+      "SHA256": "be890ce3fdc0b4cbf9c0675b7ab84ae02c5a152833ea2cb28e865ddf61ccbac0"
+    },
+    {
+      "Path": "tests/rx_completion_probe.py",
+      "Bytes": 9182,
+      "SHA256": "4da26e515b432318acde33a3c8f643b753f6cabf1f336e04c6214f945f034703"
+    },
+    {
+      "Path": "tests/rx_ring_probe.py",
+      "Bytes": 3937,
+      "SHA256": "096d44df0d5c9c2d6ab596cefa8bb4ce29cc7dfacef2a843c626d7ff11aec2ce"
+    },
+    {
+      "Path": "tests/rx_stop_probe.py",
+      "Bytes": 7040,
+      "SHA256": "7526f1ad6d699b63de6cd4e5f048655633f87dfe3282399b9d67551f6a44df38"
+    },
+    {
+      "Path": "tests/tx_advance_probe.py",
+      "Bytes": 4878,
+      "SHA256": "3eb6a31d6fa561d60afeeddd3255a7bc99fab7bcc17e773f930c33300d3bcf79"
+    },
+    {
+      "Path": "tests/validation_tests.cpp",
+      "Bytes": 5473,
+      "SHA256": "e6446a017e7e0aacdd1576e74b9652ef8aa025d7db7ba09174c4bd6b7eb31ae2"
+    }
+  ]
+}
