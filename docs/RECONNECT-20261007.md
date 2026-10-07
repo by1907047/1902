@@ -195,6 +195,22 @@ not a fixed reconnect problem. It does not erase the first trial's failed
 
 ## Split disable/hold/enable experiment
 
+### Port-state definitions cross-check
+
+The numeric decoding was cross-checked against Microsoft's public
+[usbspec.h definitions](https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/shared/usbspec.h),
+not merely a recollection or internal hub-state-machine label. USB3 connection
+and enabled flags occupy bits 0/1, the link-state field occupies bits 5–8, and
+port power is bit 9. Therefore `0x203` is connected/enabled/U0/powered;
+`0x2C0` is disconnected/disabled/Inactive/powered; and `0x2A0` is
+disconnected/disabled/Rx.Detect/powered. Change `0x41` combines connection and
+link-state changes; `0x30` combines ordinary reset and BH reset changes.
+Requests `0x30` and `0x31` correspond to SET_SEL and ISOCH_DELAY. This decoding
+does not identify the actor that triggered those transitions or explain the
+internal hub event numbers `0xBF5` / `0xBC9`.
+
+### Recorded result
+
 One targeted disable completed with exit 0, followed by a 29.998-second hold
 and one targeted enable with exit 0. This is **not** another restart trial and
 is not a driver change. The first complete Windows-ready observation was
@@ -250,6 +266,59 @@ creating a firewall rule: an old install-result file still recorded the earlier
 failed binding attempt. Its historical evidence was preserved. A separate new
 run checked the live exact device, PnP/service/INF and current service-file hash
 instead of accepting or rewriting that stale record.
+
+## Immediate-enable control: another failed 600-second acceptance
+
+One disable (exit 0) followed immediately by one enable (exit 0) reproduced the
+failure. No intentional hold was inserted; the recorded hold was 0.000154 seconds.
+The parent and network adapter remained absent in all recovery observations,
+including the last one at 599.837 seconds after enable. The 600-second window
+expired without recovery. There was no extra reset, scan or reinstall.
+
+```text
+3.596621 USBNCM: D0Exit to state 5
+3.882163 USBNCM: Idle power management disabled
+3.883135 USBNCM: WdfUsbTargetDeviceCreateWithParameters FAILED 0xC000000E
+3.883141 USBNCM: InitializeDevice failed 0xC000000E
+```
+
+ETW reported 30537 events, zero lost and one metadata schema warning. Target
+port 17 again changed `0x203 → 0x2C0 → 0x2A0`, with the same two event-123
+failures seen in the short-recovery restart trial. Its own Windows clock placed
+these at 16:59:08.126 and 16:59:08.230. The trace had no subsequent successful
+target enumeration within the capture.
+
+This time the live Mac stream did capture On → Suspended → On, USB reset and
+On → Off. Its local reset-to-Off interval was about 5.4 ms. That interval is
+within one Mac clock; it does not align Windows driver callbacks to the Mac.
+
+### Additional confound: lock state
+
+The Mac was demonstrably unlocked during earlier client interaction before the
+30-second-hold trial, but locked before the immediate-enable control. Its lock
+state and the hold duration were not controlled independently. Thus the tests
+cannot yet distinguish a timing effect, a lock/accessory-security effect or
+ordinary variability. No security or sleep policy was changed.
+
+A compact registry snapshot while locked showed the device-role USB-C port's
+USB2/USB3 transports as `Policy Authorized`, with no pending authorization;
+the USB device controller was in power state 0 and the main NCM had
+`HostAttached=0`. Another host-role port reported pending/unauthorized transports;
+that must not be confused with the direct NCM device-role connection. These
+records do not prove that authorization caused the direct-link shutdown.
+[Apple's accessory-access documentation](https://support.apple.com/en-gb/102282)
+confirms that lock state can matter for accessory approval in general, not that
+it explains this device-mode failure.
+
+Final read-only Windows inspection found the parent registered but not Present,
+no corresponding adapter/address, driver service Stopped, configuration flags 0
+(not left administratively disabled), and the expected service-file hash on
+disk. This is not proof that the SYS remains loaded. Independent management
+was Preferred, with zero Windows default routes. Captures were stopped; their
+completed one-shot tasks and empty compiler scratch directories were removed.
+All failure evidence was retained. The USB link remained unavailable at this
+inspection; the next minimal check is unlock-only observation without a cable
+operation before more destructive tests.
 
 ## Questions for cloud review
 
