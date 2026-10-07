@@ -193,6 +193,41 @@ This run demonstrates short automatic recovery after the same initial failure,
 not a fixed reconnect problem. It does not erase the first trial's failed
 600-second acceptance result. The variability is now a key test requirement.
 
+## Split disable/hold/enable experiment
+
+One targeted disable completed with exit 0, followed by a 29.998-second hold
+and one targeted enable with exit 0. This is **not** another restart trial and
+is not a driver change. The first complete Windows-ready observation was
+5.332 seconds after the enable request, with further ready checks. Post-test
+USB-source ping passed 3/3. The same SYS, /30 addresses and MTU 8000 were verified.
+
+```text
+3.603937 USBNCM: D0Exit to state 5
+33.922592 USBNCM: Idle power management disabled
+33.930523 USBNCM: InitializeDevice SUCCESS
+33.945607 USBNCM: D0Entry from state 5
+33.945617 USBNCM: Link speed 5000000000 bps
+```
+
+No `STATUS_NO_SUCH_DEVICE` was captured. All 63 one-second Mac observations
+reported active USB link and the intended address. The live Mac stream captured
+a USB reset and configuration 0 → 1 near enable; it contained no suspend,
+On/Off transition or cable-change message. Sampling/logging cannot rule out
+every short unobserved transition.
+
+ETW reported 5812 events, zero lost and the same single metadata schema warning.
+Target port 17 had two live status records near enable: `0x203/change=0x30`,
+then `0x203/change=0`. No target-port event 123 or new USB-object create/delete
+was found in this trace. xHCI device update retained the same USB object,
+with a changed slot identifier; data interface 1/alternate 1 configuration
+completed with status 0.
+
+No direct port-status observation was captured during the hold. Thus this is
+not proof of a sustained U3 state or an isolated suspend experiment. It shows
+that this one disable/hold/enable run behaved differently from both direct
+restart trials. API path and hold duration are confounded; an immediate-enable
+control is needed before assigning the improvement to either.
+
 ## Short post-recovery traffic checks
 
 The same candidate then passed a 64 MiB upload to a real file on the Windows
