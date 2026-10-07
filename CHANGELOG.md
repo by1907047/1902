@@ -8,7 +8,10 @@ Source changes after the frozen candidate. **Not built with the WDK and not hard
 - Reject device OUT NTB parameters whose `dwNtbOutMaxSize` cannot hold one maximum-size datagram under the advertised divisor/remainder/alignment; previously TX silently dropped every such frame.
 - Release the configuration-descriptor and friendly-name buffers on every path instead of leaving them parented to the WDFDEVICE across repeated PrepareHardware.
 - Remove unreachable interrupt-pipe, placeholder-instance and raw-URB code; the removed CDC notification handler read a 16-byte speed-change notification after checking only 8 bytes.
-- Add `ntb_fit_probe.py` (validation vs. the real TX NTB template), `host_memory_probe.py` (per-call failure injection for WDFMEMORY lifetime) and link-speed/NTB-fit checks in `validation_tests.cpp`. Snapshot entries for the changed pinned files are updated.
+- Negotiate a device-advertised `dwNtbInMaxSize` above the host limit (64 KiB for NTB32, 65535 for NTB16) down with `SET_NTB_INPUT_SIZE` instead of rejecting the device.
+- Cap the receive backlog at 128 queued NTBs (about 8 MiB) instead of growing non-paged memory without bound; further NTBs are dropped and counted. A dropped or undeliverable continuous-request-target buffer (function driver) is now returned to its owner instead of leaking.
+- Diagnostics only, no recovery change: count and log (1st, 2nd, 4th... occurrence) TX send failures, TX completion failures with USBD status, TX cancellations (stop or 5 s timeout), RX continuous-reader failures and RX backlog drops. Log prefixes are `Sideline1902: TX`, `Sideline1902: RX readers failed` and `USBNCM: RX NTB dropped`. The RX readers-failed callback returns TRUE, which keeps KMDF's default pipe reset and restart.
+- Add `ntb_fit_probe.py` (validation vs. the real TX NTB template), `host_memory_probe.py` (per-call failure injection for WDFMEMORY lifetime), `host_diagnostics_probe.py` (counters, bounded logging and unchanged TX/RX behavior), RX backlog-cap and buffer-ownership checks, and link-speed/NTB-fit checks in `validation_tests.cpp`. Snapshot entries for the changed pinned files are updated.
 
 ## 0.1.0-alpha.1 — 2026-10-07
 

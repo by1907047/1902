@@ -51,7 +51,7 @@ struct DMF_CONFIG_BufferQueue {
 #define DMF_CONFIG_BufferQueue_AND_ATTRIBUTES_INIT(c,a) do { *(c)={}; *(a)={}; } while(0)
 struct Object { bool live=true; virtual ~Object()=default; };
 struct Node { std::unique_ptr<uint8_t[]> bytes; bool fetched=false,queued=false; };
-struct Module: Object { std::vector<Node> nodes; std::vector<std::unique_ptr<Object>> children; bool tx; };
+struct Module: Object { std::vector<Node> nodes; std::vector<std::unique_ptr<Object>> children; bool tx,lookaside; };
 static std::vector<std::unique_ptr<Module>> modules;
 static int failStage=0, failAt=1, memoryCalls=0,requestCalls=0,fetchCalls=0,invalidUses=0,invalidEnqueues=0,unreturnedNodes=0;
 static bool Fail(int stage,int call) { return failStage==stage && call==failAt; }
@@ -66,6 +66,7 @@ static DMF_CONFIG_BufferQueue* currentConfig=nullptr;
 static NTSTATUS DMF_BufferQueue_Create(WDFDEVICE,DMF_MODULE_ATTRIBUTES*,WDF_OBJECT_ATTRIBUTES*,DMFMODULE* out) {
   if(Fail(1,1)) { *out=nullptr; return STATUS_INSUFFICIENT_RESOURCES; }
   auto m=std::make_unique<Module>(); m->tx=currentConfig->SourceSettings.BufferSize!=sizeof(RX_BUFFER);
+  m->lookaside=currentConfig->SourceSettings.EnableLookAside;
   for(size_t i=0;i<currentConfig->SourceSettings.BufferCount;++i) {
     Node n; n.bytes=std::make_unique<uint8_t[]>(currentConfig->SourceSettings.BufferSize);
     m->nodes.push_back(std::move(n));
@@ -157,7 +158,13 @@ int main() {
   std::printf("TX success creates128 complete entries %s\n",clean?"PASS":"FAIL");
   Reset(0,1); rx=nullptr; status=RxBufferQueueCreate(nullptr,nullptr,&rx);
   clean=status==STATUS_SUCCESS && rx!=nullptr && invalidUses==0;
-  if(rx) { WdfObjectDelete(rx); clean=clean && LiveObjects()==0; }
+  // No lookaside: the 128 preallocated entries bound the pinned RX backlog.
+  if(rx) { auto* m=Checked(rx); clean=clean && m && !m->lookaside && m->nodes.size()==128;
+    PVOID entry=nullptr; size_t fetched=0;
+    while(DMF_BufferQueue_Fetch(rx,&entry,nullptr)==STATUS_SUCCESS) ++fetched;
+    clean=clean && fetched==128;
+    for(auto& n:m->nodes) n.fetched=false;
+    WdfObjectDelete(rx); clean=clean && LiveObjects()==0; }
   ++checks; failures+=!clean;
   std::printf("RX success %s; %d checks, %d failures\n",clean?"PASS":"FAIL",checks,failures);
   return failures!=0;

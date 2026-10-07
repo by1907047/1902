@@ -27,7 +27,7 @@ The older `d522ef2` binary completed a 600-second, 51.22 GiB alternating-transfe
 
 ## Portable tests
 
-Run `python3 tools/run_portable_tests.py` with Python 3 and Clang. The runner checks the published snapshot and executes INF binding checks, build-policy contracts, USB descriptor validation, NTB boundaries/chains, OUT-NTB fit against the real TX template, link-speed classification, RX completion/rings/stop behavior, TX advance, buffer failures, adapter lifecycle, repeated-prepare control flow and per-prepare WDFMEMORY release.
+Run `python3 tools/run_portable_tests.py` with Python 3 and Clang. The runner checks the published snapshot and executes INF binding checks, build-policy contracts, USB descriptor validation, NTB boundaries/chains, OUT-NTB fit against the real TX template, link-speed classification, RX completion/rings/stop behavior, TX advance, buffer failures, adapter lifecycle, repeated-prepare control flow, per-prepare WDFMEMORY release, the RX backlog cap and buffer ownership on drop, and data-pipe failure diagnostics.
 
 The C++ probes extract selected real source functions but replace WDF/DMF/NetAdapterCx interfaces with shims. They use AddressSanitizer and UndefinedBehaviorSanitizer for those fixtures. They do not reproduce OS scheduling, USB hardware, all allocation paths or kernel signing enforcement. A pass is a local regression signal, not proof the SYS is safe.
 

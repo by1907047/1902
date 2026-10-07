@@ -136,16 +136,30 @@ inline size_t FirstDatagramNtbSize(bool ntb32, unsigned mtu, unsigned divisor,
     return AlignUp(datagram+mtu, alignment) + ndp + 2*dpe;
 }
 
+// Largest NTB the host accepts in either direction for the chosen format.
+inline unsigned NtbSizeLimit(bool ntb32)
+{ return ntb32 ? 0x10000u : 0xffffu; }
+
+// IN NTB size the host reads with and requests via SET_NTB_INPUT_SIZE when
+// the device advertises more than the host accepts.
+inline unsigned SelectNtbInMaxSize(unsigned advertised, bool ntb32)
+{
+    const unsigned limit = NtbSizeLimit(ntb32);
+    return advertised < limit ? advertised : limit;
+}
+
 inline bool ValidateNtb(const unsigned char* data, size_t size, unsigned mtu)
 {
     if (!data || size != 28 || Read16(data) != 28 || !(Read16(data+2) & 1) ||
         mtu <= 14 || mtu > 9014) return false;
     // The host selects NTB32 whenever the device advertises it.
     const bool ntb32 = (Read16(data+2) & 2) != 0;
-    const unsigned limit = ntb32 ? 0x10000u : 0xffffu;
+    const unsigned limit = NtbSizeLimit(ntb32);
     // Experimental bounds: reject device-advertised excessive allocations.
+    // A larger IN size is negotiated down; a larger OUT size cannot be.
     for (unsigned offset = 4; offset <= 16; offset += 12) {
-        const unsigned maximum = Read32(data+offset);
+        const unsigned advertised = Read32(data+offset);
+        const unsigned maximum = offset == 4 ? SelectNtbInMaxSize(advertised, ntb32) : advertised;
         const unsigned divisor = Read16(data+offset+4);
         const unsigned remainder = Read16(data+offset+6);
         const unsigned alignment = Read16(data+offset+8);

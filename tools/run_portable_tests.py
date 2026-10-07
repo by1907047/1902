@@ -35,7 +35,8 @@ def main():
     for probe in ('rx_completion_probe.py', 'rx_ring_probe.py', 'rx_stop_probe.py',
                   'tx_advance_probe.py', 'buffer_creation_probe.py',
                   'adapter_lifecycle_probe.py', 'host_reprepare_probe.py',
-                  'host_memory_probe.py', 'ntb_fit_probe.py'):
+                  'host_memory_probe.py', 'ntb_fit_probe.py',
+                  'host_diagnostics_probe.py'):
         run([py, 'tests/' + probe])
     print('All portable suites passed; no Windows driver/device was exercised.')
 

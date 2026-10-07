@@ -4,10 +4,20 @@
 #include "device.tmh"
 #include "apple1902_validation.h"
 
-#define MAX_HOST_NTB_SIZE               (0x10000)
 #define MAX_HOST_MTU_SIZE               (9014)
 #define MAX_HOST_TX_NTB_DATAGRAM_COUNT  (UINT16) (16)
 #define PENDING_BULK_IN_READS           (8)
+
+// Diagnostics only: true for the 1st, 2nd, 4th, 8th... occurrence so a
+// sustained failure cannot flood the debugger.
+static
+bool
+ShouldLogOccurrence(
+    _In_ LONG count
+)
+{
+    return count > 0 && (count & (count - 1)) == 0;
+}
 
 const USBNCM_DEVICE_EVENT_CALLBACKS UsbNcmHostDevice::s_NcmDeviceCallbacks =
 {
@@ -553,9 +563,9 @@ UsbNcmHostDevice::SelectConfiguration(
     // Do not retain TRUE from a previous configuration that supported NTB32.
     m_Use32BitNtb = (m_NtbParamters.bmNtbFormatsSupported & 0x2) != 0;
 
-    m_HostSelectedNtbInMaxSize = min(
+    m_HostSelectedNtbInMaxSize = Apple1902::SelectNtbInMaxSize(
         m_NtbParamters.dwNtbInMaxSize,
-        MAX_HOST_NTB_SIZE);
+        m_Use32BitNtb);
 
     return STATUS_SUCCESS;
 }
@@ -698,6 +708,7 @@ UsbNcmHostDevice::RetrieveDataBulkPipes(
 
     readerConfig.HeaderLength = 0;
     readerConfig.NumPendingReads = PENDING_BULK_IN_READS;
+    readerConfig.EvtUsbTargetPipeReadersFailed = UsbNcmHostDevice::DataBulkInPipeReadersFailed;
 
     NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
         WdfUsbTargetPipeConfigContinuousReader(
@@ -869,16 +880,66 @@ UsbNcmHostDevice::StopTransmit(
 }
 
 _Use_decl_annotations_
+BOOLEAN
+UsbNcmHostDevice::DataBulkInPipeReadersFailed(
+    WDFUSBPIPE pipe,
+    NTSTATUS status,
+    USBD_STATUS usbdStatus
+)
+{
+    UsbNcmHostDevice * hostDevice = NcmGetHostDeviceFromHandle(
+        WdfIoTargetGetDevice(WdfUsbTargetPipeGetIoTarget(pipe)));
+
+    const LONG failures = InterlockedIncrement(&hostDevice->m_RxReadersFailures);
+    if (ShouldLogOccurrence(failures))
+    {
+        DbgPrint("Sideline1902: RX readers failed #%ld status 0x%08X usbd 0x%08X\n",
+                 failures, status, usbdStatus);
+    }
+
+    // Same as configuring no callback: KMDF resets the pipe (or the device
+    // if its port is disabled) and restarts the readers.
+    return TRUE;
+}
+
+_Use_decl_annotations_
 inline
 void
 UsbNcmHostDevice::TransmitFramesCompetion(
     WDFREQUEST,
     WDFIOTARGET target,
-    PWDF_REQUEST_COMPLETION_PARAMS,
+    PWDF_REQUEST_COMPLETION_PARAMS params,
     WDFCONTEXT context
 )
 {
     UsbNcmHostDevice* hostDevice = NcmGetHostDeviceFromHandle(WdfIoTargetGetDevice(target));
+
+    const NTSTATUS status = params->IoStatus.Status;
+    if (!NT_SUCCESS(status))
+    {
+        const USBD_STATUS usbdStatus = params->Parameters.Usb.Completion != nullptr
+            ? params->Parameters.Usb.Completion->UsbdStatus
+            : 0;
+
+        if (status == STATUS_CANCELLED)
+        {
+            const LONG cancellations = InterlockedIncrement(&hostDevice->m_TxCancellations);
+            if (ShouldLogOccurrence(cancellations))
+            {
+                DbgPrint("Sideline1902: TX cancelled (stop or timeout) #%ld usbd 0x%08X\n",
+                         cancellations, usbdStatus);
+            }
+        }
+        else
+        {
+            const LONG failures = InterlockedIncrement(&hostDevice->m_TxCompletionFailures);
+            if (ShouldLogOccurrence(failures))
+            {
+                DbgPrint("Sideline1902: TX completion failed #%ld status 0x%08X usbd 0x%08X\n",
+                         failures, status, usbdStatus);
+            }
+        }
+    }
 
     hostDevice->m_NcmAdapterCallbacks->EvtUsbNcmAdapterNotifyTransmitCompletion(
         hostDevice->m_NetAdapter,
@@ -933,6 +994,15 @@ UsbNcmHostDevice::TransmitFrames(
                 WdfUsbTargetPipeGetIoTarget(hostDevice->m_DataBulkOutPipe), &sendOptions))
         {
             status = WdfRequestGetStatus(bufferRequest->Request);
+        }
+    }
+
+    if (!NT_SUCCESS(status))
+    {
+        const LONG failures = InterlockedIncrement(&hostDevice->m_TxSendFailures);
+        if (ShouldLogOccurrence(failures))
+        {
+            DbgPrint("Sideline1902: TX send failed #%ld status 0x%08X\n", failures, status);
         }
     }
 

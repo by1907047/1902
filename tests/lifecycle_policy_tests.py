@@ -50,6 +50,13 @@ class LifecyclePolicyTests(unittest.TestCase):
                                'm_DataBulkOutPipeMaximumPacketSize = 0;'):
                 self.assertIn(assignment, before)
 
+    def test_bulk_in_reader_failures_are_observed(self):
+        # The callback must be in the config before the reader is created.
+        body = function_body('RetrieveDataBulkPipes')
+        assignment = body.index('readerConfig.EvtUsbTargetPipeReadersFailed = '
+                                'UsbNcmHostDevice::DataBulkInPipeReadersFailed;')
+        self.assertLess(assignment, body.index('WdfUsbTargetPipeConfigContinuousReader('))
+
     def test_link_speed_precedes_link_up_and_uses_capabilities(self):
         # KMDF's AT_HIGH_SPEED trait is also set at SuperSpeed.
         body = function_body('EnterWorkingState')

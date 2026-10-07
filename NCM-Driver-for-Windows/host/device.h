@@ -104,6 +104,10 @@ private:
         _In_ WDFCONTEXT context
     );
 
+    static
+    EVT_WDF_USB_READERS_FAILED
+        DataBulkInPipeReadersFailed;
+
     _IRQL_requires_max_(DISPATCH_LEVEL)
     static
     VOID
@@ -196,6 +200,20 @@ private:
 
     USBNCM_ADAPTER_EVENT_CALLBACKS const *
         m_NcmAdapterCallbacks = nullptr;
+
+    // Data-pipe failure diagnostics; read with a debugger. Nothing in the
+    // driver acts on them. TX cancellations include stop and 5 s timeouts.
+    LONG
+        m_TxSendFailures = 0;
+
+    LONG
+        m_TxCompletionFailures = 0;
+
+    LONG
+        m_TxCancellations = 0;
+
+    LONG
+        m_RxReadersFailures = 0;
 
 };
 

@@ -108,6 +108,20 @@ int main()
     // IN parameters are not checked against the host TX layout.
     nbad=ntb; put32(nbad,4,1514+64+512+4); put16(nbad,8,512); put16(nbad,10,511);
     CHECK(ValidateNtb(nbad.data(),28,1514));
+    // A larger IN size is negotiated down to the host limit, not rejected.
+    CHECK(SelectNtbInMaxSize(0x4000,true)==0x4000);
+    CHECK(SelectNtbInMaxSize(0x10000,true)==0x10000);
+    CHECK(SelectNtbInMaxSize(0x20000,true)==0x10000);
+    CHECK(SelectNtbInMaxSize(0x20000,false)==0xffff);
+    CHECK(SelectNtbInMaxSize(0xffffffffu,false)==0xffff);
+    nbad=ntb; put32(nbad,4,0x20000); CHECK(ValidateNtb(nbad.data(),28,1514));
+    put32(nbad,4,0xffffffffu); CHECK(ValidateNtb(nbad.data(),28,1514));
+    nbad[2]=1; put32(nbad,16,0xffff); CHECK(ValidateNtb(nbad.data(),28,1514)); // NTB16
+    // The lower bound still applies to the size the host will select.
+    nbad=ntb; put32(nbad,4,0x20000); put16(nbad,8,0x8000); put16(nbad,12,0x8000);
+    CHECK(!ValidateNtb(nbad.data(),28,1514)); // 1514+64+0x8000+0x8000 > 0x10000
+    // OUT cannot be negotiated, so an oversized OUT size is still rejected.
+    nbad=ntb; put32(nbad,16,0x10001); CHECK(!ValidateNtb(nbad.data(),28,1514));
     // Link speed: each capability means "this speed or faster".
     using C=Capability;
     for (C high : {C::Supported,C::NotSupported,C::QueryFailed})

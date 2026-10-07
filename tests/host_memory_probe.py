@@ -36,7 +36,6 @@ shim = r'''
 #define RtlZeroMemory(d,n) std::memset((d),0,(n))
 #define ARRAYSIZE(a) (sizeof(a)/sizeof((a)[0]))
 #define min(a,b) ((a)<(b)?(a):(b))
-#define MAX_HOST_NTB_SIZE (0x10000)
 #define MAX_HOST_MTU_SIZE (9014)
 using NTSTATUS=int;using ULONG=unsigned;using PULONG=ULONG*;using USHORT=unsigned short;
 using BYTE=unsigned char;using UCHAR=unsigned char;using BOOLEAN=bool;using PVOID=void*;
@@ -58,6 +57,7 @@ using WDFMEMORY=Memory*;
 static std::set<Memory*> live;
 static int calls=0,failAt=0;
 static bool Fail(){return ++calls==failAt;}
+static unsigned advertisedFormats=3,advertisedInMax=0x10000,advertisedOutMax=0x10000;
 struct WDF_OBJECT_ATTRIBUTES{void* ParentObject;};
 #define WDF_OBJECT_ATTRIBUTES_INIT(a) ((a)->ParentObject=nullptr)
 static NTSTATUS WdfMemoryCreate(WDF_OBJECT_ATTRIBUTES* a,int,int,size_t size,WDFMEMORY* out,PVOID* buffer){
@@ -125,7 +125,9 @@ struct UsbNcmHostDevice{
  NTSTATUS RequestClassSpecificControlTransfer(UINT8 request,int,int,UINT16,WDF_MEMORY_DESCRIPTOR* d,PULONG transferred=nullptr){
   assert(request==USB_REQUEST_GET_NTB_PARAMETERS&&d->size==28);
   if(Fail())return STATUS_UNSUCCESSFUL;
-  const unsigned char ntb[28]={28,0,3,0,0,0,1,0,4,0,0,0,4,0,0,0,0,0,1,0,4,0,0,0,4,0,16,0};
+  unsigned char ntb[28]={28,0,3,0,0,0,1,0,4,0,0,0,4,0,0,0,0,0,1,0,4,0,0,0,4,0,16,0};
+  ntb[2]=(unsigned char)advertisedFormats;
+  for(int i=0;i<4;++i){ntb[4+i]=(unsigned char)(advertisedInMax>>(8*i));ntb[16+i]=(unsigned char)(advertisedOutMax>>(8*i));}
   std::memcpy(d->buffer,ntb,28);if(transferred)*transferred=28;return STATUS_SUCCESS;
  }
 };
@@ -158,6 +160,16 @@ int main(){
    assert(h.m_MaxDatagramSize==1514&&h.m_Use32BitNtb&&h.m_HostSelectedNtbInMaxSize==0x10000);
    assert(h.m_MacAddress[0]==2&&h.m_MacAddress[1]==0xab&&h.m_MacAddress[5]==0x9c);
   });
+ // Larger advertised IN sizes are negotiated down rather than rejected.
+ struct Case{unsigned formats,inMax,outMax,selected;bool ntb32;};
+ for(Case c : {Case{3,0x20000,0x10000,0x10000,true},Case{1,0x20000,0xffff,0xffff,false},
+               Case{1,0x4000,0xffff,0x4000,false}}){
+  advertisedFormats=c.formats;advertisedInMax=c.inMax;advertisedOutMax=c.outMax;
+  failAt=0;calls=0;UsbNcmHostDevice host;
+  assert(host.SelectConfiguration()==STATUS_SUCCESS&&live.empty());
+  assert(host.m_HostSelectedNtbInMaxSize==c.selected&&host.m_Use32BitNtb==c.ntb32);++checks;
+ }
+ std::puts("advertised IN 0x20000 selects host limit for NTB32/NTB16 PASS");
  std::printf("host per-prepare memory: %d checks, 0 failures\n",checks);
 }
 '''
