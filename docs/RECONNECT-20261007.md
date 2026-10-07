@@ -118,6 +118,81 @@ performance, a hardware speed-class change or production signing. No corrective
 action by this test harness explains the recovery; outside activity was not
 instrumented sufficiently to exclude every external cause.
 
+## Second actual restart: recovery with a transient enumeration failure
+
+The next actual single restart used the same frozen source and installed SYS.
+This was not a new driver or a repair. A preliminary ETW preparation attempt
+stopped before restarting the device because its inner script was missing at
+the expected location; that preparation failure is not a restart trial.
+
+USBXHCI, UCX, USBHUB3 and Kernel-PnP ETW were running before the actual restart,
+alongside native DebugView and a one-second Mac state/kernel-log recorder.
+The PnP tool returned 0 after 2.299 seconds. The first complete Windows-ready
+observation was 23.088 seconds after the restart request; subsequent checks
+were also ready. The capture ended normally. Independent management stayed
+available and Windows default-route count remained zero. Other calculation
+jobs were left running, as explicitly authorized by the user.
+
+```text
+3.603556 USBNCM: D0Exit to state 5
+3.815350 USBNCM: Idle power management disabled
+3.816132 USBNCM: WdfUsbTargetDeviceCreateWithParameters FAILED 0xC000000E
+3.816134 USBNCM: InitializeDevice failed 0xC000000E
+19.356536 USBNCM: Idle power management disabled
+19.360708 USBNCM: InitializeDevice SUCCESS
+19.374552 USBNCM: D0Entry from state 5
+19.374580 USBNCM: Link speed 5000000000 bps
+```
+
+These are DebugView capture-relative times, not time since restart. The 23.088
+seconds above is the readiness observation, not an exact link transition.
+
+The ETL contained 8025 events and reported zero events lost. `tracerpt` decoded
+the trace with one schema warning on a SystemTrace metadata header, not a
+zero-warning decode. Raw ETL/XML remain private. The target was on the Intel
+xHCI controller `8086:A1AF`, root-hub port 17. The target device identity was
+matched using descriptor/rundown data and its old/new USB object association.
+Rundown records must not be mistaken for live disconnect events.
+
+The following sequence uses only the Windows trace's own clock. Its rendered
+timezone offset is inconsistent with the external UTC query timestamps; do
+not normalize it against the Mac clock or infer cross-machine millisecond order.
+
+| Windows trace time | Target-port observation |
+| --- | --- |
+| 16:37:04.783 | PortStatus `0x203` |
+| 16:37:04.806 | USBHUB3 event 123, "Failure during Port Change Request": previous `0x203`, current `0x2C0`, change `0x41`, event `0xBF5` |
+| 16:37:04.877 | Another event 123: previous `0x2C0`, current `0x2A0`, change `0x30`, event `0xBC9` |
+| 16:37:04.878 | Old USB object deleted |
+| 16:37:20.142 | PortStatus `0x203`, change `1`; enumeration starts on a new USB object |
+| 16:37:20.156 | Enumeration completes, NTSTATUS `0` |
+| 16:37:20.366 | PrepareHardware on the new object |
+
+Before the port-status failure, descriptor reads and control requests with
+`bRequest=0x31,wValue=0x28` and `bRequest=0x30` completed successfully. A separate
+xHCI ConfigureEndpoint event showed configuration 1/interface **0**/alternate
+0. That is not evidence that NCM data interface **1** was explicitly switched
+to alternate 0 by this driver. Numeric port-state/internal hub-event decoding
+and causal attribution require further review.
+
+The Mac's own local log first records On → Suspended → On and a USB reset.
+About 15 seconds later it records `cableChangeOccurred: cable connected,
+powering on USB3 + USB2`, Off → On, a new device address and configuration 1.
+The live stream did not contain the preceding On → Off message; sampled NCM
+state and the subsequent Off → On still showed an interruption. This OS cable
+notification is not proof of a human unplug/replug. The test harness made no
+cable operation, and outside activity was not comprehensively instrumented.
+
+Afterward, both endpoints had the intended /30 USB addresses, MTU 8000, the
+expected running driver and a connected adapter. Mac route lookup resolved to
+the USB interface, and three pings bound to the USB source address succeeded:
+0% loss, RTT 4.980 / 1.691 / 1.994 ms. The Windows driver reported 5 Gbps; no
+throughput or long-term stability claim follows from that link-speed field.
+
+This run demonstrates short automatic recovery after the same initial failure,
+not a fixed reconnect problem. It does not erase the first trial's failed
+600-second acceptance result. The variability is now a key test requirement.
+
 ## Questions for cloud review
 
 Please analyze the exact frozen PR #1 source alongside these observations and
@@ -133,6 +208,11 @@ label conclusions as observation, inference or untested hypothesis.
 4. Are any source changes justified by the evidence now? If not, specify what
    evidence is missing. Do not substitute unconditional retries, swallowed
    `STATUS_NO_SUCH_DEVICE`, NTB/MTU tuning or passing mocks for enumeration proof.
+5. How do the second trial's port-status changes, successful control requests
+   and new-object enumeration change the hypothesis ranking? Verify numeric
+   interpretations from primary definitions; distinguish a USB3 link/resume
+   interaction from NCM interface teardown, without assigning blame from
+   temporally adjacent events alone.
 
 Cloud Linux analysis cannot validate Windows kernel loading, actual USB
 re-enumeration or hardware stability. Do not merge or release binaries based on
