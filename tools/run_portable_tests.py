@@ -20,6 +20,7 @@ def main():
         raise SystemExit('clang++ is required for the ASan/UBSan probes')
     py = sys.executable
     run([py, 'tools/check_snapshot.py'])
+    run([py, 'tests/source_identity_tests.py'])
     run([py, 'tests/package_tests.py',
          'NCM-Driver-for-Windows/host/SidelineAppleNcm1902.inf'])
     for test in ('build_policy_tests.py', 'lifecycle_policy_tests.py'):

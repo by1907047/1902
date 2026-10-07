@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "status": "unreleased: not built with the WDK and not hardware-tested",
+  "baseline": {
+    "tag": "v0.1.0-alpha.1",
+    "candidate": "d522ef2-dirty-469555eaf6648073",
+    "manifest": "docs/source-snapshot.json",
+    "manifest_sha256": "bdc2c2ce874cc5e8fb5a66067f2a1e421fa916a327c36daba458f5e939159221"
+  },
+  "scope": [
+    "NCM-Driver-for-Windows",
+    "tests"
+  ],
+  "changed_from_baseline": [
+    {
+      "Path": "NCM-Driver-for-Windows/adapter/adapter.cpp",
+      "Bytes": 10155,
+      "SHA256": "0b7874151efbcebf570438a77545a5d9ba13cb15724983bab72ed0cacd1bd589"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/adapter/rxqueue.h",
+      "Bytes": 4088,
+      "SHA256": "9c49385fefb3253e0d01c87f57143e24b689ef0aacbc67299856285fab9f6c56"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/common/buffers.cpp",
+      "Bytes": 8283,
+      "SHA256": "8a55b406ac1d5ec973e1b3ca6ab374483297da89cceb4509c44407414e19a0d8"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/apple1902_validation.h",
+      "Bytes": 8405,
+      "SHA256": "531132fd7b9f6d4b705516e1b469b165ab8228d402fe40fb210848e7edde4bad"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/device.cpp",
+      "Bytes": 29425,
+      "SHA256": "29c91993fd170f697d5c73614bbb4a93c74c1c3b33780ee17969bc3f580f4ce1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/device.h",
+      "Bytes": 3807,
+      "SHA256": "57e0a30fab13e93bbeb24f04e51664cd5b5c1172742b8228909c3ba7a480980a"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/driver.cpp",
+      "Bytes": 5064,
+      "SHA256": "fee498a62e8879d88ebf835baf1dab05eba19cc8187ddddcfef813abd7e6d01d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/buffers.h",
+      "Bytes": 2146,
+      "SHA256": "2d16929f391eaa173df287fa7eb7ebb6f62b54fdc1c985014e2f4a2eb71a7fac"
+    },
+    {
+      "Path": "tests/adapter_lifecycle_probe.py",
+      "Bytes": 7241,
+      "SHA256": "cab4351e4831f0b146add1b991e02c733a0840c60c0f9d92227d9c13d1911089"
+    },
+    {
+      "Path": "tests/buffer_creation_probe.py",
+      "Bytes": 8929,
+      "SHA256": "b3340c193f6a4e4b3611acaba9cd633063caab4ccd06cfd9b30b0feaa4f04bc5"
+    },
+    {
+      "Path": "tests/lifecycle_policy_tests.py",
+      "Bytes": 3540,
+      "SHA256": "b389f3e1825d3f6c0ad3959b54b060194d4c85cfa2ff1f12e42d8e4736099a44"
+    },
+    {
+      "Path": "tests/rx_completion_probe.py",
+      "Bytes": 10914,
+      "SHA256": "997f191c304683045007efba9b3453837a1f7a5aa11b3bcb2140514e94b7b9bd"
+    },
+    {
+      "Path": "tests/validation_tests.cpp",
+      "Bytes": 8107,
+      "SHA256": "a0c4e44d86c130a2913d04d863cfab3a0569f40233fef311566977821ad5d7af"
+    }
+  ],
+  "added_after_baseline": [
+    {
+      "Path": "tests/host_diagnostics_probe.py",
+      "Bytes": 7820,
+      "SHA256": "cd92ddf5a552735d3065089d57411895a476dfddc40662475ca7c16724e3a34a"
+    },
+    {
+      "Path": "tests/host_memory_probe.py",
+      "Bytes": 9825,
+      "SHA256": "135c13c5aa9982879bc14873fb16db5a210a0e90b48bb6c5f92a57e0c5147f4f"
+    },
+    {
+      "Path": "tests/ntb_fit_probe.py",
+      "Bytes": 3950,
+      "SHA256": "f211fc4137128ae26195219ee23b22935029bc8b635d1798f23c4cc69dc05e82"
+    },
+    {
+      "Path": "tests/source_identity_tests.py",
+      "Bytes": 5877,
+      "SHA256": "74e994175a794b241f63136a1a05c941465d6152fba9932755a018c4f616e3b7"
+    }
+  ],
+  "removed_after_baseline": []
+}
