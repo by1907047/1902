@@ -317,8 +317,96 @@ disk. This is not proof that the SYS remains loaded. Independent management
 was Preferred, with zero Windows default routes. Captures were stopped; their
 completed one-shot tasks and empty compiler scratch directories were removed.
 All failure evidence was retained. The USB link remained unavailable at this
-inspection; the next minimal check is unlock-only observation without a cable
-operation before more destructive tests.
+inspection. The user is away and has asked to keep the Mac locked; no unlock,
+cable operation, security-policy change or additional PnP trigger was made.
+
+## Persisted Mac logs: explicit USB restriction and unlock-associated recovery
+
+A subsequent read-only `log show --info --debug` recovered messages missing
+from the earlier live streams. Queries covered local time 15:35–15:50 and
+15:50–17:35 on October 7, each with a 45-second external timeout. All queries
+completed successfully. Raw logs stay private. The following timestamps come
+only from the Mac's persisted log, not from Windows or a mixture of captures.
+
+### Explicit shutdown reason on the target controller
+
+In **all three target-creation-failure trials**, the same Mac device controller
+that logged the reset/address sequence also logged `Unauthorized protocol`
+and `USB restricted, powering off` immediately before On → Off:
+
+| Trial | USB restricted, powering off (Mac local time) | On → Off |
+| --- | --- | --- |
+| First restart | 15:47:22.658354 and .660682 | 15:47:22.664011 |
+| Second restart | 16:36:07.269093 and .270174 | 16:36:07.271255 |
+| Immediate enable | 16:58:10.598789 and .600348 | 16:58:10.601999 |
+
+These are direct controller messages explaining its shutdown as a USB
+restriction. The second restart ultimately recovered; calling all three
+**600-second acceptance failures** would be incorrect. Only the first and
+immediate-enable runs failed those acceptance windows.
+
+The later registry snapshot's `Policy Authorized` values do not describe the
+authorization state **at the shutdown instant**. They must not override the
+event-time restriction messages or be taken to exclude a transient restriction.
+No conclusions about the unrelated host-role port are needed for this finding.
+
+### Recovery immediately follows unlock notifications
+
+| Event | First delayed recovery | Second restart recovery |
+| --- | --- | --- |
+| `com.apple.screenIsUnlocked` notification | 16:16:43.033683 | 16:36:21.836775 |
+| Target controller: cable connected, powering on USB3 + USB2 | 16:16:43.102505 | 16:36:21.914265 |
+| Target controller Off → On | 16:16:43.102565 | 16:36:21.914347 |
+| Configuration 0 → 1 | 16:16:44.046553 | 16:36:22.851499 |
+
+The local notification-to-power-on intervals are approximately **69 ms** and
+**78 ms**. This is repeat evidence for unlock-associated reattachment, not an
+exact estimate of the Windows readiness time and not a controlled unlock-only
+trial. The log's cable-change notification alone still does not prove a human
+replug. No recorded lock notification was found for the first trial's trigger
+in the inspected early window; its initial screen state remains unknown.
+
+The second restart's trigger occurred after the 16:26:25.238758 locked
+notification and before the 16:36:21.836775 unlocked notification. The successful
+30-second hold occurred after that unlock and before the next locked
+notification at 16:56:22.085109. The immediate-enable failure occurred after
+that lock. Subsequent passive samples continue to observe a locked Mac and an
+unavailable USB link, with independent management intact.
+
+### Correction: the successful 30-second hold did include suspend/resume
+
+The persisted target-controller log records On → Suspended at
+16:52:47.194928, a suspend message at .194970, and Suspended → On at
+16:53:17.336892. A USB reset at .443743 is followed by addressing and
+configuration 0 → 1 at .498929. Thus the earlier live-stream statement
+"no suspend was captured" was only about that stream: **suspend/resume did
+occur in the successful run**, for approximately 30.142 seconds.
+
+This corrects the cloud review's proposed correlation that every logged
+suspend/resume followed by reset loses the device. This successful counterexample
+contains that sequence and no restriction/shutdown message in the queried log.
+Mac controller suspension still does not prove a continuously measured Windows
+port U3 state; that port-state gap remains.
+
+### Updated interpretation and remaining limits
+
+The strongest current explanation for these observed disappearances is
+**Mac USB restriction during the software re-enumeration sequence**, followed
+by unlock-associated reattachment. Driver target creation then reports an
+unavailable device. Lock state now has direct event evidence beyond a timing
+correlation, but the exact policy input, device-role applicability and reliable
+locked/clamshell operation are not yet established by a controlled experiment.
+A 30-second hold is not a demonstrated fix, and the driver lifecycle's effect
+on the re-enumeration trigger is not categorically excluded.
+
+[Apple documents accessory approval settings](https://support.apple.com/en-gb/102282),
+including automatic approval while unlocked and always allowing accessories.
+That general documentation is not a guarantee that a given setting fixes this
+Mac device-mode path. No security preference was changed, no approval was
+bypassed, and no diagnostic driver was installed. A supported, consciously
+authorized policy test is a candidate for a later maintenance window, not a
+performed fix. The current locked-state recorder retains its original UTC
+deadline of 12:01:01 and does not repeat PnP actions.
 
 ## Questions for cloud review
 
