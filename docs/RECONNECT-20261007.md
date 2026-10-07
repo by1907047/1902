@@ -193,6 +193,29 @@ This run demonstrates short automatic recovery after the same initial failure,
 not a fixed reconnect problem. It does not erase the first trial's failed
 600-second acceptance result. The variability is now a key test requirement.
 
+## Short post-recovery traffic checks
+
+The same candidate then passed a 64 MiB upload to a real file on the Windows
+**C drive**. Sixteen block hashes, the full stored-file readback hash and the
+peer acknowledgement matched. The worker reported 0.73709 seconds through
+transfer/flush and 0.18558 seconds for full readback. This includes protocol,
+hashing and file operations; it is not a pure-network speed test. The stored
+payload, generated worker, compiler scratch and narrow temporary firewall rule
+were removed after success. Evidence and the content-generation recipe remain.
+
+A subsequent raw TCP upload-then-download check transferred 64 MiB in each
+direction with matching SHA256. Each business connection was attempted once.
+Receiver payload timers measured approximately 203 MB/s Mac → Windows and
+395 MB/s Windows → Mac. The sender's socket-enqueue timer was not treated as
+received throughput. These are short laboratory samples with concurrent work
+left running, not a maximum-rate measurement or a sustained-traffic pass.
+
+The first preparation of this TCP check stopped before starting a listener or
+creating a firewall rule: an old install-result file still recorded the earlier
+failed binding attempt. Its historical evidence was preserved. A separate new
+run checked the live exact device, PnP/service/INF and current service-file hash
+instead of accepting or rewriting that stale record.
+
 ## Questions for cloud review
 
 Please analyze the exact frozen PR #1 source alongside these observations and
