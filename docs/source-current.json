@@ -115,6 +115,11 @@
       "SHA256": "19c2a1f9fb41fd3f4608d030cbe68d21718d6bc19bf594e2b9ed2e2651afb588"
     },
     {
+      "Path": "tests/out_credit_probe.py",
+      "Bytes": 6051,
+      "SHA256": "6f98bdd9e1a468b116f3cf4a423f711931f8e84b55c080b175e84678822458e1"
+    },
+    {
       "Path": "tests/out_recovery_probe.py",
       "Bytes": 72232,
       "SHA256": "f25cca3fed166d032e629d32fb17331abb305125d81fd684c47e0347f9cd32af"
