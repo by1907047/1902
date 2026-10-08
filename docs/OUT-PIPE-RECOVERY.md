@@ -1,6 +1,18 @@
 # Experimental data-pipe diagnostics and pipe-only recovery
 
-**Status:** experimental and source only. It has not been built with the WDK, installed, or tested on hardware.
+**Status:** experimental; this PR publishes source only, not a driver binary. Commit `d7fd6d67a680` passed offline x64 Debug/Release WDK builds and both INF validations, and its locally test-signed Release was installed for hardware tests on 2026-10-08. It is not Microsoft-signed. Existing native-analysis/dependency warnings remain.
+
+Hardware results for that exact driver commit, on one USB3 connection:
+
+| Mode | Result | What it establishes |
+| --- | --- | --- |
+| `0` | Explicit-source ping and one 64 MiB transfer in each direction passed | Fresh-link smoke check only |
+| `1` | Three pairs passed; the next Windows-to-Mac transfer hit OUT `USBD_STATUS_XACT_ERROR`, followed by send timeouts | The initiating failure still reproduces; original failed run retained |
+| `3` | 600.42 s, 1100 pairs / 2200 SHA256-checked transfers passed; 68.75 GiB per direction | One sustained healthy run, **not a demonstrated recovery**: no initiating error or recovery event was recorded |
+
+A separate fresh mode-3 pair also passed. The experimental switch was then restored to off, with the original missing registry value restored; the link and explicit-source ping were checked again. Security policies were unchanged, and unrelated computation was not stopped. PR #1 remains unmerged.
+
+Offline ETW correlation from two failed runs found requested/completed lengths of 7924/6144 and 32136/21504 bytes. Those requested lengths also appeared in 1477 and 6399 successful OUT transfers before their respective failures. Neither request was an exact multiple of the 1024-byte maximum packet size. This does not support a failure unique to either length or an exact-MPS request; it does not identify or exclude a link, controller, cable or timing cause. Small IN completions near the errors do not establish heavy bidirectional payload load. No nearby non-bulk stack event was found in the captured windows; absence from this capture does not rule out a link event.
 
 **Scope:** recovery only restarts a halted pipe. It does not address whatever causes the first USB3 bulk-OUT transaction error, and that cause is still unknown. A pipe that restarts has not been shown to carry data again; only the offered-traffic check below can show that.
 
