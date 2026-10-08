@@ -3,6 +3,7 @@
 #include "driver.h"
 #include "device.tmh"
 #include "apple1902_validation.h"
+#include "out_pipe_policy.h"
 
 #define MAX_HOST_MTU_SIZE               (9014)
 #define MAX_HOST_TX_NTB_DATAGRAM_COUNT  (UINT16) (16)
@@ -17,6 +18,28 @@ ShouldLogOccurrence(
 )
 {
     return count > 0 && (count & (count - 1)) == 0;
+}
+
+static_assert((unsigned)STATUS_CANCELLED == Apple1902::Status::Cancelled, "status mismatch");
+static_assert((unsigned)STATUS_IO_TIMEOUT == Apple1902::Status::IoTimeout, "status mismatch");
+static_assert((unsigned)STATUS_NO_SUCH_DEVICE == Apple1902::Status::NoSuchDevice, "status mismatch");
+static_assert((unsigned)STATUS_DEVICE_NOT_CONNECTED == Apple1902::Status::DeviceNotConnected, "status mismatch");
+static_assert((unsigned)STATUS_DEVICE_REMOVED == Apple1902::Status::DeviceRemoved, "status mismatch");
+static_assert((unsigned)STATUS_DELETE_PENDING == Apple1902::Status::DeletePending, "status mismatch");
+static_assert((unsigned)STATUS_DEVICE_DOES_NOT_EXIST == Apple1902::Status::DeviceDoesNotExist, "status mismatch");
+static_assert((unsigned)STATUS_DEVICE_POWERED_OFF == Apple1902::Status::DevicePoweredOff, "status mismatch");
+static_assert((unsigned)USBD_STATUS_XACT_ERROR == Apple1902::Status::UsbdXactError, "status mismatch");
+static_assert((unsigned)USBD_STATUS_DEVICE_GONE == Apple1902::Status::UsbdDeviceGone, "status mismatch");
+
+// KeQueryInterruptTime units (100 ns) to whole milliseconds.
+static
+ULONG64
+ElapsedMs(
+    _In_ ULONG64 from,
+    _In_ ULONG64 to
+)
+{
+    return (to - from) / 10000;
 }
 
 const USBNCM_DEVICE_EVENT_CALLBACKS UsbNcmHostDevice::s_NcmDeviceCallbacks =
@@ -753,6 +776,9 @@ UsbNcmHostDevice::EnterWorkingState(
 {
     PAGED_CODE();
 
+    // A new D0 session: the OUT recovery budget resets here and nowhere else.
+    BeginD0Session();
+
     if (previousState != WdfPowerDeviceD3Final)
     {
         NCM_RETURN_IF_NOT_NT_SUCCESS(SelectSetting());
@@ -859,10 +885,26 @@ UsbNcmHostDevice::StartTransmit(
 )
 {
     UsbNcmHostDevice* hostDevice = NcmGetHostDeviceFromHandle(usbNcmWdfDevice);
+
+    WdfWaitLockAcquire(hostDevice->m_TxLifecycleLock, nullptr);
     if (hostDevice->m_DataBulkOutPipe != nullptr)
     {
-        (void) StartPipe(hostDevice->m_DataBulkOutPipe);
+        const NTSTATUS status = StartPipe(hostDevice->m_DataBulkOutPipe);
+        if (NT_SUCCESS(status))
+        {
+            hostDevice->m_TxPipeRunning = TRUE;
+            if (hostDevice->m_DataPathDebug & Apple1902::DataPathOutPipeRecovery)
+            {
+                hostDevice->OpenTxAdmissionLocked();
+            }
+        }
+        else if (hostDevice->m_DataPathDebug != 0)
+        {
+            // Not marked running; in recovery mode sends stay closed.
+            DbgPrint("Sideline1902: OUT pipe start failed 0x%08X\n", status);
+        }
     }
+    WdfWaitLockRelease(hostDevice->m_TxLifecycleLock);
 }
 
 PAGEDX
@@ -873,9 +915,41 @@ UsbNcmHostDevice::StopTransmit(
 )
 {
     UsbNcmHostDevice* hostDevice = NcmGetHostDeviceFromHandle(usbNcmWdfDevice);
+
+    WdfWaitLockAcquire(hostDevice->m_TxLifecycleLock, nullptr);
+    hostDevice->m_TxPipeRunning = FALSE;
+    if (hostDevice->m_DataPathDebug & Apple1902::DataPathOutPipeRecovery)
+    {
+        // A stopped target queues new sends instead of failing them.
+        hostDevice->CloseTxAdmissionLocked();
+    }
     if (hostDevice->m_DataBulkOutPipe != nullptr)
     {
         StopPipe(hostDevice->m_DataBulkOutPipe);
+    }
+    WdfWaitLockRelease(hostDevice->m_TxLifecycleLock);
+
+    // Outside the lock, which a queued work item needs. StopPipe returned
+    // after every sent request's completion routine and, in recovery mode,
+    // admission is closed, so nothing can enqueue the work item after this
+    // flush until a later StartTransmit. Runs for a null pipe as well.
+    if (hostDevice->m_TxRecoveryWorkItem != nullptr)
+    {
+        WdfWorkItemFlush(hostDevice->m_TxRecoveryWorkItem);
+    }
+
+    if (hostDevice->m_DataPathDebug & Apple1902::DataPathOutInstrumentation)
+    {
+        DbgPrint("Sideline1902: OUT stop: inflight %ld peak %ld ok %ld cancelled %ld "
+                 "timeouts %ld failed %ld send-failed %ld rejected %ld\n",
+                 InterlockedCompareExchange(&hostDevice->m_TxInflight, 0, 0),
+                 InterlockedCompareExchange(&hostDevice->m_TxInflightPeak, 0, 0),
+                 InterlockedCompareExchange(&hostDevice->m_TxSuccesses, 0, 0),
+                 InterlockedCompareExchange(&hostDevice->m_TxCancellations, 0, 0),
+                 InterlockedCompareExchange(&hostDevice->m_TxTimeouts, 0, 0),
+                 InterlockedCompareExchange(&hostDevice->m_TxCompletionFailures, 0, 0),
+                 InterlockedCompareExchange(&hostDevice->m_TxSendFailures, 0, 0),
+                 InterlockedCompareExchange(&hostDevice->m_TxAdmissionRejects, 0, 0));
     }
 }
 
@@ -915,32 +989,72 @@ UsbNcmHostDevice::TransmitFramesCompetion(
     UsbNcmHostDevice* hostDevice = NcmGetHostDeviceFromHandle(WdfIoTargetGetDevice(target));
 
     const NTSTATUS status = params->IoStatus.Status;
-    if (!NT_SUCCESS(status))
-    {
-        const USBD_STATUS usbdStatus = params->Parameters.Usb.Completion != nullptr
-            ? params->Parameters.Usb.Completion->UsbdStatus
-            : 0;
+    const USBD_STATUS usbdStatus = params->Parameters.Usb.Completion != nullptr
+        ? params->Parameters.Usb.Completion->UsbdStatus
+        : 0;
+    const LONG inflight = InterlockedDecrement(&hostDevice->m_TxInflight);
+    const bool instrumentation =
+        (hostDevice->m_DataPathDebug & Apple1902::DataPathOutInstrumentation) != 0;
+    const Apple1902::TxCompletion kind =
+        Apple1902::ClassifyTxCompletion((unsigned)status, (unsigned)usbdStatus);
 
-        if (status == STATUS_CANCELLED)
+    if (kind == Apple1902::TxCompletion::Success)
+    {
+        if (instrumentation)
         {
-            const LONG cancellations = InterlockedIncrement(&hostDevice->m_TxCancellations);
-            if (ShouldLogOccurrence(cancellations))
-            {
-                DbgPrint("Sideline1902: TX cancelled (stop or timeout) #%ld usbd 0x%08X\n",
-                         cancellations, usbdStatus);
-            }
+            InterlockedIncrement(&hostDevice->m_TxSuccesses);
+            InterlockedExchange64(&hostDevice->m_TxLastSuccessTime, (LONG64)KeQueryInterruptTime());
         }
-        else
+    }
+    else if (kind == Apple1902::TxCompletion::Cancelled)
+    {
+        const LONG cancellations = InterlockedIncrement(&hostDevice->m_TxCancellations);
+        if (ShouldLogOccurrence(cancellations))
         {
-            const LONG failures = InterlockedIncrement(&hostDevice->m_TxCompletionFailures);
-            if (ShouldLogOccurrence(failures))
-            {
-                DbgPrint("Sideline1902: TX completion failed #%ld status 0x%08X usbd 0x%08X\n",
-                         failures, status, usbdStatus);
-            }
+            DbgPrint("Sideline1902: TX cancelled (stop or cancel) #%ld usbd 0x%08X\n",
+                     cancellations, usbdStatus);
+        }
+    }
+    else if (kind == Apple1902::TxCompletion::TimedOut)
+    {
+        const LONG timeouts = InterlockedIncrement(&hostDevice->m_TxTimeouts);
+        if (ShouldLogOccurrence(timeouts))
+        {
+            DbgPrint("Sideline1902: TX timed out (5 s send timeout) #%ld usbd 0x%08X\n",
+                     timeouts, usbdStatus);
+        }
+    }
+    else
+    {
+        const LONG failures = InterlockedIncrement(&hostDevice->m_TxCompletionFailures);
+        if (ShouldLogOccurrence(failures))
+        {
+            DbgPrint("Sideline1902: TX completion failed #%ld status 0x%08X usbd 0x%08X\n",
+                     failures, status, usbdStatus);
         }
     }
 
+    if (instrumentation &&
+        kind != Apple1902::TxCompletion::Success &&
+        kind != Apple1902::TxCompletion::Cancelled &&
+        InterlockedCompareExchange(&hostDevice->m_TxFirstFailureLogged, 1, 0) == 0)
+    {
+        const LONG64 lastSuccess = InterlockedCompareExchange64(&hostDevice->m_TxLastSuccessTime, 0, 0);
+        // With 0 successes the elapsed time is reported as 0.
+        DbgPrint("Sideline1902: OUT first failure: status 0x%08X usbd 0x%08X inflight %ld, "
+                 "successes %ld, last OUT success %I64u ms ago\n",
+                 status, usbdStatus, inflight,
+                 InterlockedCompareExchange(&hostDevice->m_TxSuccesses, 0, 0),
+                 lastSuccess != 0 ? ElapsedMs((ULONG64)lastSuccess, KeQueryInterruptTime()) : 0);
+    }
+
+    if (kind == Apple1902::TxCompletion::PipeError &&
+        hostDevice->m_TxRecoveryWorkItem != nullptr)
+    {
+        hostDevice->RequestOutPipeRecovery(status, usbdStatus);
+    }
+
+    // Returns the buffer to the pool; it may be reused at once.
     hostDevice->m_NcmAdapterCallbacks->EvtUsbNcmAdapterNotifyTransmitCompletion(
         hostDevice->m_NetAdapter,
         (TX_BUFFER_REQUEST *)context);
@@ -956,9 +1070,22 @@ UsbNcmHostDevice::TransmitFrames(
     NTSTATUS status = STATUS_SUCCESS;
     UsbNcmHostDevice * hostDevice = NcmGetHostDeviceFromHandle(usbNcmWdfDevice);
 
+    // The send section. Only recovery mode closes admission, while the pipe
+    // is not running or is being reset; it then waits for this section.
+    if (!ExAcquireRundownProtection(&hostDevice->m_TxAdmission))
+    {
+        const LONG rejects = InterlockedIncrement(&hostDevice->m_TxAdmissionRejects);
+        if (ShouldLogOccurrence(rejects))
+        {
+            DbgPrint("Sideline1902: TX dropped, OUT pipe not running #%ld\n", rejects);
+        }
+        return STATUS_DEVICE_NOT_READY;
+    }
+
     // Guard against NULL pipe
     if (hostDevice->m_DataBulkOutPipe == nullptr || hostDevice->m_DataBulkOutPipeMaximumPacketSize == 0)
     {
+        ExReleaseRundownProtection(&hostDevice->m_TxAdmission);
         return STATUS_DEVICE_NOT_READY;
     }
 
@@ -989,11 +1116,33 @@ UsbNcmHostDevice::TransmitFrames(
         WDF_REQUEST_SEND_OPTIONS_INIT(&sendOptions, WDF_REQUEST_SEND_OPTION_TIMEOUT);
         WDF_REQUEST_SEND_OPTIONS_SET_TIMEOUT(&sendOptions, WDF_REL_TIMEOUT_IN_SEC(5));
 
+        // The completion routine may run inline, before WdfRequestSend
+        // returns, and return this buffer to the pool for reuse. Count it
+        // first, and do not touch bufferRequest after a successful send.
+        LONG inflight = InterlockedIncrement(&hostDevice->m_TxInflight);
+        if (hostDevice->m_DataPathDebug & Apple1902::DataPathOutInstrumentation)
+        {
+            LONG peak = InterlockedCompareExchange(&hostDevice->m_TxInflightPeak, 0, 0);
+            while (inflight > peak)
+            {
+                const LONG previous = InterlockedCompareExchange(
+                    &hostDevice->m_TxInflightPeak, inflight, peak);
+                if (previous == peak)
+                {
+                    break;
+                }
+                peak = previous;
+            }
+        }
+
         if (!WdfRequestSend(
                 bufferRequest->Request,
                 WdfUsbTargetPipeGetIoTarget(hostDevice->m_DataBulkOutPipe), &sendOptions))
         {
+            // Not sent, so no completion routine runs: undo the count; the
+            // caller still owns the buffer.
             status = WdfRequestGetStatus(bufferRequest->Request);
+            InterlockedDecrement(&hostDevice->m_TxInflight);
         }
     }
 
@@ -1006,5 +1155,259 @@ UsbNcmHostDevice::TransmitFrames(
         }
     }
 
+    ExReleaseRundownProtection(&hostDevice->m_TxAdmission);
     return status;
+}
+
+PAGEDX
+_Use_decl_annotations_
+NTSTATUS
+UsbNcmHostDevice::InitializeDataPathControl(
+    void
+)
+{
+    PAGED_CODE();
+
+    // Open: without recovery mode nothing ever closes it.
+    ExInitializeRundownProtection(&m_TxAdmission);
+    m_TxAdmissionOpen = TRUE;
+
+    WDF_OBJECT_ATTRIBUTES attributes;
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = m_WdfDevice;
+
+    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
+        WdfWaitLockCreate(&attributes, &m_TxLifecycleLock),
+        "WdfWaitLockCreate failed");
+
+    ULONG value = 0;
+    bool found = false;
+    WDFKEY key = nullptr;
+    if (NT_SUCCESS(WdfDeviceOpenRegistryKey(
+            m_WdfDevice,
+            PLUGPLAY_REGKEY_DEVICE,
+            KEY_READ,
+            WDF_NO_OBJECT_ATTRIBUTES,
+            &key)))
+    {
+        DECLARE_CONST_UNICODE_STRING(valueName, SIDELINE1902_DATA_PATH_DEBUG_VALUE);
+        found = NT_SUCCESS(WdfRegistryQueryULong(key, &valueName, &value));
+        WdfRegistryClose(key);
+    }
+
+    m_DataPathDebug = Apple1902::DataPathDebugFromRegistry(found, value);
+    if (found && value != m_DataPathDebug)
+    {
+        DbgPrint("Sideline1902: data-path debug 0x%lX has unknown bits; using 0\n", value);
+    }
+
+    if (m_DataPathDebug & Apple1902::DataPathOutPipeRecovery)
+    {
+        WDF_WORKITEM_CONFIG config;
+        WDF_WORKITEM_CONFIG_INIT(&config, UsbNcmHostDevice::OutPipeRecoveryWorkItem);
+        config.AutomaticSerialization = FALSE;
+
+        const NTSTATUS status = WdfWorkItemCreate(&config, &attributes, &m_TxRecoveryWorkItem);
+        if (!NT_SUCCESS(status))
+        {
+            m_TxRecoveryWorkItem = nullptr;
+            m_DataPathDebug &= ~Apple1902::DataPathOutPipeRecovery;
+            DbgPrint("Sideline1902: OUT recovery work item failed 0x%08X; recovery off\n", status);
+        }
+        else
+        {
+            // Closed until a StartTransmit whose pipe start succeeds.
+            WdfWaitLockAcquire(m_TxLifecycleLock, nullptr);
+            CloseTxAdmissionLocked();
+            WdfWaitLockRelease(m_TxLifecycleLock);
+        }
+    }
+
+    if (m_DataPathDebug != 0)
+    {
+        DbgPrint("Sideline1902: data-path debug 0x%lX: OUT instrumentation %d, OUT pipe recovery %d\n",
+                 m_DataPathDebug,
+                 (m_DataPathDebug & Apple1902::DataPathOutInstrumentation) != 0,
+                 (m_DataPathDebug & Apple1902::DataPathOutPipeRecovery) != 0);
+    }
+
+    return STATUS_SUCCESS;
+}
+
+PAGEDX
+_Use_decl_annotations_
+void
+UsbNcmHostDevice::BeginD0Session(
+    void
+)
+{
+    PAGED_CODE();
+
+    // D0Exit stopped transmit and flushed the work item before this. Queue
+    // stop/start inside one D0 session does not come here.
+    WdfWaitLockAcquire(m_TxLifecycleLock, nullptr);
+    m_TxRecoveryAttempts = 0;
+    m_TxLastRecoveryTime = 0;
+    WdfWaitLockRelease(m_TxLifecycleLock);
+
+    InterlockedExchange(&m_TxFirstFailureLogged, 0);
+}
+
+_Use_decl_annotations_
+void
+UsbNcmHostDevice::CloseTxAdmissionLocked(
+    void
+)
+{
+    if (m_TxAdmissionOpen)
+    {
+        // New ExAcquireRundownProtection calls fail from here on; this waits
+        // for every TransmitFrames section that already holds a reference.
+        // No spin lock is held, and the sections never take the wait lock.
+        ExWaitForRundownProtectionRelease(&m_TxAdmission);
+        m_TxAdmissionOpen = FALSE;
+    }
+}
+
+_Use_decl_annotations_
+void
+UsbNcmHostDevice::OpenTxAdmissionLocked(
+    void
+)
+{
+    if (!m_TxAdmissionOpen)
+    {
+        ExReInitializeRundownProtection(&m_TxAdmission);
+        m_TxAdmissionOpen = TRUE;
+    }
+}
+
+_Use_decl_annotations_
+void
+UsbNcmHostDevice::RequestOutPipeRecovery(
+    NTSTATUS status,
+    USBD_STATUS usbdStatus
+)
+{
+    // One work item at a time. It decides (running, budget, cooldown) under
+    // the lifecycle lock; an error while one is pending is only counted.
+    if (InterlockedCompareExchange(&m_TxRecoveryQueued, 1, 0) != 0)
+    {
+        const LONG coalesced = InterlockedIncrement(&m_TxRecoveryCoalesced);
+        if (ShouldLogOccurrence(coalesced))
+        {
+            DbgPrint("Sideline1902: OUT recovery already pending; error not queued #%ld "
+                     "status 0x%08X usbd 0x%08X\n", coalesced, status, usbdStatus);
+        }
+        return;
+    }
+
+    InterlockedExchange(&m_TxRecoveryTriggerStatus, status);
+    InterlockedExchange(&m_TxRecoveryTriggerUsbdStatus, usbdStatus);
+    WdfWorkItemEnqueue(m_TxRecoveryWorkItem);
+}
+
+_Use_decl_annotations_
+VOID
+UsbNcmHostDevice::OutPipeRecoveryWorkItem(
+    WDFWORKITEM workItem
+)
+{
+    NcmGetHostDeviceFromHandle((WDFDEVICE)WdfWorkItemGetParentObject(workItem))->RecoverOutPipe();
+}
+
+// Pipe-only recovery: close admission, drain send sections, cancel sent I/O,
+// reset the pipe, then reopen only after a successful start. Never resets or
+// cycles the port and never retries a payload. Only the reset request has a
+// time bound (2 s); the drain and the cancellation wait depend on the USB
+// stack completing cancelled requests, as StopTransmit already does.
+PAGEDX
+_Use_decl_annotations_
+void
+UsbNcmHostDevice::RecoverOutPipe(
+    void
+)
+{
+    PAGED_CODE();
+
+    WdfWaitLockAcquire(m_TxLifecycleLock, nullptr);
+
+    const NTSTATUS trigger = InterlockedCompareExchange(&m_TxRecoveryTriggerStatus, 0, 0);
+    const USBD_STATUS triggerUsbd = InterlockedCompareExchange(&m_TxRecoveryTriggerUsbdStatus, 0, 0);
+    const ULONG64 begin = KeQueryInterruptTime();
+    const Apple1902::OutRecoveryDecision decision = Apple1902::DecideOutRecovery(
+        m_TxPipeRunning && m_DataBulkOutPipe != nullptr,
+        m_TxRecoveryAttempts,
+        begin,
+        m_TxLastRecoveryTime);
+
+    if (decision != Apple1902::OutRecoveryDecision::Run)
+    {
+        // Not acted on: the pipe stays as it is until a later error after
+        // the cooldown, a queue restart or a new D0 session. Nothing re-arms
+        // this attempt; no timer, no retry loop.
+        const LONG skipped = InterlockedIncrement(&m_TxRecoverySkipped);
+        if (ShouldLogOccurrence(skipped))
+        {
+            DbgPrint("Sideline1902: OUT recovery skipped (%s) #%ld after status 0x%08X usbd 0x%08X, "
+                     "attempts %lu/%u\n",
+                     decision == Apple1902::OutRecoveryDecision::NotRunning ? "pipe not running" :
+                     decision == Apple1902::OutRecoveryDecision::BudgetExhausted ? "budget exhausted" :
+                     "cooldown",
+                     skipped, trigger, triggerUsbd,
+                     m_TxRecoveryAttempts, Apple1902::MaxOutRecoveriesPerD0);
+        }
+        InterlockedExchange(&m_TxRecoveryQueued, 0);
+        WdfWaitLockRelease(m_TxLifecycleLock);
+        return;
+    }
+
+    const ULONG attempt = ++m_TxRecoveryAttempts;
+    m_TxLastRecoveryTime = begin;
+    WDFUSBPIPE pipe = m_DataBulkOutPipe;
+    WDFIOTARGET target = WdfUsbTargetPipeGetIoTarget(pipe);
+    DbgPrint("Sideline1902: OUT recovery %lu/%u start after status 0x%08X usbd 0x%08X\n",
+             attempt, Apple1902::MaxOutRecoveriesPerD0, trigger, triggerUsbd);
+
+    CloseTxAdmissionLocked();
+    m_TxPipeRunning = FALSE;
+    const ULONG64 drained = KeQueryInterruptTime();
+
+    // Returns after every sent request's completion routine has run.
+    WdfIoTargetStop(target, WdfIoTargetCancelSentIo);
+    const ULONG64 stopped = KeQueryInterruptTime();
+
+    WDF_REQUEST_SEND_OPTIONS options;
+    WDF_REQUEST_SEND_OPTIONS_INIT(&options, WDF_REQUEST_SEND_OPTION_TIMEOUT);
+    WDF_REQUEST_SEND_OPTIONS_SET_TIMEOUT(&options, WDF_REL_TIMEOUT_IN_SEC(2));
+    const NTSTATUS resetStatus = WdfUsbTargetPipeResetSynchronously(pipe, WDF_NO_HANDLE, &options);
+    const ULONG64 reset = KeQueryInterruptTime();
+
+    NTSTATUS startStatus = STATUS_SUCCESS;
+    ULONG64 started = reset;
+    if (NT_SUCCESS(resetStatus))
+    {
+        startStatus = WdfIoTargetStart(target);
+        started = KeQueryInterruptTime();
+        if (NT_SUCCESS(startStatus))
+        {
+            m_TxPipeRunning = TRUE;
+            OpenTxAdmissionLocked();
+            // Capture the next failure too, if the error recurs.
+            InterlockedExchange(&m_TxFirstFailureLogged, 0);
+        }
+    }
+
+    DbgPrint("Sideline1902: OUT recovery %lu/%u %s: reset 0x%08X start 0x%08X; "
+             "drain %I64u ms, stop %I64u ms, reset %I64u ms, start %I64u ms\n",
+             attempt, Apple1902::MaxOutRecoveriesPerD0,
+             m_TxPipeRunning ? "recovered" :
+             !NT_SUCCESS(resetStatus) ? "reset failed, OUT closed until queue or device restart" :
+             "start failed, OUT closed until queue or device restart",
+             resetStatus, startStatus,
+             ElapsedMs(begin, drained), ElapsedMs(drained, stopped),
+             ElapsedMs(stopped, reset), ElapsedMs(reset, started));
+
+    InterlockedExchange(&m_TxRecoveryQueued, 0);
+    WdfWaitLockRelease(m_TxLifecycleLock);
 }

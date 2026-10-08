@@ -92,6 +92,14 @@ public:
         void
     );
 
+    // Reads the default-off data-path switch and creates the OUT lifecycle
+    // lock and, only when recovery is enabled, its work item.
+    PAGED
+    NTSTATUS
+    InitializeDataPathControl(
+        void
+    );
+
 private:
 
     _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -116,6 +124,41 @@ private:
         _In_ WDFIOTARGET target,
         _In_ PWDF_REQUEST_COMPLETION_PARAMS params,
         _In_ WDFCONTEXT context
+    );
+
+    _IRQL_requires_max_(DISPATCH_LEVEL)
+    void
+    RequestOutPipeRecovery(
+        _In_ NTSTATUS status,
+        _In_ USBD_STATUS usbdStatus
+    );
+
+    static
+    EVT_WDF_WORKITEM
+        OutPipeRecoveryWorkItem;
+
+    PAGED
+    void
+    RecoverOutPipe(
+        void
+    );
+
+    PAGED
+    void
+    BeginD0Session(
+        void
+    );
+
+    _IRQL_requires_(PASSIVE_LEVEL)
+    void
+    CloseTxAdmissionLocked(
+        void
+    );
+
+    _IRQL_requires_(PASSIVE_LEVEL)
+    void
+    OpenTxAdmissionLocked(
+        void
     );
 
     PAGED
@@ -202,7 +245,9 @@ private:
         m_NcmAdapterCallbacks = nullptr;
 
     // Data-pipe failure diagnostics; read with a debugger. Nothing in the
-    // driver acts on them. TX cancellations include stop and 5 s timeouts.
+    // driver acts on them. KMDF reports a request cancelled by its own send
+    // timeout as STATUS_IO_TIMEOUT, so timeouts are counted separately from
+    // STATUS_CANCELLED (stop or explicit cancel).
     LONG
         m_TxSendFailures = 0;
 
@@ -213,7 +258,79 @@ private:
         m_TxCancellations = 0;
 
     LONG
+        m_TxTimeouts = 0;
+
+    LONG
         m_RxReadersFailures = 0;
+
+    // Default-off switch (Apple1902::DataPathOut* bits), fixed per device.
+    ULONG
+        m_DataPathDebug = 0;
+
+    // Requests handed to WdfRequestSend and not yet completed. Incremented
+    // before the send; WdfRequestSend may run the completion inline.
+    LONG
+        m_TxInflight = 0;
+
+    // Instrumentation only (switch bit 0x1).
+    LONG
+        m_TxInflightPeak = 0;
+
+    LONG
+        m_TxSuccesses = 0;
+
+    LONG64
+        m_TxLastSuccessTime = 0;
+
+    LONG
+        m_TxFirstFailureLogged = 0;
+
+    LONG
+        m_TxAdmissionRejects = 0;
+
+    // Admission gate for bulk-OUT sends. TransmitFrames holds a reference for
+    // its whole send section, at up to DISPATCH_LEVEL. Only recovery mode
+    // closes it, and only under m_TxLifecycleLock, which waits for every
+    // active section to leave before the target is stopped or reset.
+    EX_RUNDOWN_REF
+        m_TxAdmission = {};
+
+    // Guarded by m_TxLifecycleLock (PASSIVE_LEVEL only; never taken on the
+    // send or completion path).
+    WDFWAITLOCK
+        m_TxLifecycleLock = nullptr;
+
+    BOOLEAN
+        m_TxAdmissionOpen = TRUE;
+
+    BOOLEAN
+        m_TxPipeRunning = FALSE;
+
+    ULONG
+        m_TxRecoveryAttempts = 0;
+
+    ULONG64
+        m_TxLastRecoveryTime = 0;
+
+    // Recovery only (switch bit 0x2). Null otherwise.
+    WDFWORKITEM
+        m_TxRecoveryWorkItem = nullptr;
+
+    // 1 from enqueue until the work item has finished deciding and acting.
+    LONG
+        m_TxRecoveryQueued = 0;
+
+    LONG
+        m_TxRecoveryTriggerStatus = 0;
+
+    LONG
+        m_TxRecoveryTriggerUsbdStatus = 0;
+
+    LONG
+        m_TxRecoveryCoalesced = 0;
+
+    LONG
+        m_TxRecoverySkipped = 0;
 
 };
 

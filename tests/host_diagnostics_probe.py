@@ -15,6 +15,7 @@ from rx_completion_probe import function_from_source, root
 source = root/'host/device.cpp'
 functions = '\n'.join([
     function_from_source(source, 'static\nbool\nShouldLogOccurrence('),
+    function_from_source(source, 'static\nULONG64\nElapsedMs('),
     function_from_source(source, 'BOOLEAN\nUsbNcmHostDevice::DataBulkInPipeReadersFailed('),
     function_from_source(source, 'void\nUsbNcmHostDevice::TransmitFramesCompetion('),
     function_from_source(source, 'NTSTATUS\nUsbNcmHostDevice::TransmitFrames('),
@@ -23,16 +24,18 @@ shim = r'''
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
+#include "%s"
 #define _In_
 #define _Use_decl_annotations_
 #define NT_SUCCESS(s) ((s)>=0)
 #define NT_FRE_ASSERT(e) assert(e)
 using NTSTATUS=int32_t;using LONG=int32_t;using USBD_STATUS=int32_t;using BOOLEAN=bool;using ULONG=uint32_t;
+using LONG64=int64_t;using ULONG64=uint64_t;
 using UCHAR=uint8_t;using VOID=void;
 using WDFREQUEST=void*;using WDFIOTARGET=void*;using WDFUSBPIPE=void*;using WDFDEVICE=void*;
 using WDFMEMORY=void*;using WDFCONTEXT=void*;using NETADAPTER=void*;
 constexpr BOOLEAN TRUE=true;
-constexpr NTSTATUS STATUS_SUCCESS=0,STATUS_CANCELLED=int32_t(0xC0000120),
+constexpr NTSTATUS STATUS_SUCCESS=0,STATUS_CANCELLED=int32_t(0xC0000120),STATUS_IO_TIMEOUT=int32_t(0xC00000B5),
  STATUS_IO_DEVICE_ERROR=int32_t(0xC0000185),STATUS_DEVICE_NOT_READY=int32_t(0xC00000A3),
  STATUS_INVALID_DEVICE_STATE=int32_t(0xC0000184),STATUS_INSUFFICIENT_RESOURCES=int32_t(0xC000009A);
 constexpr USBD_STATUS USBD_STATUS_STALL_PID=int32_t(0xC0000004);
@@ -40,6 +43,15 @@ static int logs=0;
 static int DbgPrintShim(const char*,...){++logs;return 0;}
 #define DbgPrint DbgPrintShim
 static LONG InterlockedIncrement(LONG* p){return ++*p;}
+static LONG InterlockedDecrement(LONG* p){return --*p;}
+static LONG InterlockedCompareExchange(LONG* p,LONG x,LONG c){LONG o=*p;if(o==c)*p=x;return o;}
+static LONG64 InterlockedExchange64(LONG64* p,LONG64 v){LONG64 o=*p;*p=v;return o;}
+static LONG64 InterlockedCompareExchange64(LONG64* p,LONG64 x,LONG64 c){LONG64 o=*p;if(o==c)*p=x;return o;}
+static ULONG64 KeQueryInterruptTime(){return 1;}
+struct EX_RUNDOWN_REF{int active;};
+static int gateClosed=0;
+static BOOLEAN ExAcquireRundownProtection(EX_RUNDOWN_REF* r){if(gateClosed)return false;++r->active;return true;}
+static void ExReleaseRundownProtection(EX_RUNDOWN_REF* r){assert(r->active>0);--r->active;}
 struct WDF_USB_REQUEST_COMPLETION_PARAMS{USBD_STATUS UsbdStatus;};
 struct WDF_REQUEST_COMPLETION_PARAMS{
  struct{NTSTATUS Status;}IoStatus;
@@ -62,7 +74,10 @@ static AdapterCallbacks adapterCallbacks{NotifyTransmitCompletion};
 struct UsbNcmHostDevice{
  WDFUSBPIPE m_DataBulkOutPipe=reinterpret_cast<void*>(7);ULONG m_DataBulkOutPipeMaximumPacketSize=512;
  AdapterCallbacks* m_NcmAdapterCallbacks=&adapterCallbacks;NETADAPTER m_NetAdapter=nullptr;
- LONG m_TxSendFailures=0,m_TxCompletionFailures=0,m_TxCancellations=0,m_RxReadersFailures=0;
+ LONG m_TxSendFailures=0,m_TxCompletionFailures=0,m_TxCancellations=0,m_TxTimeouts=0,m_RxReadersFailures=0;
+ ULONG m_DataPathDebug=0;LONG m_TxInflight=0,m_TxInflightPeak=0,m_TxSuccesses=0,m_TxFirstFailureLogged=0,m_TxAdmissionRejects=0;
+ LONG64 m_TxLastSuccessTime=0;EX_RUNDOWN_REF m_TxAdmission{};void* m_TxRecoveryWorkItem=nullptr;
+ void RequestOutPipeRecovery(NTSTATUS,USBD_STATUS){assert(!"recovery is off in this probe");}
  static BOOLEAN DataBulkInPipeReadersFailed(WDFUSBPIPE,NTSTATUS,USBD_STATUS);
  static VOID TransmitFramesCompetion(WDFREQUEST,WDFIOTARGET,PWDF_REQUEST_COMPLETION_PARAMS,WDFCONTEXT);
  static NTSTATUS TransmitFrames(WDFDEVICE,TX_BUFFER_REQUEST*);
@@ -76,6 +91,7 @@ static NTSTATUS WdfUsbTargetPipeFormatRequestForWrite(WDFUSBPIPE,WDFREQUEST,WDFM
 static bool WdfRequestSend(WDFREQUEST,WDFIOTARGET,WDF_REQUEST_SEND_OPTIONS* o){assert(o->Timeout==-50000000LL);return sendAccepted;}
 static NTSTATUS WdfRequestGetStatus(WDFREQUEST){return sendStatus;}
 '''
+shim = shim.replace('%s', str(root/'host/out_pipe_policy.h'))
 main = r'''
 static int checks=0;
 #define CHECK(e) do{++checks;assert(e);}while(0)
@@ -102,7 +118,11 @@ int main(){
   UsbNcmHostDevice::TransmitFramesCompetion(nullptr,reinterpret_cast<void*>(9),&failed,&request);
  }
  CHECK(completions==104&&host.m_TxCompletionFailures==3&&logs==2);
- std::puts("TX completion: buffer returned once per completion; cancel/error counted, logs bounded PASS");
+ logs=0;
+ for(int i=0;i<4;++i){auto timedOut=Params(STATUS_IO_TIMEOUT,&usb);
+  UsbNcmHostDevice::TransmitFramesCompetion(nullptr,reinterpret_cast<void*>(9),&timedOut,&request);}
+ CHECK(completions==108&&host.m_TxTimeouts==4&&host.m_TxCompletionFailures==3&&host.m_TxCancellations==100&&logs==3);
+ std::puts("TX completion: buffer returned once per completion; cancel/timeout/error counted apart, logs bounded PASS");
  logs=0;
  for(int i=0;i<5;++i)CHECK(UsbNcmHostDevice::DataBulkInPipeReadersFailed(nullptr,STATUS_IO_DEVICE_ERROR,USBD_STATUS_STALL_PID)==TRUE);
  CHECK(host.m_RxReadersFailures==5&&logs==3);
@@ -120,6 +140,8 @@ int main(){
  formatStatus=STATUS_SUCCESS;host.m_DataBulkOutPipe=nullptr;
  CHECK(UsbNcmHostDevice::TransmitFrames(current,&request)==STATUS_DEVICE_NOT_READY);
  CHECK(host.m_TxSendFailures==2); // no pipe is not a send failure
+ gateClosed=1;CHECK(UsbNcmHostDevice::TransmitFrames(current,&request)==STATUS_DEVICE_NOT_READY);
+ CHECK(host.m_TxSendFailures==2&&host.m_TxAdmissionRejects==1&&host.m_TxAdmission.active==0);
  std::puts("TX send: failure status returned unchanged and counted PASS");
  std::printf("host data-pipe diagnostics: %d checks, 0 failures\n",checks);
 }

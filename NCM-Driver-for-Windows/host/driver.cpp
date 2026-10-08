@@ -94,7 +94,12 @@ UsbNcmHostEvtDeviceAdd(
         WdfDeviceCreate(&DeviceInit, &attribs, &wdfDevice),
         "WdfDeviceCreate failed");
 
-    new (NcmGetHostDeviceFromHandle(wdfDevice)) UsbNcmHostDevice(wdfDevice);
+    UsbNcmHostDevice * hostDevice =
+        new (NcmGetHostDeviceFromHandle(wdfDevice)) UsbNcmHostDevice(wdfDevice);
+
+    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
+        hostDevice->InitializeDataPathControl(),
+        "InitializeDataPathControl failed");
 
     // Disable idle power management to prevent USB disconnects during display changes
     WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS idleSettings;

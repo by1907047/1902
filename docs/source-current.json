@@ -34,18 +34,18 @@
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.cpp",
-      "Bytes": 29425,
-      "SHA256": "29c91993fd170f697d5c73614bbb4a93c74c1c3b33780ee17969bc3f580f4ce1"
+      "Bytes": 45372,
+      "SHA256": "426e60c5dda132700655c9691d4711aa94744636d3e094f4b3e19abb811796cc"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.h",
-      "Bytes": 3807,
-      "SHA256": "57e0a30fab13e93bbeb24f04e51664cd5b5c1172742b8228909c3ba7a480980a"
+      "Bytes": 6378,
+      "SHA256": "bb8291737ed21cea0cc6f83cb267ce0b0045931fc4f4ae8e7e8a35c711fcc99a"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/driver.cpp",
-      "Bytes": 5064,
-      "SHA256": "fee498a62e8879d88ebf835baf1dab05eba19cc8187ddddcfef813abd7e6d01d"
+      "Bytes": 5237,
+      "SHA256": "0a39801aaa8eb69c704648e79eef6b5f3589545a8174240fac3c8a65c6ee6e50"
     },
     {
       "Path": "NCM-Driver-for-Windows/inc/buffers.h",
@@ -64,8 +64,8 @@
     },
     {
       "Path": "tests/lifecycle_policy_tests.py",
-      "Bytes": 3540,
-      "SHA256": "b389f3e1825d3f6c0ad3959b54b060194d4c85cfa2ff1f12e42d8e4736099a44"
+      "Bytes": 5056,
+      "SHA256": "db1677b779e1f916f87396100ccfe5eed6f39279229d8e73157b5205930e1656"
     },
     {
       "Path": "tests/rx_completion_probe.py",
@@ -80,9 +80,14 @@
   ],
   "added_after_baseline": [
     {
+      "Path": "NCM-Driver-for-Windows/host/out_pipe_policy.h",
+      "Bytes": 3722,
+      "SHA256": "7ce03645d1918b8e8c639c611ab3d3bc117abffb1edac781b014bd9f13839c7b"
+    },
+    {
       "Path": "tests/host_diagnostics_probe.py",
-      "Bytes": 7820,
-      "SHA256": "cd92ddf5a552735d3065089d57411895a476dfddc40662475ca7c16724e3a34a"
+      "Bytes": 9541,
+      "SHA256": "b814c770605ac1a152b6c3b7e1e4ef476edfe841d1c2eebf33709e9fd7ed651f"
     },
     {
       "Path": "tests/host_memory_probe.py",
@@ -93,6 +98,11 @@
       "Path": "tests/ntb_fit_probe.py",
       "Bytes": 3950,
       "SHA256": "f211fc4137128ae26195219ee23b22935029bc8b635d1798f23c4cc69dc05e82"
+    },
+    {
+      "Path": "tests/out_recovery_probe.py",
+      "Bytes": 40275,
+      "SHA256": "33df951c0b1dbd0413777a4ea099f37082dc48b46b999beb1e5fc77b5c6acc34"
     },
     {
       "Path": "tests/source_identity_tests.py",

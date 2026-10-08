@@ -67,6 +67,32 @@ class LifecyclePolicyTests(unittest.TestCase):
                         body.index('EvtUsbNcmAdapterSetLinkState('),
                         'The first link-up indication must carry the queried speed')
 
+    def test_out_recovery_budget_resets_only_per_d0_session(self):
+        body = function_body('EnterWorkingState')
+        self.assertLess(body.index('BeginD0Session();'), body.index('SelectSetting()'))
+        for name in ('StartTransmit', 'StopTransmit', 'RecoverOutPipe'):
+            self.assertNotIn('m_TxRecoveryAttempts = 0', function_body(name))
+        self.assertIn('m_TxRecoveryAttempts = 0;', function_body('BeginD0Session'))
+
+    def test_stop_transmit_flushes_outside_the_lifecycle_lock(self):
+        body = function_body('StopTransmit')
+        self.assertLess(body.index('StopPipe('), body.index('WdfWaitLockRelease('))
+        self.assertLess(body.index('WdfWaitLockRelease('), body.index('WdfWorkItemFlush('))
+
+    def test_out_recovery_never_escalates(self):
+        for call in ('ResetPortSynchronously', 'CyclePortSynchronously', 'WdfUsbTargetDeviceReset'):
+            self.assertNotIn(call, SOURCE)
+        body = function_body('RecoverOutPipe')
+        order = [body.index(s) for s in ('CloseTxAdmissionLocked();', 'WdfIoTargetStop(',
+                                         'WdfUsbTargetPipeResetSynchronously(',
+                                         'WdfIoTargetStart(', 'OpenTxAdmissionLocked();')]
+        self.assertEqual(order, sorted(order))
+        self.assertIn('WDF_REL_TIMEOUT_IN_SEC(2)', body)
+
+    def test_device_add_reads_the_switch(self):
+        driver = (ROOT / 'host/driver.cpp').read_text()
+        self.assertIn('hostDevice->InitializeDataPathControl()', driver)
+
 
 if __name__ == '__main__':
     unittest.main()
