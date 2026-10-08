@@ -336,8 +336,18 @@ private:
 
             m_NextNdpIndex = ntbHeader.NdpIndex;
 
-            // validate the datagram pointer table
-            return GetNextNdp();
+            // Reject bad/cyclic header chains before exposing any DPE.
+            NTSTATUS status = ValidateNdpChain();
+            if (status == STATUS_SUCCESS)
+            {
+                status = GetNextNdp();
+            }
+            if (status != STATUS_SUCCESS)
+            {
+                // Initialization failure must not leave a traversable chain.
+                m_NextNdpIndex = 0;
+            }
+            return status;
         }
 
         NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(STATUS_BAD_DATA, "Bad NTB header signature");
@@ -361,6 +371,61 @@ private:
         size_t size;
         m_DatagramPointerTable = (DPE *)WdfMemoryGetBuffer(m_DatagramPointerTableMemory, &size);
         RtlZeroMemory(m_DatagramPointerTable, size);
+    }
+
+    // Validate every reachable NDP header and reject cycles before exposing
+    // any DPE. Floyd traversal is allocation-free and accepts nonmonotonic
+    // acyclic chains. The existing per-table DPE validation remains below.
+    _IRQL_requires_max_(DISPATCH_LEVEL)
+    NTSTATUS ValidateNdpChain(
+        void
+    )
+    {
+        const size_t minDptSize = sizeof(NDP) + 2 * sizeof(DPE);
+        const UINT32 maximumSteps = (UINT32)(m_BlockLength / minDptSize);
+        UINT32 slow = m_NextNdpIndex;
+        UINT32 fast = m_NextNdpIndex;
+        UINT32 steps = 0;
+
+        while (fast != 0)
+        {
+            if (steps++ >= maximumSteps)
+            {
+                return STATUS_BAD_DATA;
+            }
+
+            // Advance slow once and fast twice, checking each header before
+            // dereference. Subtraction-form bounds cannot wrap at UINT32_MAX.
+            for (unsigned hop = 0; hop < 3; ++hop)
+            {
+                UINT32 & index = hop == 0 ? slow : fast;
+                if (index == 0)
+                {
+                    continue;
+                }
+                if (index < sizeof(NTH) || index > m_BlockLength ||
+                    minDptSize > m_BlockLength - index)
+                {
+                    return STATUS_BAD_DATA;
+                }
+
+                const NDP & header = (const NDP &) *(m_Buffer + index);
+                if (header.Signature != ndp_sig || header.Length < minDptSize ||
+                    (header.Length - sizeof(NDP)) % sizeof(DPE) != 0 ||
+                    header.Length > m_BlockLength - index)
+                {
+                    return STATUS_BAD_DATA;
+                }
+                index = header.NextNdpIndex;
+            }
+
+            if (fast != 0 && slow == fast)
+            {
+                return STATUS_BAD_DATA;
+            }
+        }
+
+        return STATUS_SUCCESS;
     }
 
     _IRQL_requires_max_(DISPATCH_LEVEL)

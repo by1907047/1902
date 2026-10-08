@@ -29,8 +29,8 @@
     },
     {
       "Path": "NCM-Driver-for-Windows/common/ntb.cpp",
-      "Bytes": 16761,
-      "SHA256": "0becea479d6c50f5f31cd4d2c166777a2aafe4219f1538b430b21fcea2928af5"
+      "Bytes": 18997,
+      "SHA256": "eb94d60663a788c5b35250093e928dcd6fc7b6177473e9f81265b9e69a1ddad9"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/apple1902_validation.h",
@@ -73,6 +73,11 @@
       "SHA256": "688ec5b97b8c0c8331eee3736b4a4b56f268bb4249674e4f8f3d314a734b440d"
     },
     {
+      "Path": "tests/ntb_review_probe.py",
+      "Bytes": 11809,
+      "SHA256": "e80cda70f30a3872e5e9af342a5a3384d6a55448cf7ffd259e6d6d1d2937ab34"
+    },
+    {
       "Path": "tests/rx_completion_probe.py",
       "Bytes": 10914,
       "SHA256": "997f191c304683045007efba9b3453837a1f7a5aa11b3bcb2140514e94b7b9bd"
@@ -103,6 +108,11 @@
       "Path": "tests/host_memory_probe.py",
       "Bytes": 9825,
       "SHA256": "135c13c5aa9982879bc14873fb16db5a210a0e90b48bb6c5f92a57e0c5147f4f"
+    },
+    {
+      "Path": "tests/ntb_chain_probe.py",
+      "Bytes": 5799,
+      "SHA256": "a7841da1938a9db35322415ca3b6791667149c1680c6bbdf791367133ccd34ff"
     },
     {
       "Path": "tests/ntb_fit_probe.py",
