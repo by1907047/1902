@@ -129,6 +129,13 @@ Recovery never resets or cycles the port, never resets the device, never retries
 
 Every request sent before the restart was cancelled by its stop, so these refer only to new traffic. The restart's own phase durations (drain, stop, reset, start) are logged separately.
 
+The first-send timestamp is published by one 64-bit compare/exchange, before
+calling `WdfRequestSend`. There is no separate claimed flag: an inline
+completion from a competing sender must not see a claimed but unpublished
+timestamp. A controlled two-sender test covers that preemption. The marker is
+a driver offer-time observation, not the USB bus submission time; use ETW to
+cross-check the data-progress window.
+
 ### Lifecycle
 
 `StopTransmit` is the path used by `NcmTxQueue::Stop`, D0Exit (through `LeaveWorkingState`) and adapter destroy. It does the following:
@@ -177,6 +184,9 @@ The probe covers:
 - races between the work item and stop, D0Exit or a null pipe;
 - IN recovery: the `FALSE` handover, a disabled port, a failed reset, device gone, and a stop that comes first;
 - an IN/OUT/D0Exit race on threads, 150 rounds, checking that resets never overlap;
+- a continuous reader-failure storm followed by D0Exit, requiring the modeled
+  callbacks and queued work to quiesce (not a bound on real USB cancellation);
+- a first-send marker publication race with a competing inline completion;
 - a threaded stress run.
 
 **Limits.** These tests cannot show KMDF scheduling, IRQL or paging rules, Driver Verifier results, USB hardware behavior, or whether a pipe reset restores Apple's device-mode endpoint. The framework is modeled from its source, not executed. `NcmTxQueue::Advance` is mirrored, not run. The WDK constants and annotations are checked only by a WDK build.

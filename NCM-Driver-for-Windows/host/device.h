@@ -383,9 +383,6 @@ private:
         m_TxPostRestartFirstSend = 0;
 
     LONG
-        m_TxPostRestartSendLogged = 0;
-
-    LONG
         m_TxPostRestartSuccessLogged = 0;
 
     // IN reader failures handed over by DataBulkInPipeReadersFailed.

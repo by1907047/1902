@@ -154,7 +154,8 @@ static LONG InterlockedCompareExchange(LONG* p,LONG x,LONG c){__atomic_compare_e
 static LONG64 InterlockedExchange64(LONG64* p,LONG64 v){return __atomic_exchange_n(p,v,__ATOMIC_SEQ_CST);}
 static LONG64 InterlockedCompareExchange64(LONG64* p,LONG64 x,LONG64 c){__atomic_compare_exchange_n(p,&c,x,false,__ATOMIC_SEQ_CST,__ATOMIC_SEQ_CST);return c;}
 static std::atomic<ULONG64> g_clock{1};
-static ULONG64 KeQueryInterruptTime(){return g_clock.load();}
+static std::function<void()> g_clockHook;static std::atomic<bool> g_clockHookArmed{false};
+static ULONG64 KeQueryInterruptTime(){if(g_clockHookArmed.exchange(false)){auto hook=g_clockHook;hook();}return g_clock.load();}
 static void AdvanceSeconds(int s){g_clock+=ULONG64(s)*10000000ull;}
 
 // --- rundown protection (admission gate) ---
@@ -662,6 +663,28 @@ static void AdmissionRace(){
  std::puts("admission: active section drains before stop; late and during-reset sends refused PASS");
 }
 
+// Pause sender A while it is sampling its marker time. Sender B must still
+// publish a valid first-send timestamp before an inline success can log it.
+// A separate "claimed" flag followed by a timestamp store fails this test.
+static void PostRestartMarkerRace(){
+ Reset();Rig* r=NewRig(true,2);U::StartTransmit(&r->dev);Trigger(r);
+ std::mutex m;std::condition_variable cv;bool paused=false,release=false;
+ g_clockHook=[&]{std::unique_lock<std::mutex> l(m);paused=true;cv.notify_all();cv.wait(l,[&]{return release;});};
+ g_clockHookArmed=true;g_sendMode=SendMode::InlineSuccess;
+ std::thread a([&]{Send(&r->dev);});
+ {std::unique_lock<std::mutex> l(m);cv.wait(l,[&]{return paused;});}
+ NTSTATUS b=Send(&r->dev);
+ LONG64 published=InterlockedCompareExchange64(&r->host->m_TxPostRestartFirstSend,0,0);
+ bool successLogged=LogsWith("OUT first success after pipe restart")==1;
+ {std::lock_guard<std::mutex> l(m);release=true;cv.notify_all();}
+ a.join();g_clockHook=nullptr;g_sendMode=SendMode::Pend;
+ CHECK(NT_SUCCESS(b)&&successLogged);
+ CHECK(published!=0); // measured at B's completion, not after A finally stores
+ CHECK(LogsWith("OUT first send offered after pipe restart")==1);
+ U::StopTransmit(&r->dev);ExpectAllReturned(r);
+ std::puts("post-restart marker: competing inline success cannot observe a claimed but unpublished timestamp PASS");
+}
+
 static void Stress(){
  Reset();Rig* r=NewRig(true,3);FakeTarget* t=&r->pipe.target;auto* w=r->host->m_DataPathWorkItem;
  r->host->BeginD0Session();U::StartReceive(&r->dev);U::StartTransmit(&r->dev);
@@ -749,11 +772,36 @@ static void InOutRace(){
              "no framework reset, no access after D0Exit PASS\n",both,g_maxResetDepth.load());
 }
 
+// Repeated immediate reader errors are event-driven, not a retry loop in the
+// worker. Exercise a live failure storm and require D0Exit to quiesce it in
+// this model. This is NOT a bound on real KMDF/USB-stack cancellation time.
+static void InFailureStormStops(){
+ Reset();Rig* r=NewRig(true,2);auto* w=r->host->m_DataPathWorkItem;
+ U::StartReceive(&r->dev);U::StartTransmit(&r->dev);
+ std::atomic<bool> done{false},exited{false};std::atomic<int> failures{0};
+ g_resetHook=[]{std::this_thread::sleep_for(std::chrono::microseconds(200));};
+ std::thread worker([&]{while(!done){if(!RunQueuedWorkItem(w))std::this_thread::yield();}});
+ std::thread errors([&]{while(!done){if(KmdfReaderFailure(r,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR)==0)++failures;std::this_thread::yield();}});
+ auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
+ while(failures<20&&std::chrono::steady_clock::now()<deadline)std::this_thread::yield();
+ std::thread stop([&]{r->host->LeaveWorkingState();exited=true;});
+ deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
+ while(!exited&&std::chrono::steady_clock::now()<deadline)std::this_thread::yield();
+ CHECK(exited.load()); // abort on model hang; never terminate a live kernel thread
+ done=true;stop.join();errors.join();worker.join();g_resetHook=nullptr;
+ int resets=TraceCount("in-reset"),enq=Enqueues(w);
+ CHECK(failures>=20&&!ReadersActive(r)&&!r->host->m_RxPipeRunning);
+ CHECK(KmdfReaderFailure(r,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR)==-1);
+ CHECK(!RunQueuedWorkItem(w)&&TraceCount("in-reset")==resets&&Enqueues(w)==enq);
+ CHECK(TraceCount("kmdf-")==0&&g_maxResetDepth.load()<=1);ExpectAllReturned(r);
+ std::printf("IN failure storm: %d failures, %d pipe resets; modeled D0Exit quiesces callbacks and queued work PASS\n",failures.load(),resets);
+}
+
 int main(){
  PoolInit(32);
  SwitchValues();NoRecoveryModes();Classification();
  RecoveryCycle(2);RecoveryCycle(3);FailedResetAndStart();Budget();
- StopAndRemovalRaces();InlineCompletion();AdmissionRace();InReaderRecovery();InOutRace();Stress();
+ StopAndRemovalRaces();InlineCompletion();AdmissionRace();InReaderRecovery();InOutRace();InFailureStormStops();PostRestartMarkerRace();Stress();
  std::printf("OUT recovery probe: %d checks, 0 failures\n",checks);
 }
 '''

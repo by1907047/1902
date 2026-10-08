@@ -4,6 +4,8 @@
 
 Source changes after the frozen candidate. **Not built with the WDK and not hardware-tested**; the 0.1.0-alpha.1 hardware results do not apply to them.
 
+- Publish the post-restart first-send timestamp atomically, preventing a competing inline completion from logging a claimed but unpublished time. Add controlled marker-race and continuous IN-failure/D0Exit probes; their results describe the model, not a real USB cancellation bound.
+
 - Report link speed from USBD connection capabilities (SuperSpeed 5 Gb/s, High-Speed 480 Mb/s, Full-Speed 12 Mb/s, unknown on query failure) instead of KMDF's `AT_HIGH_SPEED` trait, which is also set at SuperSpeed. The speed is now recorded before the first link-up indication.
 - Reject device OUT NTB parameters whose `dwNtbOutMaxSize` cannot hold one maximum-size datagram under the advertised divisor/remainder/alignment; previously TX silently dropped every such frame.
 - Release the configuration-descriptor and friendly-name buffers on every path instead of leaving them parented to the WDFDEVICE across repeated PrepareHardware.

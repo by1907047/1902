@@ -1212,12 +1212,17 @@ UsbNcmHostDevice::TransmitFrames(
             // send actually offered, not at the restart itself.
             const LONG64 restart = InterlockedCompareExchange64(&hostDevice->m_TxRestartTime, 0, 0);
             if (restart != 0 &&
-                InterlockedCompareExchange(&hostDevice->m_TxPostRestartSendLogged, 1, 0) == 0)
+                InterlockedCompareExchange64(&hostDevice->m_TxPostRestartFirstSend, 0, 0) == 0)
             {
+                // Publish the timestamp atomically, not a separate claimed
+                // flag: a competing sender can complete inline before this
+                // thread resumes. Its completion must already see the time.
                 const ULONG64 now = KeQueryInterruptTime();
-                InterlockedExchange64(&hostDevice->m_TxPostRestartFirstSend, (LONG64)now);
-                DbgPrint("Sideline1902: OUT first send offered after pipe restart: +%I64u ms\n",
-                         ElapsedMs((ULONG64)restart, now));
+                if (InterlockedCompareExchange64(&hostDevice->m_TxPostRestartFirstSend, (LONG64)now, 0) == 0)
+                {
+                    DbgPrint("Sideline1902: OUT first send offered after pipe restart: +%I64u ms\n",
+                             ElapsedMs((ULONG64)restart, now));
+                }
             }
         }
 
@@ -1596,7 +1601,6 @@ UsbNcmHostDevice::RecoverOutPipeLocked(
             m_TxPipeRunning = TRUE;
             // Markers first, then admission: the first send offered after
             // this restart and its first success are logged against it.
-            InterlockedExchange(&m_TxPostRestartSendLogged, 0);
             InterlockedExchange(&m_TxPostRestartSuccessLogged, 0);
             InterlockedExchange64(&m_TxPostRestartFirstSend, 0);
             InterlockedExchange64(&m_TxRestartTime, (LONG64)started);

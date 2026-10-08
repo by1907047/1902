@@ -34,13 +34,13 @@
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.cpp",
-      "Bytes": 53429,
-      "SHA256": "57fdfa934348c6833e6f877bdea9b4bddffe7d551fb78d484e482c66d8094406"
+      "Bytes": 53658,
+      "SHA256": "7be3c077502f3cebc054f227f6ea0c6a23601536c8d4424c03b8722ac98071c7"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.h",
-      "Bytes": 7755,
-      "SHA256": "ba01f6d6131ea3e39de29859e177b16db56fb3d62f5f21029d291d891c0f6ba1"
+      "Bytes": 7706,
+      "SHA256": "3a4b8ad194376c3ec7b3c88c5f51112e43e16a2afb66e0b76452cc5d34490ebf"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/driver.cpp",
@@ -106,8 +106,8 @@
     },
     {
       "Path": "tests/out_recovery_probe.py",
-      "Bytes": 50349,
-      "SHA256": "e71c14c8f24c6a63be962e77968574a292dace49c4a23af3c84132d0ec22c4dc"
+      "Bytes": 53731,
+      "SHA256": "060e40a4ae16c9e9496188a4314b577279916a3026b44a3009c83244cac19ca6"
     },
     {
       "Path": "tests/source_identity_tests.py",
