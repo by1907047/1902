@@ -11,6 +11,7 @@
 #include "buffers.h"
 #include "callbacks.h"
 #include "mac.h"
+#include "out_pipe_policy.h"
 
 EXTERN_C_START
 
@@ -92,10 +93,11 @@ public:
         void
     );
 
-    // Reads the default-off data-path switch and creates the OUT lifecycle
-    // lock and, only when recovery is enabled, its work item.
+    // Reads the default-off data-path switch. Only recovery mode creates
+    // anything (a wait lock and a work item); if that fails, recovery stays
+    // off and device add continues.
     PAGED
-    NTSTATUS
+    void
     InitializeDataPathControl(
         void
     );
@@ -126,6 +128,22 @@ private:
         _In_ WDFCONTEXT context
     );
 
+    bool
+    IsRecoveryMode(
+        void
+    ) const
+    {
+        return (m_DataPathDebug & Apple1902::DataPathOutPipeRecovery) != 0;
+    }
+
+    bool
+    IsInstrumentationMode(
+        void
+    ) const
+    {
+        return (m_DataPathDebug & Apple1902::DataPathOutInstrumentation) != 0;
+    }
+
     _IRQL_requires_max_(DISPATCH_LEVEL)
     void
     RequestOutPipeRecovery(
@@ -133,13 +151,32 @@ private:
         _In_ USBD_STATUS usbdStatus
     );
 
+    _IRQL_requires_(PASSIVE_LEVEL)
+    void
+    RequestInPipeRecovery(
+        _In_ NTSTATUS status,
+        _In_ USBD_STATUS usbdStatus
+    );
+
     static
     EVT_WDF_WORKITEM
-        OutPipeRecoveryWorkItem;
+        DataPathRecoveryWorkItem;
 
     PAGED
     void
-    RecoverOutPipe(
+    RecoverDataPipes(
+        void
+    );
+
+    PAGED
+    void
+    RecoverOutPipeLocked(
+        void
+    );
+
+    PAGED
+    void
+    RecoverInPipeLocked(
         void
     );
 
@@ -263,16 +300,16 @@ private:
     LONG
         m_RxReadersFailures = 0;
 
-    // Default-off switch (Apple1902::DataPathOut* bits), fixed per device.
+    // Default-off switch (Apple1902::DataPathOut* bits), fixed after device
+    // add. 0 creates nothing and takes none of the paths below.
     ULONG
         m_DataPathDebug = 0;
 
-    // Requests handed to WdfRequestSend and not yet completed. Incremented
-    // before the send; WdfRequestSend may run the completion inline.
+    // Instrumentation only (bit 0x1). In flight = handed to WdfRequestSend
+    // and not completed; counted before the send, which may complete inline.
     LONG
         m_TxInflight = 0;
 
-    // Instrumentation only (switch bit 0x1).
     LONG
         m_TxInflightPeak = 0;
 
@@ -285,26 +322,36 @@ private:
     LONG
         m_TxFirstFailureLogged = 0;
 
-    LONG
-        m_TxAdmissionRejects = 0;
-
-    // Admission gate for bulk-OUT sends. TransmitFrames holds a reference for
-    // its whole send section, at up to DISPATCH_LEVEL. Only recovery mode
-    // closes it, and only under m_TxLifecycleLock, which waits for every
-    // active section to leave before the target is stopped or reset.
+    // Recovery only (bit 0x2); everything below is unused otherwise.
+    //
+    // Admission gate for bulk-OUT sends: TransmitFrames holds a reference
+    // for its whole send section, at up to DISPATCH_LEVEL. It is closed,
+    // under m_DataPathLock, whenever the OUT pipe is not running, and
+    // closing waits for every active section to leave.
     EX_RUNDOWN_REF
         m_TxAdmission = {};
 
-    // Guarded by m_TxLifecycleLock (PASSIVE_LEVEL only; never taken on the
-    // send or completion path).
-    WDFWAITLOCK
-        m_TxLifecycleLock = nullptr;
+    LONG
+        m_TxAdmissionRejects = 0;
 
+    // Serializes every stop, reset and start of both data pipes: queue and
+    // D0 start/stop, OUT recovery and IN recovery. PASSIVE_LEVEL only; never
+    // taken on the send, completion or readers-failed path.
+    WDFWAITLOCK
+        m_DataPathLock = nullptr;
+
+    WDFWORKITEM
+        m_DataPathWorkItem = nullptr;
+
+    // Guarded by m_DataPathLock.
     BOOLEAN
         m_TxAdmissionOpen = TRUE;
 
     BOOLEAN
         m_TxPipeRunning = FALSE;
+
+    BOOLEAN
+        m_RxPipeRunning = FALSE;
 
     ULONG
         m_TxRecoveryAttempts = 0;
@@ -312,11 +359,7 @@ private:
     ULONG64
         m_TxLastRecoveryTime = 0;
 
-    // Recovery only (switch bit 0x2). Null otherwise.
-    WDFWORKITEM
-        m_TxRecoveryWorkItem = nullptr;
-
-    // 1 from enqueue until the work item has finished deciding and acting.
+    // 1 from an OUT trigger's enqueue until the work item has handled it.
     LONG
         m_TxRecoveryQueued = 0;
 
@@ -331,6 +374,32 @@ private:
 
     LONG
         m_TxRecoverySkipped = 0;
+
+    // Offered-traffic markers after the last successful OUT pipe restart.
+    LONG64
+        m_TxRestartTime = 0;
+
+    LONG64
+        m_TxPostRestartFirstSend = 0;
+
+    LONG
+        m_TxPostRestartSendLogged = 0;
+
+    LONG
+        m_TxPostRestartSuccessLogged = 0;
+
+    // IN reader failures handed over by DataBulkInPipeReadersFailed.
+    LONG
+        m_RxRecoveryPending = 0;
+
+    LONG
+        m_RxRecoveryTriggerStatus = 0;
+
+    LONG
+        m_RxRecoveryTriggerUsbdStatus = 0;
+
+    LONG
+        m_RxRecoveries = 0;
 
 };
 

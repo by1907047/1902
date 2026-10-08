@@ -34,18 +34,18 @@
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.cpp",
-      "Bytes": 45372,
-      "SHA256": "426e60c5dda132700655c9691d4711aa94744636d3e094f4b3e19abb811796cc"
+      "Bytes": 53429,
+      "SHA256": "57fdfa934348c6833e6f877bdea9b4bddffe7d551fb78d484e482c66d8094406"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.h",
-      "Bytes": 6378,
-      "SHA256": "bb8291737ed21cea0cc6f83cb267ce0b0045931fc4f4ae8e7e8a35c711fcc99a"
+      "Bytes": 7755,
+      "SHA256": "ba01f6d6131ea3e39de29859e177b16db56fb3d62f5f21029d291d891c0f6ba1"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/driver.cpp",
-      "Bytes": 5237,
-      "SHA256": "0a39801aaa8eb69c704648e79eef6b5f3589545a8174240fac3c8a65c6ee6e50"
+      "Bytes": 5234,
+      "SHA256": "f760ae1937b8169f6786ea098e690c85794032e11758dcf0f97cf5a2e5afa75d"
     },
     {
       "Path": "NCM-Driver-for-Windows/inc/buffers.h",
@@ -64,13 +64,18 @@
     },
     {
       "Path": "tests/lifecycle_policy_tests.py",
-      "Bytes": 5056,
-      "SHA256": "db1677b779e1f916f87396100ccfe5eed6f39279229d8e73157b5205930e1656"
+      "Bytes": 6042,
+      "SHA256": "69fd211fe9cb9d8c587aaf4139cc89b94199315ab5676d4634a316a6e0b5f299"
     },
     {
       "Path": "tests/rx_completion_probe.py",
       "Bytes": 10914,
       "SHA256": "997f191c304683045007efba9b3453837a1f7a5aa11b3bcb2140514e94b7b9bd"
+    },
+    {
+      "Path": "tests/rx_stop_probe.py",
+      "Bytes": 7419,
+      "SHA256": "5a6fcc40c0181e9ca1357e37f3b4a084bc78851bc9ef71e09841db4bf87441b8"
     },
     {
       "Path": "tests/validation_tests.cpp",
@@ -86,8 +91,8 @@
     },
     {
       "Path": "tests/host_diagnostics_probe.py",
-      "Bytes": 9541,
-      "SHA256": "b814c770605ac1a152b6c3b7e1e4ef476edfe841d1c2eebf33709e9fd7ed651f"
+      "Bytes": 10072,
+      "SHA256": "70965187f326bb9209a097d390ffb1db6d5b594ecc56a78efb401b5c1e6bec34"
     },
     {
       "Path": "tests/host_memory_probe.py",
@@ -101,8 +106,8 @@
     },
     {
       "Path": "tests/out_recovery_probe.py",
-      "Bytes": 40275,
-      "SHA256": "33df951c0b1dbd0413777a4ea099f37082dc48b46b999beb1e5fc77b5c6acc34"
+      "Bytes": 50349,
+      "SHA256": "e71c14c8f24c6a63be962e77968574a292dace49c4a23af3c84132d0ec22c4dc"
     },
     {
       "Path": "tests/source_identity_tests.py",

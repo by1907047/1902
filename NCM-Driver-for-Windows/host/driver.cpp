@@ -97,9 +97,8 @@ UsbNcmHostEvtDeviceAdd(
     UsbNcmHostDevice * hostDevice =
         new (NcmGetHostDeviceFromHandle(wdfDevice)) UsbNcmHostDevice(wdfDevice);
 
-    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
-        hostDevice->InitializeDataPathControl(),
-        "InitializeDataPathControl failed");
+    // Never fails device add; recovery stays off if its objects cannot be created.
+    hostDevice->InitializeDataPathControl();
 
     // Disable idle power management to prevent USB disconnects during display changes
     WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS idleSettings;

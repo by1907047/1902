@@ -70,29 +70,44 @@ class LifecyclePolicyTests(unittest.TestCase):
     def test_out_recovery_budget_resets_only_per_d0_session(self):
         body = function_body('EnterWorkingState')
         self.assertLess(body.index('BeginD0Session();'), body.index('SelectSetting()'))
-        for name in ('StartTransmit', 'StopTransmit', 'RecoverOutPipe'):
+        for name in ('StartTransmit', 'StopTransmit', 'RecoverDataPipes', 'RecoverOutPipeLocked'):
             self.assertNotIn('m_TxRecoveryAttempts = 0', function_body(name))
         self.assertIn('m_TxRecoveryAttempts = 0;', function_body('BeginD0Session'))
 
-    def test_stop_transmit_flushes_outside_the_lifecycle_lock(self):
+    def test_stop_transmit_flushes_outside_the_data_path_lock(self):
         body = function_body('StopTransmit')
-        self.assertLess(body.index('StopPipe('), body.index('WdfWaitLockRelease('))
-        self.assertLess(body.index('WdfWaitLockRelease('), body.index('WdfWorkItemFlush('))
+        recovery = body[body.index('else'):]
+        self.assertLess(recovery.index('StopPipe('), recovery.index('WdfWaitLockRelease('))
+        self.assertLess(recovery.index('WdfWaitLockRelease('), recovery.index('WdfWorkItemFlush('))
 
-    def test_out_recovery_never_escalates(self):
+    def test_recovery_never_escalates_and_keeps_order(self):
         for call in ('ResetPortSynchronously', 'CyclePortSynchronously', 'WdfUsbTargetDeviceReset'):
             self.assertNotIn(call, SOURCE)
-        body = function_body('RecoverOutPipe')
-        order = [body.index(s) for s in ('CloseTxAdmissionLocked();', 'WdfIoTargetStop(',
-                                         'WdfUsbTargetPipeResetSynchronously(',
-                                         'WdfIoTargetStart(', 'OpenTxAdmissionLocked();')]
+        out = function_body('RecoverOutPipeLocked')
+        order = [out.index(s) for s in ('CloseTxAdmissionLocked();', 'WdfIoTargetStop(',
+                                        'WdfUsbTargetPipeResetSynchronously(',
+                                        'WdfIoTargetStart(', 'OpenTxAdmissionLocked();')]
         self.assertEqual(order, sorted(order))
-        self.assertIn('WDF_REL_TIMEOUT_IN_SEC(2)', body)
+        rx = function_body('RecoverInPipeLocked')
+        order = [rx.index(s) for s in ('WdfIoTargetStop(', 'WdfUsbTargetPipeResetSynchronously(',
+                                       'WdfIoTargetStart(')]
+        self.assertEqual(order, sorted(order))
+        for body in (out, rx):
+            self.assertIn('WDF_REL_TIMEOUT_IN_SEC(2)', body)
+            self.assertNotIn('"recovered', body)
+
+    def test_readers_failed_callback_never_blocks_or_stops(self):
+        # Stopping a reader pipe waits for the work item running this callback.
+        body = function_body('DataBulkInPipeReadersFailed')
+        for call in ('WdfWaitLockAcquire', 'WdfIoTargetStop', 'WdfIoTargetStart',
+                     'WdfUsbTargetPipeResetSynchronously', 'WdfWorkItemFlush'):
+            self.assertNotIn(call, body)
+        self.assertLess(body.index('return TRUE;'), body.index('RequestInPipeRecovery('))
+        self.assertIn('return FALSE;', body)
 
     def test_device_add_reads_the_switch(self):
         driver = (ROOT / 'host/driver.cpp').read_text()
-        self.assertIn('hostDevice->InitializeDataPathControl()', driver)
-
+        self.assertIn('hostDevice->InitializeDataPathControl();', driver)
 
 if __name__ == '__main__':
     unittest.main()

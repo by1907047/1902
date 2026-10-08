@@ -34,7 +34,7 @@ using LONG64=int64_t;using ULONG64=uint64_t;
 using UCHAR=uint8_t;using VOID=void;
 using WDFREQUEST=void*;using WDFIOTARGET=void*;using WDFUSBPIPE=void*;using WDFDEVICE=void*;
 using WDFMEMORY=void*;using WDFCONTEXT=void*;using NETADAPTER=void*;
-constexpr BOOLEAN TRUE=true;
+constexpr BOOLEAN TRUE=true,FALSE=false;
 constexpr NTSTATUS STATUS_SUCCESS=0,STATUS_CANCELLED=int32_t(0xC0000120),STATUS_IO_TIMEOUT=int32_t(0xC00000B5),
  STATUS_IO_DEVICE_ERROR=int32_t(0xC0000185),STATUS_DEVICE_NOT_READY=int32_t(0xC00000A3),
  STATUS_INVALID_DEVICE_STATE=int32_t(0xC0000184),STATUS_INSUFFICIENT_RESOURCES=int32_t(0xC000009A);
@@ -75,9 +75,13 @@ struct UsbNcmHostDevice{
  WDFUSBPIPE m_DataBulkOutPipe=reinterpret_cast<void*>(7);ULONG m_DataBulkOutPipeMaximumPacketSize=512;
  AdapterCallbacks* m_NcmAdapterCallbacks=&adapterCallbacks;NETADAPTER m_NetAdapter=nullptr;
  LONG m_TxSendFailures=0,m_TxCompletionFailures=0,m_TxCancellations=0,m_TxTimeouts=0,m_RxReadersFailures=0;
+ // Switch 0 (off): none of the instrumentation or recovery members may change.
  ULONG m_DataPathDebug=0;LONG m_TxInflight=0,m_TxInflightPeak=0,m_TxSuccesses=0,m_TxFirstFailureLogged=0,m_TxAdmissionRejects=0;
- LONG64 m_TxLastSuccessTime=0;EX_RUNDOWN_REF m_TxAdmission{};void* m_TxRecoveryWorkItem=nullptr;
+ LONG64 m_TxLastSuccessTime=0,m_TxRestartTime=0,m_TxPostRestartFirstSend=0;LONG m_TxPostRestartSendLogged=0,m_TxPostRestartSuccessLogged=0;
+ EX_RUNDOWN_REF m_TxAdmission{};
+ bool IsRecoveryMode() const{return (m_DataPathDebug&2)!=0;}bool IsInstrumentationMode() const{return (m_DataPathDebug&1)!=0;}
  void RequestOutPipeRecovery(NTSTATUS,USBD_STATUS){assert(!"recovery is off in this probe");}
+ void RequestInPipeRecovery(NTSTATUS,USBD_STATUS){assert(!"recovery is off in this probe");}
  static BOOLEAN DataBulkInPipeReadersFailed(WDFUSBPIPE,NTSTATUS,USBD_STATUS);
  static VOID TransmitFramesCompetion(WDFREQUEST,WDFIOTARGET,PWDF_REQUEST_COMPLETION_PARAMS,WDFCONTEXT);
  static NTSTATUS TransmitFrames(WDFDEVICE,TX_BUFFER_REQUEST*);
@@ -140,8 +144,10 @@ int main(){
  formatStatus=STATUS_SUCCESS;host.m_DataBulkOutPipe=nullptr;
  CHECK(UsbNcmHostDevice::TransmitFrames(current,&request)==STATUS_DEVICE_NOT_READY);
  CHECK(host.m_TxSendFailures==2); // no pipe is not a send failure
- gateClosed=1;CHECK(UsbNcmHostDevice::TransmitFrames(current,&request)==STATUS_DEVICE_NOT_READY);
- CHECK(host.m_TxSendFailures==2&&host.m_TxAdmissionRejects==1&&host.m_TxAdmission.active==0);
+ // Off: the admission gate is never consulted, nothing is counted in flight.
+ gateClosed=1;host.m_DataBulkOutPipe=reinterpret_cast<void*>(7);
+ CHECK(UsbNcmHostDevice::TransmitFrames(current,&request)==STATUS_SUCCESS);
+ CHECK(host.m_TxAdmissionRejects==0&&host.m_TxAdmission.active==0&&host.m_TxInflight==0&&host.m_TxInflightPeak==0);
  std::puts("TX send: failure status returned unchanged and counted PASS");
  std::printf("host data-pipe diagnostics: %d checks, 0 failures\n",checks);
 }

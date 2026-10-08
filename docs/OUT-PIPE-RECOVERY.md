@@ -1,159 +1,229 @@
-# Experimental bulk-OUT diagnostics and pipe-only recovery
+# Experimental data-pipe diagnostics and pipe-only recovery
 
-Status: **experimental, off by default, source only.** Not built with the WDK, not installed and not hardware-tested. Nothing here changes behavior unless the switch below is set. The USB3 transaction error that starts the sustained-traffic stall still has an unknown cause, and this code does not address that cause.
+**Status:** experimental and source only. It has not been built with the WDK, installed, or tested on hardware.
+
+**Scope:** recovery only restarts a halted pipe. It does not address whatever causes the first USB3 bulk-OUT transaction error, and that cause is still unknown. A pipe that restarts has not been shown to carry data again; only the offered-traffic check below can show that.
 
 ## Why
 
-A USB3 600 s run on the frozen PR #1 head showed this sequence (evidence in by1907047/1902#2):
+A USB3 600 s run on the frozen PR #1 head behaved as follows (evidence in by1907047/1902#2):
 
-1. One bulk-OUT transaction error: USBD `0xC0000011`, IRP `0xC0000001`.
-2. After that, no successful OUT completion. The 128 TX requests only ended as 5 s timeouts.
+1. One bulk-OUT transfer failed with USBD status `0xC0000011` (transaction error) and IRP status `0xC0000001`.
+2. After that, no OUT request succeeded. The 128 TX requests only ended as 5 s timeouts.
 3. Bulk IN kept completing throughout.
 
-The driver has no bulk-OUT pipe recovery, and neither does `v0.1.0-alpha.1`. This experiment tests one hypothesis: a pipe-only reset, with no re-enumeration, restores OUT progress after that error.
+Neither the frozen head nor `v0.1.0-alpha.1` has any bulk-OUT recovery. This experiment tests one hypothesis: resetting only the pipe, without re-enumerating the device, lets OUT traffic progress again after that error.
 
 ## Switch
 
-Set a `REG_DWORD` named `Sideline1902DataPathDebug` in the device's hardware key, `...\Enum\<device instance>\Device Parameters`. The driver reads it once when the device is added, so a change takes effect only after the device restarts. Restart with the Mac unlocked; while it is locked, macOS restricts USB.
+The switch is a `REG_DWORD` named `Sideline1902DataPathDebug` in the device hardware key (`...\Enum\<device instance>\Device Parameters`).
+
+- The driver reads it once, when the device is added. To change it, restart the device.
+- Restart with the Mac unlocked. While the Mac is locked, macOS restricts USB.
 
 | Value | Meaning |
 | --- | --- |
-| missing, `0`, read failure, any unknown bit | Off. The TX I/O sequence is identical to `2327f448cf6c`. The only log change is that send timeouts are now labelled `TX timed out` instead of `TX completion failed`. |
-| `1` | OUT instrumentation only. |
-| `2` | OUT pipe recovery only, with its own logs. |
-| `3` | Both. |
+| missing, `0`, read failure, any unknown bit | Off |
+| `1` | OUT instrumentation only |
+| `2` | Data-pipe recovery only, with its own logs |
+| `3` | Both |
 
-**Instrumentation (`0x1`)** records these values and logs them; nothing acts on them:
+**What still differs from `2327f448cf6c` when the switch is off.** It is not "nothing", so the full list:
 
-- Peak requests in flight.
-- Successful completions.
-- Time of the last OUT success, from `KeQueryInterruptTime`, which is monotonic.
-- The first failure in each D0 session. This is re-armed after a successful recovery. It logs the status, the USBD status, the in-flight count and the milliseconds since the last success.
-- A summary when transmit stops: `Sideline1902: OUT stop: ...`.
+- **Device add** opens the device hardware key and reads one value. A failed read just selects off.
+- **Unknown bits** in the value produce one log line.
+- **TX timeouts** are logged as `TX timed out` instead of `TX completion failed`, and counted in their own counter. KMDF reports a request that was cancelled by its own send timer as `STATUS_IO_TIMEOUT`. `TX cancelled` now means `STATUS_CANCELLED` only.
+- **Per completion and per send**, the driver classifies the status with plain arithmetic and makes a few mode checks on a constant read once at device add.
+- **Code size** grows.
 
-**Counted in every mode**, including 0:
+When the switch is off, the driver:
 
-- `TX cancelled (stop or cancel)`: `STATUS_CANCELLED`.
-- `TX timed out (5 s send timeout)`: KMDF reports a request cancelled by its own timer as `STATUS_IO_TIMEOUT`.
-- `TX completion failed`: everything else.
-- Send failures.
+- creates no wait lock and no work item;
+- makes no admission-gate (rundown) calls;
+- counts no requests as in flight;
+- keeps no timestamps or post-restart markers;
+- does not change the readers-failed callback, which still returns `TRUE`.
 
-## Recovery trigger
+`out_recovery_probe.py` compiles the frozen head's data-path functions and checks that switch 0 gives the same I/O trace. The modeled trace covers sends, completions, stops, starts, the framework's reader-recovery resets and buffer returns. The same run checks that no lock, rundown or in-flight operation happens. This is a check of the modeled trace, not of timing, code size or every WDF call.
 
-The trigger is a TX completion whose USBD status is `USBD_STATUS_XACT_ERROR`, unless the completion status shows that the device is gone. These never trigger recovery:
+**If the recovery objects cannot be created** (the wait lock or the work item), recovery stays off, the failure is logged, and device add continues. Instrumentation, if selected, stays on.
 
-- Cancellations and timeouts.
-- Device-gone statuses: `STATUS_NO_SUCH_DEVICE`, `STATUS_DEVICE_NOT_CONNECTED`, `STATUS_DEVICE_REMOVED`, `STATUS_DELETE_PENDING`, `STATUS_DEVICE_DOES_NOT_EXIST`, `STATUS_DEVICE_POWERED_OFF`, and USBD `DEVICE_GONE`.
-- Stall, babble, and every other status.
+## Instrumentation (`0x1`)
 
-All statuses are still counted and logged.
+Instrumentation records and logs the following. Nothing acts on these values.
 
-## Sequence
+- **In flight.** A request counts once it is handed to `WdfRequestSend` and stops counting when it completes. It is counted before the send, because the completion may run inline.
+- **Peak in flight, successful completions, and the time of the last OUT success.** Times come from `KeQueryInterruptTime`, which is monotonic, and only differences between them are logged.
+- **The first non-cancel failure in each D0 session**, with its status, USBD status, in-flight count, success count and the milliseconds since the last success. This is re-armed after each pipe restart.
+- **A summary when TX stops:** `Sideline1902: OUT stop: ...`.
 
-The recovery runs in a work item at `PASSIVE_LEVEL` and holds the TX lifecycle wait lock throughout:
+## Recovery (`0x2`)
 
-1. **Decide.** Skip with a log line if the pipe is not running, the budget is used up, or the 10 s cooldown has not passed.
-2. **Close admission and drain.** `ExWaitForRundownProtectionRelease` makes new `TransmitFrames` calls fail at once. It then waits for every send section that is already inside `WdfRequestSend`.
-3. **Stop the target.** `WdfIoTargetStop(CancelSentIo)` returns after every sent request's completion routine has run. All buffers are back in the pool.
-4. **Reset the pipe.** `WdfUsbTargetPipeResetSynchronously` issues `URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL`, with a 2 s request timeout.
-5. **Restart.** Only if the reset succeeded, call `WdfIoTargetStart`. Only if that start succeeded, mark the pipe running and reopen admission.
+### Serialization
 
-If the reset or the start fails, the failure is logged and kept: the pipe stays not running and admission stays closed. Sends are refused and dropped instead of being queued to a stopped target. Only a normal queue restart or device restart reopens it.
+Every stop, reset and start of either data pipe runs under one PASSIVE-level wait lock, `m_DataPathLock`. That covers:
 
-The recovery never resets or cycles the port, never resets the device, and never retries a payload. There is no timer and no retry loop.
+- queue and D0 start/stop of TX;
+- queue and D0 start/stop of RX;
+- OUT recovery;
+- IN recovery.
 
-## Budget and cooldown
+The send, completion and readers-failed paths never take this lock. No spin lock is involved anywhere.
 
-- The budget is 3 attempts per D0 session. It resets in `EnterWorkingState` (D0Entry), not on a queue restart.
-- Attempts must be at least 10 s apart.
-- An error that arrives during the cooldown, after the budget is used up, or while the pipe is not running is counted and logged as skipped, on the 1st, 2nd, 4th... occurrence, and is not acted on later.
-- An error that arrives while a recovery is already queued or running is counted as coalesced.
+The framework's own continuous-reader recovery is the one path that would bypass this lock. KMDF source at `b6191d9`, `FxUsbPipeContinuousReader::FxUsbPipeRequestWorkItemHandler`, shows what it does:
 
-## Synchronization
+1. It cancels the readers.
+2. It calls `EvtUsbTargetPipeReadersFailed`.
+3. If the callback returns `TRUE`, it resets the IN pipe, or, if the port is disabled, the whole device (`IOCTL_INTERNAL_USB_RESET_PORT`). It holds no driver lock while doing this.
 
-- **Send path, up to `DISPATCH_LEVEL`.** `TransmitFrames` holds a rundown reference for its whole send section. Before `WdfRequestSend` it increments the in-flight count. On a FALSE return it undoes that increment, because the completion routine does not run. After a TRUE return it does not touch the request, because an inline completion may already have returned the buffer to the pool.
-- **Completion path.** It uses only interlocked operations and may enqueue the work item. It never takes the wait lock. No spin lock is held across a blocking call or across an inline completion.
-- **Who changes admission and target state.** Only `StartTransmit`, `StopTransmit` and the recovery work item. All three run at `PASSIVE_LEVEL` under the wait lock.
-- **What `StopTransmit` does.** This is the path that `NcmTxQueue::Stop`, D0Exit through `LeaveWorkingState`, and adapter destroy all use:
-  1. Clears the running flag.
-  2. In recovery mode, closes admission.
-  3. Stops the pipe.
-  4. Releases the lock, and only then calls `WdfWorkItemFlush`.
+In recovery mode, `DataBulkInPipeReadersFailed` therefore returns `FALSE`. The framework then does neither reset and does not resubmit the readers. The callback records the failure and enqueues the data-path work item. It takes no lock and does not stop or start the target. This matters because stopping a reader pipe waits for the very work item that runs this callback; `FxUsbPipe::GotoStopState` sets `Wait = TRUE`.
 
-  The work item needs the lock, so flushing while holding it would deadlock. The flush also runs when there is no pipe.
-- **Why nothing enqueues after that flush.** `WdfIoTargetStop` has returned after every completion routine, and admission is closed, so no new send can produce a completion until the next `StartTransmit`.
-- **Why no stale pipe handle is used.** D0Entry re-selects the alternate setting and gets new pipe handles, but that happens only after D0Exit has run `StopTransmit` and the flush. The work item reads the pipe only under the lock, and only while the pipe is marked running.
+The work item then performs the framework's enabled-port sequence itself, under the lock:
 
-**Assumptions.** Only the reset request has a time bound, 2 s. The drain waits for send sections, which do not block. The stop waits for the USB stack to complete cancelled requests, exactly as `StopTransmit` already did. A `StopTransmit` that arrives during a recovery therefore waits for the drain, the cancellation, at most 2 s of reset, and the start. Every recovery logs these phase durations: `drain`, `stop`, `reset` and `start`, in milliseconds.
+1. `WdfIoTargetStop`, which cancels the readers and waits for the framework work item.
+2. `WdfUsbTargetPipeResetSynchronously`, with a 2 s timeout.
+3. `WdfIoTargetStart`, which resubmits the readers.
+
+Recovery mode differs from the framework default in two deliberate ways. Both are logged:
+
+- **Port disabled.** The device is never reset. If the pipe reset fails, the readers stay stopped until the next queue or device restart.
+- **Device gone.** If the failure status is a device-gone status, nothing is reset.
+
+IN recovery has no budget, which matches the framework default of recovering every time.
+
+The guarantee: in recovery mode, no pipe or port reset by this driver or by the framework on its behalf overlaps another reset, a pipe stop/start, or a queue/D0 transition. Every one of them runs under the lock, or does not run at all.
+
+### OUT trigger
+
+Recovery starts on `USBD_STATUS_XACT_ERROR` from a device that is still present. These never start it:
+
+- cancellations;
+- timeouts;
+- device-gone statuses: `STATUS_NO_SUCH_DEVICE`, `STATUS_DEVICE_NOT_CONNECTED`, `STATUS_DEVICE_REMOVED`, `STATUS_DELETE_PENDING`, `STATUS_DEVICE_DOES_NOT_EXIST`, `STATUS_DEVICE_POWERED_OFF`, and USBD `DEVICE_GONE`;
+- stall, babble, and every other status.
+
+Every status is still counted and logged.
+
+### OUT sequence (work item, under the lock)
+
+1. **Decide.** The work item skips, with a log line, if the pipe is not running, the budget is used up, or the 10 s cooldown has not passed.
+2. **Close admission and drain.** `TransmitFrames` holds a rundown reference for its whole send section, at up to DISPATCH_LEVEL. `ExWaitForRundownProtectionRelease` refuses new sends and waits for sends already in progress. This step exists because a stopped KMDF target queues new sends (`STATUS_WDF_QUEUED`) instead of failing them, and no send may reach a pipe that is being reset.
+3. **Stop.** `WdfIoTargetStop(CancelSentIo)` returns after every sent request's completion routine has run.
+4. **Reset.** `WdfUsbTargetPipeResetSynchronously` issues `URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL` with a 2 s timeout.
+5. **Restart.** Only if the reset succeeded, call `WdfIoTargetStart`. Only if that start succeeded, mark the pipe running, set the post-restart markers and reopen admission.
+
+The log label after a successful start is `pipe restarted, data recovery unverified`, because a successful API call is not delivery. If the reset or the start fails, the failure is logged and kept: the pipe is not running, and sends are refused instead of being queued. Only a normal queue restart or device restart reopens the pipe.
+
+Recovery never resets or cycles the port, never resets the device, never retries a payload, and has no timer or retry loop.
+
+**Budget.** 3 attempts per D0 session, at least 10 s apart.
+
+- The budget resets in `EnterWorkingState` (D0Entry), not on a queue restart.
+- An error that arrives during the cooldown, after the budget is used up, or while the pipe is not running is counted and logged as skipped (1st, 2nd, 4th... occurrence) and never acted on later.
+- An error that arrives while a recovery is pending is counted as coalesced.
+
+**Offered traffic.** After a restart, the driver logs two events:
+
+- `OUT first send offered after pipe restart: +N ms` when the first new send is handed to `WdfRequestSend`;
+- `OUT first success after pipe restart: +N ms after restart, +M ms after the first send offered after it`.
+
+Every request sent before the restart was cancelled by its stop, so these refer only to new traffic. The restart's own phase durations (drain, stop, reset, start) are logged separately.
+
+### Lifecycle
+
+`StopTransmit` is the path used by `NcmTxQueue::Stop`, D0Exit (through `LeaveWorkingState`) and adapter destroy. It does the following:
+
+1. Clears the running flag.
+2. Closes admission.
+3. Stops the pipe.
+4. Releases the lock.
+5. Flushes the work item. The flush must come after the lock is released, because the work item needs the lock. It runs even when there is no pipe.
+
+After that flush nothing can enqueue the work item:
+
+- **OUT side.** The stop completed every completion routine, and admission is closed.
+- **IN side.** `StopReceive` stopped the reader pipe first. That stop waits for the framework reader work item, and the framework queues no new one while the pipe is stopped.
+
+D0Entry re-selects the alternate setting and fetches new pipe handles only after that. The work item reads a pipe only under the lock, and only while that pipe is marked running.
+
+### Time bounds and assumptions
+
+- **Reset requests.** These are the only steps with a time bound: 2 s each.
+- **Drain.** It waits for send sections, which do not block.
+- **Stops.** They wait for the USB stack to complete the cancelled requests, as the existing stops do.
+- **Waiting behind recovery.** A queue stop or D0Exit that arrives during a recovery waits for that recovery to finish. Phase durations are logged so this wait can be measured. No hard bound is claimed for the whole work item.
 
 ## Portable tests (Linux)
 
-Run `python3 tests/out_recovery_probe.py`. It runs as part of `tools/run_portable_tests.py`.
+Run `python3 tests/out_recovery_probe.py`. It also runs as part of `tools/run_portable_tests.py`.
 
-The probe compiles the production functions from `host/device.cpp` and the production class from `host/device.h`. It runs them against a KMDF model under ASan, UBSan and real threads. The model follows the open-source KMDF framework in these points:
+The probe compiles the production functions and class. It runs them against a KMDF model under ASan, UBSan and real threads. The model includes:
 
-- A stopped target queues new sends.
-- A stop with `CancelSentIo` returns only after the completion routines have run.
-- A completion may run inline.
-- A send that returns FALSE gets no completion.
+- stopped-target queuing;
+- inline completion;
+- a stop that waits for completions and for the reader work item;
+- the framework's reader recovery, which on `TRUE` resets the pipe, or the port when the port is disabled, without any driver lock.
 
 The probe covers:
 
-- Every switch value.
-- Classification of each status.
-- Stopped-target queuing, with and without admission control.
-- A sender that races with the drain.
-- Senders during a reset.
-- Inline completion, a FALSE send, and a format failure.
-- Failed reset and failed start.
-- Budget and cooldown.
-- A queue restart compared with a new D0 session.
-- Races between the work item and stop, D0Exit, or a missing pipe.
-- A threaded stress run.
+- each switch value, including recovery without instrumentation;
+- allocation failures;
+- the off state: no lock, gate or in-flight use, and the same I/O trace as the frozen head;
+- status classification;
+- admission racing the drain, and sends during a reset;
+- buffer ownership;
+- failed reset and failed start;
+- budget and cooldown, and the D0-session versus queue-restart budget;
+- races between the work item and stop, D0Exit or a null pipe;
+- IN recovery: the `FALSE` handover, a disabled port, a failed reset, device gone, and a stop that comes first;
+- an IN/OUT/D0Exit race on threads, 150 rounds, checking that resets never overlap;
+- a threaded stress run.
 
-It also compiles the TX functions of the frozen `2327f448cf6c` head and requires switch 0 to produce an identical I/O trace.
-
-Eleven deliberate mutations of `device.cpp` were each caught during development, for example removing the drain, flushing inside the lock, or reopening after a failed start.
-
-**Limits.** Linux shims cannot show KMDF scheduling, IRQL or paging rules, Driver Verifier results, or USB hardware behavior. `NcmTxQueue::Advance`'s caller contract is mirrored, not executed. The WDK constants are checked by `static_assert` only in a real WDK build.
+**Limits.** These tests cannot show KMDF scheduling, IRQL or paging rules, Driver Verifier results, USB hardware behavior, or whether a pipe reset restores Apple's device-mode endpoint. The framework is modeled from its source, not executed. `NcmTxQueue::Advance` is mirrored, not run. The WDK constants and annotations are checked only by a WDK build.
 
 ## Hardware acceptance (owner's local decision)
 
-These criteria are for the owner's local runs. Use circular USB ETW and DebugView, keep the Mac unlocked, and use the existing harness unchanged. That harness stops on a failed pair: a failed pair stays failed, and a failed sustained run is never converted to a pass.
+Run with circular USB ETW and DebugView, the Mac unlocked, and the existing harness unchanged. The harness stops on the first failed pair. That pair and that run stay failed and are never converted to a pass.
 
-**R0: switch absent.** Run a short smoke test on the candidate build:
+**R0: switch absent.** A short smoke test with the candidate build:
 
-- link, address and MTU are correct;
-- ping 3/3;
-- no `OUT ` or `data-path` log lines.
+- link and MTU are correct;
+- ping succeeds 3/3;
+- no `OUT `, `IN ` or `data-path` log lines appear.
 
-This shows that "off" behaves like the frozen head. It is not a regression proof under load.
+**R1: switch `3` (or `2`).** USB3 600 s, at most 3 runs. Stop after the first run in which `OUT recovery ... start` appears.
 
-**R1: switch `3`, or `2` to exclude instrumentation effects.** Run USB3 600 s, up to 3 runs, and stop after the first run in which recovery starts.
+- **Recovery never starts.** The result is inconclusive.
+- **Recovery starts.** Record the restart log line (reset/start status and phase durations) as the API result only. Then run a separate, bounded post-restart probe:
+  - It runs on the same USB attachment. ETW must show no PnP removal and no re-enumeration.
+  - It does not retry the failed payload.
+  - It offers new traffic: ping 3/3 and one fresh 64 MiB checked pair.
+  - Its first send time is where data progress starts to be measured. The driver's `OUT first send offered after pipe restart` line and ETW mark it.
+  - Report it as "post-restart probe", separately from the sustained run.
 
-- **Not triggered.** No `OUT recovery ... start` line appears. This is inconclusive, not a pass.
-- **Triggered.** Keep the original failed pair as failed. Then, as a separately labelled post-recovery check on the same connection, with no re-enumeration and no payload retry, run ping 3/3 and one fresh bounded 64 MiB pair.
+**Data progress after the restart is supported if all of these hold:**
 
-  The hypothesis is **supported** if all of these hold:
-  - the reset status is success;
-  - ETW shows a successful OUT completion within 1 s of the restart;
-  - the post-recovery check passes;
-  - ETW shows no PnP removal and no hub port reset or warm reset for the device;
-  - there are at most 3 attempts.
+- an OUT completion succeeds within 1 s of that first offered send;
+- the post-restart probe passes;
+- ETW shows no PnP removal and no hub port reset or warm reset for the device;
+- there are at most 3 attempts.
 
-  The hypothesis is **refuted** if any of these happen:
-  - the reset succeeds but no OUT completion succeeds within 5 s;
-  - the reset fails or times out;
-  - the error recurs within the cooldown or until the budget is used up;
-  - the post-recovery check fails.
+**Data progress is refuted if any of these happen:**
 
-**Stop and roll back** on any of the following:
+- no OUT completion succeeds within 5 s of the first offered send;
+- the reset fails or times out;
+- the error recurs until the budget is used up;
+- the post-restart probe fails.
+
+If no traffic was offered after the restart, there is no conclusion either way.
+
+**Stop and roll back on any of these:**
 
 - a bugcheck;
-- a stop that hangs for more than 30 s;
+- a stop that hangs longer than 30 s;
 - any port reset or cycle attributable to the driver;
-- more than 3 attempts in one D0 session.
+- more than 3 OUT attempts in one D0 session.
 
-To roll back, delete the value or set it to 0, then restart the device, or reinstall the frozen build.
+To roll back, delete the value or set it to 0, then restart the device. If that is not enough, reinstall the frozen build.
 
-Driver Verifier is not required by this document. Enabling it is the owner's choice.
+Driver Verifier is not required by this document; enabling it is the owner's choice.
