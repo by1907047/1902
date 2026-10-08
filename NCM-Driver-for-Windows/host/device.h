@@ -94,8 +94,8 @@ public:
     );
 
     // Reads the default-off data-path switch. Only recovery mode creates
-    // anything (a wait lock and a work item); if that fails, recovery stays
-    // off and device add continues.
+    // anything (a wait lock, work item and one-shot timer); if that fails,
+    // recovery stays off and device add continues.
     PAGED
     void
     InitializeDataPathControl(
@@ -161,6 +161,10 @@ private:
     static
     EVT_WDF_WORKITEM
         DataPathRecoveryWorkItem;
+
+    static
+    EVT_WDF_TIMER
+        OutRecoveryTimer;
 
     PAGED
     void
@@ -343,6 +347,14 @@ private:
     WDFWORKITEM
         m_DataPathWorkItem = nullptr;
 
+    WDFTIMER
+        m_OutRecoveryTimer = nullptr;
+
+    // Timer/completion paths read this atomically, without the wait lock.
+    // Stop clears it before synchronously draining the timer and work item.
+    LONG
+        m_TxRecoveryEnabled = 0;
+
     // Guarded by m_DataPathLock.
     BOOLEAN
         m_TxAdmissionOpen = TRUE;
@@ -359,9 +371,14 @@ private:
     ULONG64
         m_TxLastRecoveryTime = 0;
 
-    // 1 from an OUT trigger's enqueue until the work item has handled it.
+    // 1 while a genuine OUT fault remains unconsumed, including cooldown.
+    // Consume it while admission is closed, before offering new traffic.
     LONG
         m_TxRecoveryQueued = 0;
+
+    // Guarded by m_DataPathLock; zero when no cooldown delivery is pending.
+    ULONG64
+        m_TxRecoveryDueTime = 0;
 
     LONG
         m_TxRecoveryTriggerStatus = 0;

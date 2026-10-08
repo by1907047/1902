@@ -58,6 +58,7 @@ NEW_FUNCTIONS = ['static\nULONG64\nElapsedMs('] + DATA_PATH_FUNCTIONS + [
     'void\nUsbNcmHostDevice::RequestOutPipeRecovery(',
     'void\nUsbNcmHostDevice::RequestInPipeRecovery(',
     'VOID\nUsbNcmHostDevice::DataPathRecoveryWorkItem(',
+    'VOID\nUsbNcmHostDevice::OutRecoveryTimer(',
     'void\nUsbNcmHostDevice::RecoverDataPipes(',
     'void\nUsbNcmHostDevice::RecoverInPipeLocked(',
     'void\nUsbNcmHostDevice::RecoverOutPipeLocked(',
@@ -112,7 +113,7 @@ SHIM = r'''
 #define NT_SUCCESS(s) ((NTSTATUS)(s)>=0)
 #define NT_FRE_ASSERT(e) assert(e)
 #define NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(e,m) do{NTSTATUS s_=(e);if(!NT_SUCCESS(s_))return s_;}while(0)
-using NTSTATUS=int32_t;using LONG=int32_t;using ULONG=uint32_t;using LONG64=int64_t;using ULONG64=uint64_t;
+using NTSTATUS=int32_t;using LONG=int32_t;using ULONG=uint32_t;using LONG64=int64_t;using ULONG64=uint64_t;using LONGLONG=int64_t;
 using USBD_STATUS=int32_t;using BOOLEAN=bool;using UCHAR=uint8_t;using BYTE=uint8_t;using UINT8=uint8_t;
 using UINT16=uint16_t;using UINT32=uint32_t;using PULONG=ULONG*;using VOID=void;
 constexpr bool TRUE=true,FALSE=false;
@@ -131,6 +132,7 @@ static thread_local bool t_dispatch=false;      // send or completion path
 static thread_local bool t_inCompletion=false;
 static thread_local int t_locksHeld=0;
 static thread_local bool t_inReaderCallback=false;   // framework reader work item, inside the callback
+static thread_local bool t_inTimer=false;
 static std::atomic<int> g_lockAcquires{0},g_lockCreates{0},g_rundownOps{0};
 static std::atomic<int> g_resetDepth{0},g_maxResetDepth{0};
 struct ResetScope{ResetScope(){int d=++g_resetDepth;int m=g_maxResetDepth;while(d>m&&!g_maxResetDepth.compare_exchange_weak(m,d)){}}~ResetScope(){--g_resetDepth;}};
@@ -161,13 +163,16 @@ static void AdvanceSeconds(int s){g_clock+=ULONG64(s)*10000000ull;}
 // --- rundown protection (admission gate) ---
 struct EX_RUNDOWN_REF{LONG active;bool closed;bool closing;};
 static std::mutex g_rundownLock;static std::condition_variable g_rundownCv;
+static std::function<void()> g_admissionOpenHook;
 static void ExInitializeRundownProtection(EX_RUNDOWN_REF* r){std::lock_guard<std::mutex> l(g_rundownLock);*r={0,false,false};}
 static BOOLEAN ExAcquireRundownProtection(EX_RUNDOWN_REF* r){++g_rundownOps;std::lock_guard<std::mutex> l(g_rundownLock);if(r->closed||r->closing)return false;++r->active;return true;}
 static void ExReleaseRundownProtection(EX_RUNDOWN_REF* r){++g_rundownOps;std::lock_guard<std::mutex> l(g_rundownLock);assert(r->active>0);--r->active;g_rundownCv.notify_all();}
 static void ExWaitForRundownProtectionRelease(EX_RUNDOWN_REF* r){
  AssertPassive();std::unique_lock<std::mutex> l(g_rundownLock);assert(!r->closed);r->closing=true;
  g_rundownCv.wait(l,[&]{return r->active==0;});r->closing=false;r->closed=true;}
-static void ExReInitializeRundownProtection(EX_RUNDOWN_REF* r){std::lock_guard<std::mutex> l(g_rundownLock);assert(r->closed&&r->active==0);r->closed=false;}
+static void ExReInitializeRundownProtection(EX_RUNDOWN_REF* r){
+ {std::lock_guard<std::mutex> l(g_rundownLock);assert(r->closed&&r->active==0);r->closed=false;}
+ auto hook=g_admissionOpenHook;if(hook)hook();}
 static bool GateClosing(EX_RUNDOWN_REF* r){std::lock_guard<std::mutex> l(g_rundownLock);return r->closing||r->closed;}
 
 // --- WDF objects ---
@@ -266,21 +271,23 @@ static NTSTATUS WdfUsbTargetPipeResetSynchronously(WDFUSBPIPE p,WDFREQUEST r,WDF
 // Wait locks: PASSIVE only, never recursive, never on the send/completion path.
 struct FakeWaitLock{std::mutex m;std::atomic<std::thread::id> owner{};};
 using WDFWAITLOCK=FakeWaitLock*;
-struct WDF_OBJECT_ATTRIBUTES{void* ParentObject;};
-#define WDF_OBJECT_ATTRIBUTES_INIT(a) ((a)->ParentObject=nullptr)
+enum WDF_EXECUTION_LEVEL{WdfExecutionLevelInheritFromParent,WdfExecutionLevelDispatch};
+struct WDF_OBJECT_ATTRIBUTES{void* ParentObject;WDF_EXECUTION_LEVEL ExecutionLevel;};
+#define WDF_OBJECT_ATTRIBUTES_INIT(a) ((a)->ParentObject=nullptr,(a)->ExecutionLevel=WdfExecutionLevelInheritFromParent)
 #define WDF_NO_OBJECT_ATTRIBUTES nullptr
 static NTSTATUS g_waitLockCreateStatus=STATUS_SUCCESS;
 static NTSTATUS WdfWaitLockCreate(WDF_OBJECT_ATTRIBUTES* a,WDFWAITLOCK* l){assert(a&&a->ParentObject);++g_lockCreates;
  if(!NT_SUCCESS(g_waitLockCreateStatus))return g_waitLockCreateStatus;*l=new FakeWaitLock;return STATUS_SUCCESS;}
-static void WdfWaitLockAcquire(WDFWAITLOCK l,void*){AssertPassive();assert(!t_inCompletion&&!t_inReaderCallback);assert(l&&l->owner.load()!=std::this_thread::get_id());
+static void WdfWaitLockAcquire(WDFWAITLOCK l,void*){AssertPassive();assert(!t_inCompletion&&!t_inReaderCallback&&!t_inTimer);assert(l&&l->owner.load()!=std::this_thread::get_id());
  ++g_lockAcquires;
  l->m.lock();l->owner=std::this_thread::get_id();++t_locksHeld;}
 static void WdfWaitLockRelease(WDFWAITLOCK l){assert(l->owner.load()==std::this_thread::get_id());l->owner=std::thread::id();--t_locksHeld;l->m.unlock();}
 
-// Work items: run by a test "worker" or by flush; never inline at enqueue.
+// Work items: run by test workers or by flush; never inline at enqueue.
+// KMDF can run another callback for the same work item before one returns.
 struct FakeWorkItem;using WDFWORKITEM=FakeWorkItem*;
 using WorkFn=void(WDFWORKITEM);
-struct FakeWorkItem{WorkFn* fn=nullptr;FakeDevice* parent=nullptr;bool queued=false;bool running=false;int enqueues=0;};
+struct FakeWorkItem{WorkFn* fn=nullptr;FakeDevice* parent=nullptr;bool queued=false;int running=0;int enqueues=0;};
 typedef VOID EVT_WDF_WORKITEM(WDFWORKITEM);
 struct WDF_WORKITEM_CONFIG{WorkFn* EvtWorkItemFunc;bool AutomaticSerialization;};
 #define WDF_WORKITEM_CONFIG_INIT(c,f) ((c)->EvtWorkItemFunc=(f),(c)->AutomaticSerialization=true)
@@ -289,17 +296,51 @@ static NTSTATUS WdfWorkItemCreate(WDF_WORKITEM_CONFIG* c,WDF_OBJECT_ATTRIBUTES* 
  AssertPassive();assert(!c->AutomaticSerialization&&a&&a->ParentObject);++g_workItemCreates;
  if(!NT_SUCCESS(g_workItemCreateStatus))return g_workItemCreateStatus;
  *w=new FakeWorkItem;(*w)->fn=c->EvtWorkItemFunc;(*w)->parent=(FakeDevice*)a->ParentObject;return STATUS_SUCCESS;}
-static void WdfWorkItemEnqueue(WDFWORKITEM w){std::lock_guard<std::mutex> l(g_m);++w->enqueues;w->queued=true;g_cv.notify_all();}
+static std::function<void()> g_timerEnqueueHook;
+static void WdfWorkItemEnqueue(WDFWORKITEM w){
+ if(t_inTimer){auto hook=g_timerEnqueueHook;if(hook)hook();}
+ std::lock_guard<std::mutex> l(g_m);++w->enqueues;w->queued=true;g_cv.notify_all();}
 static WDFOBJECT WdfWorkItemGetParentObject(WDFWORKITEM w){return w->parent;}
 static bool RunQueuedWorkItem(WDFWORKITEM w){
- {std::lock_guard<std::mutex> l(g_m);if(!w->queued||w->running)return false;w->queued=false;w->running=true;}
+ {std::lock_guard<std::mutex> l(g_m);if(!w->queued)return false;w->queued=false;++w->running;}
  bool old=t_dispatch;t_dispatch=false;w->fn(w);t_dispatch=old;
- std::lock_guard<std::mutex> l(g_m);w->running=false;g_cv.notify_all();return true;}
+ std::lock_guard<std::mutex> l(g_m);--w->running;g_cv.notify_all();return true;}
 static void WdfWorkItemFlush(WDFWORKITEM w){
  AssertPassive();assert(w&&t_locksHeld==0); // a queued item needs the data-path lock
- Trace("flush");RunQueuedWorkItem(w);
- std::unique_lock<std::mutex> l(g_m);g_cv.wait(l,[&]{return !w->running&&!w->queued;});}
+ Trace("flush");for(;;){RunQueuedWorkItem(w);
+  std::unique_lock<std::mutex> l(g_m);if(!w->running&&!w->queued)return;
+  g_cv.wait(l,[&]{return !w->running||w->queued;});}}
 static int Enqueues(WDFWORKITEM w){std::lock_guard<std::mutex> l(g_m);return w?w->enqueues:0;}
+
+// Recovery-only one-shot timer. The DPC never waits for the work item or
+// takes DataPathLock, so Stop(TRUE) can drain it while holding that lock.
+struct FakeTimer;using WDFTIMER=FakeTimer*;
+using TimerFn=void(WDFTIMER);typedef VOID EVT_WDF_TIMER(WDFTIMER);
+struct FakeTimer{TimerFn* fn=nullptr;FakeDevice* parent=nullptr;bool armed=false;bool stopping=false;int running=0;ULONG64 due=0;int starts=0;int stops=0;};
+struct WDF_TIMER_CONFIG{TimerFn* EvtTimerFunc;bool AutomaticSerialization;};
+#define WDF_TIMER_CONFIG_INIT(c,f) ((c)->EvtTimerFunc=(f),(c)->AutomaticSerialization=true)
+static NTSTATUS g_timerCreateStatus=STATUS_SUCCESS;static int g_timerCreates=0,g_timerCalls=0;
+static std::function<void()> g_timerDpcHook;
+static NTSTATUS WdfTimerCreate(WDF_TIMER_CONFIG* c,WDF_OBJECT_ATTRIBUTES* a,WDFTIMER* timer){
+ AssertPassive();assert(!c->AutomaticSerialization&&a&&a->ParentObject&&a->ExecutionLevel==WdfExecutionLevelDispatch);++g_timerCreates;
+ if(!NT_SUCCESS(g_timerCreateStatus))return g_timerCreateStatus;
+ *timer=new FakeTimer;(*timer)->fn=c->EvtTimerFunc;(*timer)->parent=(FakeDevice*)a->ParentObject;return STATUS_SUCCESS;}
+static WDFOBJECT WdfTimerGetParentObject(WDFTIMER timer){return timer->parent;}
+static BOOLEAN WdfTimerStart(WDFTIMER timer,LONGLONG due){
+ assert(timer&&due<0&&!t_inTimer);++g_timerCalls;Trace("timer-start");
+ std::lock_guard<std::mutex> l(g_m);assert(!timer->stopping);bool old=timer->armed;
+ timer->armed=true;timer->due=g_clock.load()+ULONG64(-due);++timer->starts;return old;}
+static BOOLEAN WdfTimerStop(WDFTIMER timer,BOOLEAN wait){
+ assert(timer&&!t_inTimer);if(wait)AssertPassive();++g_timerCalls;Trace("timer-stop");
+ std::unique_lock<std::mutex> l(g_m);assert(!timer->stopping);timer->stopping=true;
+ bool old=timer->armed;timer->armed=false;++timer->stops;
+ if(wait)g_cv.wait(l,[&]{return timer->running==0;});timer->stopping=false;return old;}
+static bool FireTimer(WDFTIMER timer,bool early=false){
+ {std::lock_guard<std::mutex> l(g_m);if(!timer->armed||(!early&&g_clock.load()<timer->due))return false;
+  timer->armed=false;++timer->running;}
+ {DispatchScope scope;t_inTimer=true;auto hook=g_timerDpcHook;if(hook)hook();timer->fn(timer);t_inTimer=false;}
+ {std::lock_guard<std::mutex> l(g_m);--timer->running;g_cv.notify_all();}return true;}
+static bool TimerArmed(WDFTIMER timer){std::lock_guard<std::mutex> l(g_m);return timer&&timer->armed;}
 
 // Registry
 struct UNICODE_STRING{const wchar_t* Buffer;};
@@ -391,7 +432,7 @@ int main(){
  PoolInit(16);Rig rig;
 #ifndef FROZEN_HEAD
  g_regHasValue=false;rig.host->InitializeDataPathControl();
- assert(rig.host->m_DataPathDebug==0&&rig.host->m_DataPathWorkItem==nullptr&&rig.host->m_DataPathLock==nullptr);
+ assert(rig.host->m_DataPathDebug==0&&rig.host->m_DataPathWorkItem==nullptr&&rig.host->m_DataPathLock==nullptr&&rig.host->m_OutRecoveryTimer==nullptr);
 #endif
  FakeTarget* t=&rig.pipe.target;
  UsbNcmHostDevice::StartReceive(&rig.dev);
@@ -428,13 +469,13 @@ int main(){
  // Only the timeout label changed; no new message appears with switch 0.
  assert(LogsWith("TX timed out")==1&&LogsWith("OUT ")==0&&LogsWith("IN ")==0&&LogsWith("data-path")==0&&LogsWith("TX dropped")==0);
  // Off means off: no lock, work item, admission gate or in-flight accounting.
- assert(rig.host->m_TxInflight==0&&g_lockCreates==0&&g_lockAcquires==0&&g_rundownOps==0&&g_workItemCreates==0);
+ assert(rig.host->m_TxInflight==0&&g_lockCreates==0&&g_lockAcquires==0&&g_rundownOps==0&&g_workItemCreates==0&&g_timerCreates==0&&g_timerCalls==0);
 #endif
 }
 '''
 
 MAIN = r'''
-static int checks=0;
+static std::atomic<int> checks{0};
 #define CHECK(e) do{++checks;if(!(e)){std::fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#e);std::abort();}}while(0)
 using U=UsbNcmHostDevice;
 static void Reset(){std::lock_guard<std::mutex> l(g_traceLock);g_trace.clear();g_logs.clear();}
@@ -449,21 +490,23 @@ static void SwitchValues(){
   {true,3,STATUS_SUCCESS,3},{true,4,STATUS_SUCCESS,0},{true,7,STATUS_SUCCESS,0},{true,0xffffffffu,STATUS_SUCCESS,0},
   {true,3,STATUS_OBJECT_NAME_NOT_FOUND,0}};
  for(auto& c:cases){
-  Reset();g_regOpenStatus=c.open;int creates=g_workItemCreates;Rig* r=NewRig(c.has,c.value);g_regOpenStatus=STATUS_SUCCESS;
+  Reset();g_regOpenStatus=c.open;int creates=g_workItemCreates,timers=g_timerCreates;Rig* r=NewRig(c.has,c.value);g_regOpenStatus=STATUS_SUCCESS;
   CHECK(r->host->m_DataPathDebug==c.expect);
   CHECK((r->host->m_DataPathWorkItem!=nullptr)==((c.expect&2)!=0));
   CHECK((r->host->m_DataPathLock!=nullptr)==((c.expect&2)!=0));
+  CHECK((r->host->m_OutRecoveryTimer!=nullptr)==((c.expect&2)!=0));
   CHECK(g_workItemCreates-creates==((c.expect&2)?1:0));
+  CHECK(g_timerCreates-timers==((c.expect&2)?1:0));
   CHECK(r->host->m_TxAdmissionOpen==!(c.expect&2)); // closed until a successful start
   CHECK(LogsWith("data-path debug")==(c.expect!=0)+(c.has&&c.value!=c.expect&&NT_SUCCESS(c.open)));
  }
  // Recovery objects that cannot be created switch recovery off; device add
  // still succeeds (the function cannot fail) and the off paths are used.
- for(int which=0;which<2;++which)for(ULONG v:{2u,3u}){
-  Reset();(which?g_workItemCreateStatus:g_waitLockCreateStatus)=STATUS_INSUFFICIENT_RESOURCES;
+ for(int which=0;which<3;++which)for(ULONG v:{2u,3u}){
+  Reset();(which==0?g_waitLockCreateStatus:which==1?g_workItemCreateStatus:g_timerCreateStatus)=STATUS_INSUFFICIENT_RESOURCES;
   int acquires=g_lockAcquires;Rig* r=NewRig(true,v);
-  g_workItemCreateStatus=g_waitLockCreateStatus=STATUS_SUCCESS;
-  CHECK(r->host->m_DataPathDebug==(v&1)&&r->host->m_DataPathWorkItem==nullptr&&r->host->m_DataPathLock==nullptr);
+  g_workItemCreateStatus=g_waitLockCreateStatus=g_timerCreateStatus=STATUS_SUCCESS;
+  CHECK(r->host->m_DataPathDebug==(v&1)&&r->host->m_DataPathWorkItem==nullptr&&r->host->m_DataPathLock==nullptr&&r->host->m_OutRecoveryTimer==nullptr);
   CHECK(r->host->m_TxAdmissionOpen&&LogsWith("recovery setup failed")==1&&g_lockAcquires==acquires);
   U::StartTransmit(&r->dev);CHECK(NT_SUCCESS(Send(&r->dev)));
   CompleteSent(&r->pipe.target,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);U::StopTransmit(&r->dev);
@@ -477,7 +520,7 @@ static void SwitchValues(){
 // target still queues sends exactly as before.
 static void NoRecoveryModes(){
  for(ULONG v:{0u,1u}){
-  Reset();int acquires=g_lockAcquires,rundown=g_rundownOps,locks=g_lockCreates;
+  Reset();int acquires=g_lockAcquires,rundown=g_rundownOps,locks=g_lockCreates,timers=g_timerCreates,timerCalls=g_timerCalls;
   Rig* r=NewRig(true,v);FakeTarget* t=&r->pipe.target;U::StartReceive(&r->dev);U::StartTransmit(&r->dev);
   Send(&r->dev);Send(&r->dev);CompleteSent(t,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);
   CHECK(r->host->m_TxCompletionFailures==1&&r->host->m_TxRecoveryQueued==0);
@@ -495,9 +538,10 @@ static void NoRecoveryModes(){
   CHECK(TraceCount("kmdf-port-reset")==1&&ReadersActive(r));
   r->host->BeginD0Session();CHECK(r->host->LeaveWorkingState()==STATUS_SUCCESS);ExpectAllReturned(r);
   CHECK(g_lockAcquires==acquires&&g_rundownOps==rundown&&g_lockCreates==locks);
+  CHECK(g_timerCreates==timers&&g_timerCalls==timerCalls&&r->host->m_OutRecoveryTimer==nullptr);
  }
  std::puts("switch 0/1: no recovery, stopped target still queues, framework reader recovery kept, "
-           "no lock/gate use, instrumentation only with 0x1 PASS");
+           "no lock/gate/timer use, instrumentation only with 0x1 PASS");
 }
 
 static void Classification(){
@@ -583,20 +627,127 @@ static void Budget(){
  Reset();Rig* r=NewRig(true,2);U::StartTransmit(&r->dev);r->host->BeginD0Session();
  Trigger(r);CHECK(r->host->m_TxRecoveryAttempts==1);
  AdvanceSeconds(5);Trigger(r);                                        // inside the cooldown
- CHECK(r->host->m_TxRecoveryAttempts==1&&TraceCount("reset")==1&&LogsWith("OUT recovery skipped")==1);
- CHECK(Running(r)&&r->host->m_TxRecoveryQueued==0);
- AdvanceSeconds(6);Trigger(r);CHECK(r->host->m_TxRecoveryAttempts==2);
+ CHECK(r->host->m_TxRecoveryAttempts==1&&TraceCount("reset")==1&&LogsWith("OUT recovery deferred")==1);
+ CHECK(Running(r)&&r->host->m_TxRecoveryQueued==1&&TimerArmed(r->host->m_OutRecoveryTimer));
+ AdvanceSeconds(6);CHECK(FireTimer(r->host->m_OutRecoveryTimer));
+ CHECK(RunQueuedWorkItem(r->host->m_DataPathWorkItem)&&r->host->m_TxRecoveryAttempts==2);
  AdvanceSeconds(11);Trigger(r);CHECK(r->host->m_TxRecoveryAttempts==3);
  AdvanceSeconds(11);Trigger(r);CHECK(r->host->m_TxRecoveryAttempts==3&&TraceCount("reset")==3);
- CHECK(r->host->m_TxRecoverySkipped==2);
+ CHECK(r->host->m_TxRecoverySkipped==1);
  // Queue stop/start inside the D0 session does not replenish the budget.
  U::StopTransmit(&r->dev);U::StartTransmit(&r->dev);AdvanceSeconds(11);Trigger(r);
- CHECK(r->host->m_TxRecoveryAttempts==3&&TraceCount("reset")==3&&r->host->m_TxRecoverySkipped==3);
+ CHECK(r->host->m_TxRecoveryAttempts==3&&TraceCount("reset")==3&&r->host->m_TxRecoverySkipped==2);
  // A new D0 session does.
  U::StopTransmit(&r->dev);r->host->BeginD0Session();U::StartTransmit(&r->dev);Trigger(r);
  CHECK(r->host->m_TxRecoveryAttempts==1&&TraceCount("reset")==4);
  U::StopTransmit(&r->dev);ExpectAllReturned(r);
- std::puts("budget: 10 s cooldown skip logged, 3 per D0 session, queue restart does not replenish PASS");
+ std::puts("budget: cooldown fault deferred, 3 per D0 session, queue restart does not replenish PASS");
+}
+
+static Rig* DeferredRig(){
+ Rig* r=NewRig(true,3);U::StartTransmit(&r->dev);Trigger(r);AdvanceSeconds(1);Trigger(r);
+ CHECK(r->host->m_TxRecoveryAttempts==1&&r->host->m_TxRecoveryQueued==1);
+ CHECK(TimerArmed(r->host->m_OutRecoveryTimer)&&r->host->m_OutRecoveryTimer->starts==1);
+ return r;
+}
+
+// No later XACT_ERROR is needed. Timeouts and an old/out-of-order success
+// must not consume the actual fault which is waiting for cooldown delivery.
+static void DeferredWithoutFreshError(){
+ Reset();Rig* r=DeferredRig();auto* w=r->host->m_DataPathWorkItem;auto* timer=r->host->m_OutRecoveryTimer;
+ for(int i=0;i<8;++i)Send(&r->dev);
+ CompleteSent(&r->pipe.target,7,STATUS_IO_TIMEOUT,USBD_STATUS_CANCELED);
+ CompleteSent(&r->pipe.target,1,STATUS_SUCCESS,0);
+ CHECK(r->host->m_TxRecoveryQueued==1&&!RunQueuedWorkItem(w)&&timer->starts==1);
+ // Duplicate faults are remembered in the same pending record, not timers.
+ int enq=Enqueues(w);
+ for(int i=0;i<10;++i){Send(&r->dev);CompleteSent(&r->pipe.target,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);}
+ CHECK(Enqueues(w)==enq&&timer->starts==1&&r->host->m_TxRecoveryAttempts==1);
+ AdvanceSeconds(8);CHECK(!FireTimer(timer));
+ AdvanceSeconds(1);CHECK(FireTimer(timer)&&RunQueuedWorkItem(w));
+ CHECK(r->host->m_TxRecoveryAttempts==2&&TraceCount("reset")==2&&r->host->m_TxRecoveryQueued==0);
+ CHECK(!TimerArmed(timer)&&r->host->m_TxRecoveryDueTime==0);
+ U::StopTransmit(&r->dev);ExpectAllReturned(r);
+ // An early delivery must retain pending and rearm only the remainder.
+ Reset();r=DeferredRig();timer=r->host->m_OutRecoveryTimer;w=r->host->m_DataPathWorkItem;
+ CHECK(FireTimer(timer,true)&&RunQueuedWorkItem(w));
+ CHECK(r->host->m_TxRecoveryAttempts==1&&r->host->m_TxRecoveryQueued==1&&TimerArmed(timer));
+ CHECK(timer->due==r->host->m_TxLastRecoveryTime+Apple1902::OutRecoveryCooldown);
+ AdvanceSeconds(9);CHECK(FireTimer(timer)&&RunQueuedWorkItem(w)&&r->host->m_TxRecoveryAttempts==2);
+ U::StopTransmit(&r->dev);ExpectAllReturned(r);
+ std::puts("deferred: timeout-only tail / old success cannot consume fault, duplicates coalesce, early timer rearmed PASS");
+}
+
+// Open the gate while the original recovery callback still owns the lock.
+// A fresh inline/fast completion must claim a new fault; a second callback
+// is allowed to start now and wait on DataPathLock before the first returns.
+static void ReopenFaultRace(){
+ for(bool inlineCompletion:{true,false}){
+  Reset();Rig* r=NewRig(true,3);U::StartTransmit(&r->dev);
+  Send(&r->dev);CompleteSent(&r->pipe.target,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);
+  auto* w=r->host->m_DataPathWorkItem;int enq=Enqueues(w);std::thread second;
+  g_admissionOpenHook=[&]{
+   CHECK(r->host->m_TxRecoveryQueued==0); // old fault consumed before gate opens
+   if(inlineCompletion){g_sendMode=SendMode::InlineXact;CHECK(NT_SUCCESS(Send(&r->dev)));g_sendMode=SendMode::Pend;}
+   else {CHECK(NT_SUCCESS(Send(&r->dev)));std::thread completion([&]{CompleteSent(&r->pipe.target,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);});completion.join();}
+   CHECK(Enqueues(w)==enq+1&&r->host->m_TxRecoveryQueued==1);
+   second=std::thread([&]{CHECK(RunQueuedWorkItem(w));});
+  };
+  CHECK(RunQueuedWorkItem(w));g_admissionOpenHook=nullptr;second.join();
+  CHECK(r->host->m_TxRecoveryQueued==1&&TimerArmed(r->host->m_OutRecoveryTimer));
+  CHECK(r->host->m_TxRecoveryAttempts==1&&r->host->m_TxRecoveryCoalesced==0);
+  AdvanceSeconds(10);CHECK(FireTimer(r->host->m_OutRecoveryTimer)&&RunQueuedWorkItem(w));
+  CHECK(r->host->m_TxRecoveryAttempts==2&&r->host->m_TxRecoveryQueued==0);
+  U::StopTransmit(&r->dev);ExpectAllReturned(r);
+ }
+ std::puts("reopen race: inline / fast new XACT preserved before original callback returns; overlapping callback serialized PASS");
+}
+
+static void DeferredStopAndD0(){
+ for(bool d0Exit:{false,true}){
+  Reset();Rig* r=DeferredRig();auto* timer=r->host->m_OutRecoveryTimer;auto* w=r->host->m_DataPathWorkItem;
+  int resets=TraceCount("reset");
+  if(d0Exit)CHECK(r->host->LeaveWorkingState()==STATUS_SUCCESS);else U::StopTransmit(&r->dev);
+  CHECK(!TimerArmed(timer)&&r->host->m_TxRecoveryQueued==0&&r->host->m_TxRecoveryDueTime==0);
+  CHECK(r->host->m_TxRecoveryEnabled==0&&!r->host->m_TxAdmissionOpen);
+  AdvanceSeconds(20);CHECK(!FireTimer(timer)&&!RunQueuedWorkItem(w)&&TraceCount("reset")==resets);
+  // A fresh D0/session must have no old delivery or cause resurrected.
+  r->host->BeginD0Session();U::StartTransmit(&r->dev);
+  CHECK(r->host->m_TxRecoveryAttempts==0&&r->host->m_TxRecoveryEnabled==1);
+  CHECK(!FireTimer(timer)&&!RunQueuedWorkItem(w)&&r->host->m_TxRecoveryQueued==0);
+  U::StopTransmit(&r->dev);ExpectAllReturned(r);
+ }
+ // Concurrent lifecycle stop calls must serialize TimerStop(TRUE).
+ Reset();Rig* r=DeferredRig();std::thread a([&]{U::StopTransmit(&r->dev);});
+ std::thread b([&]{U::StopTransmit(&r->dev);});a.join();b.join();
+ CHECK(!TimerArmed(r->host->m_OutRecoveryTimer)&&r->host->m_TxRecoveryEnabled==0);
+ ExpectAllReturned(r);
+ std::puts("deferred lifecycle: stop/D0Exit drain timer, no stale delivery after D0Entry, duplicate stops serialize PASS");
+}
+
+// Pause DPC both before its enabled check and after the check/before enqueue.
+// Stop(TRUE) must drain either case; even the late enqueue is flushed only
+// after releasing DataPathLock, without another reset or a revived timer.
+static void TimerStopRace(){
+ for(bool afterEnabledCheck:{false,true}){
+  Reset();Rig* r=DeferredRig();auto* timer=r->host->m_OutRecoveryTimer;auto* w=r->host->m_DataPathWorkItem;
+  std::mutex m;std::condition_variable cv;bool paused=false,release=false;
+  std::atomic<bool> stopped{false};int enq=Enqueues(w),resets=TraceCount("reset");
+  auto hook=[&]{std::unique_lock<std::mutex> l(m);paused=true;cv.notify_all();cv.wait(l,[&]{return release;});};
+  if(afterEnabledCheck)g_timerEnqueueHook=hook;else g_timerDpcHook=hook;
+  AdvanceSeconds(9);std::thread dpc([&]{CHECK(FireTimer(timer));});
+  {std::unique_lock<std::mutex> l(m);cv.wait(l,[&]{return paused;});}
+  std::thread stop([&]{U::StopTransmit(&r->dev);stopped=true;});
+  auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
+  while(TraceCount("timer-stop")==0&&std::chrono::steady_clock::now()<deadline)std::this_thread::yield();
+  CHECK(TraceCount("timer-stop")==1&&!stopped.load());
+  {std::lock_guard<std::mutex> l(m);release=true;cv.notify_all();}
+  dpc.join();stop.join();g_timerEnqueueHook=nullptr;g_timerDpcHook=nullptr;
+  CHECK(stopped&&Enqueues(w)==enq+(afterEnabledCheck?1:0));
+  CHECK(r->host->m_TxRecoveryQueued==0&&!TimerArmed(timer)&&!RunQueuedWorkItem(w)&&TraceCount("reset")==resets);
+  ExpectAllReturned(r);
+ }
+ std::puts("timer-stop race: precheck and late-DPC enqueue drained; no lock inversion, reset or resurrection PASS");
 }
 
 // The lifecycle wins over a queued work item: it never touches the pipe.
@@ -606,7 +757,7 @@ static void StopAndRemovalRaces(){
   Send(&r->dev);Send(&r->dev);CompleteSent(&r->pipe.target,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);
   CHECK(Enqueues(w)==1);
   if(path==0)U::StopTransmit(&r->dev);else CHECK(r->host->LeaveWorkingState()==STATUS_SUCCESS);
-  CHECK(TraceCount("stop")==1&&TraceCount("reset")==0&&LogsWith("OUT recovery skipped")==1);
+  CHECK(TraceCount("stop")==1&&TraceCount("reset")==0&&LogsWith("pending recovery cancelled by stop")==1);
   CHECK(r->host->m_TxRecoveryQueued==0&&!RunQueuedWorkItem(w));
   r->pipe.valid=false;                    // SelectSetting on the next D0Entry drops the pipe
   int enq=Enqueues(w);CHECK(Send(&r->dev)==STATUS_DEVICE_NOT_READY&&Enqueues(w)==enq);
@@ -616,7 +767,7 @@ static void StopAndRemovalRaces(){
  Reset();Rig* r=NewRig(true,3);r->host->m_DataBulkOutPipe=nullptr;r->pipe.valid=false;
  U::StartTransmit(&r->dev);CHECK(!Running(r)&&Send(&r->dev)==STATUS_DEVICE_NOT_READY);
  r->host->RequestOutPipeRecovery(STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);
- U::StopTransmit(&r->dev);CHECK(LogsWith("OUT recovery skipped")==1&&r->host->m_TxRecoveryQueued==0);
+ U::StopTransmit(&r->dev);CHECK(LogsWith("pending recovery cancelled by stop")==1&&r->host->m_TxRecoveryQueued==0);
  CHECK(r->host->LeaveWorkingState()==STATUS_SUCCESS);ExpectAllReturned(r);
  std::puts("stop/D0Exit/null pipe: queued work item skips, flush outside lock, no late enqueue, no stale pipe PASS");
 }
@@ -801,8 +952,9 @@ int main(){
  PoolInit(32);
  SwitchValues();NoRecoveryModes();Classification();
  RecoveryCycle(2);RecoveryCycle(3);FailedResetAndStart();Budget();
+ DeferredWithoutFreshError();ReopenFaultRace();DeferredStopAndD0();TimerStopRace();
  StopAndRemovalRaces();InlineCompletion();AdmissionRace();InReaderRecovery();InOutRace();InFailureStormStops();PostRestartMarkerRace();Stress();
- std::printf("OUT recovery probe: %d checks, 0 failures\n",checks);
+ std::printf("OUT recovery probe: %d checks, 0 failures\n",checks.load());
 }
 '''
 

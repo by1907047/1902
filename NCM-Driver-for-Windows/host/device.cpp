@@ -934,6 +934,7 @@ UsbNcmHostDevice::StartTransmit(
         if (NT_SUCCESS(status))
         {
             hostDevice->m_TxPipeRunning = TRUE;
+            InterlockedExchange(&hostDevice->m_TxRecoveryEnabled, 1);
             hostDevice->OpenTxAdmissionLocked();
         }
         else
@@ -963,6 +964,7 @@ UsbNcmHostDevice::StopTransmit(
     else
     {
         WdfWaitLockAcquire(hostDevice->m_DataPathLock, nullptr);
+        InterlockedExchange(&hostDevice->m_TxRecoveryEnabled, 0);
         hostDevice->m_TxPipeRunning = FALSE;
         // A stopped target queues new sends instead of failing them.
         hostDevice->CloseTxAdmissionLocked();
@@ -970,12 +972,24 @@ UsbNcmHostDevice::StopTransmit(
         {
             StopPipe(hostDevice->m_DataBulkOutPipe);
         }
+        // The DPC only enqueues work: it never takes this lock or waits.
+        // Keeping the lock here serializes duplicate stops and prevents a
+        // worker from rearming the timer while it is being drained.
+        WdfTimerStop(hostDevice->m_OutRecoveryTimer, TRUE);
+        if (InterlockedExchange(&hostDevice->m_TxRecoveryQueued, 0) != 0)
+        {
+            DbgPrint("Sideline1902: OUT pending recovery cancelled by stop; deferred %d, attempts %lu/%u\n",
+                     hostDevice->m_TxRecoveryDueTime != 0,
+                     hostDevice->m_TxRecoveryAttempts, Apple1902::MaxOutRecoveriesPerD0);
+        }
+        hostDevice->m_TxRecoveryDueTime = 0;
         WdfWaitLockRelease(hostDevice->m_DataPathLock);
 
         // Outside the lock, which a queued work item needs. StopPipe
         // returned after every sent request's completion routine and
-        // admission is closed, so no OUT completion can enqueue the work
-        // item until a later StartTransmit. Runs for a null pipe as well.
+        // admission is closed and the timer is drained, so no OUT source
+        // can enqueue the work item until a later StartTransmit. Runs for
+        // a null pipe as well.
         WdfWorkItemFlush(hostDevice->m_DataPathWorkItem);
     }
 
@@ -1301,11 +1315,24 @@ UsbNcmHostDevice::InitializeDataPathControl(
             status = WdfWorkItemCreate(&config, &attributes, &m_DataPathWorkItem);
         }
 
+        if (NT_SUCCESS(status))
+        {
+            WDF_TIMER_CONFIG config;
+            WDF_TIMER_CONFIG_INIT(&config, UsbNcmHostDevice::OutRecoveryTimer);
+            // A nonblocking DPC: automatic device serialization could make
+            // Stop's synchronous timer drain wait on a lifecycle callback.
+            config.AutomaticSerialization = FALSE;
+            attributes.ExecutionLevel = WdfExecutionLevelDispatch;
+            status = WdfTimerCreate(&config, &attributes, &m_OutRecoveryTimer);
+        }
+
         if (!NT_SUCCESS(status))
         {
-            // Both objects are parented to the device and go with it.
+            // All objects are parented to the device and go with it. None
+            // was enqueued or armed before all allocations succeeded.
             m_DataPathLock = nullptr;
             m_DataPathWorkItem = nullptr;
+            m_OutRecoveryTimer = nullptr;
             m_DataPathDebug &= ~Apple1902::DataPathOutPipeRecovery;
             DbgPrint("Sideline1902: data-path recovery setup failed 0x%08X; recovery off\n", status);
         }
@@ -1343,6 +1370,7 @@ UsbNcmHostDevice::BeginD0Session(
         WdfWaitLockAcquire(m_DataPathLock, nullptr);
         m_TxRecoveryAttempts = 0;
         m_TxLastRecoveryTime = 0;
+        m_TxRecoveryDueTime = 0;
         InterlockedExchange64(&m_TxRestartTime, 0);
         WdfWaitLockRelease(m_DataPathLock);
     }
@@ -1429,6 +1457,24 @@ UsbNcmHostDevice::DataPathRecoveryWorkItem(
 )
 {
     NcmGetHostDeviceFromHandle((WDFDEVICE)WdfWorkItemGetParentObject(workItem))->RecoverDataPipes();
+}
+
+_Use_decl_annotations_
+VOID
+UsbNcmHostDevice::OutRecoveryTimer(
+    WDFTIMER timer
+)
+{
+    UsbNcmHostDevice * hostDevice = NcmGetHostDeviceFromHandle(
+        (WDFDEVICE)WdfTimerGetParentObject(timer));
+
+    // No lock, pipe access or wait on the DPC path. Stop first disables
+    // this source, then waits for this callback, then flushes queued work.
+    if (InterlockedCompareExchange(&hostDevice->m_TxRecoveryEnabled, 0, 0) != 0 &&
+        InterlockedCompareExchange(&hostDevice->m_TxRecoveryQueued, 0, 0) != 0)
+    {
+        WdfWorkItemEnqueue(hostDevice->m_DataPathWorkItem);
+    }
 }
 
 // Every stop, reset and start of either data pipe happens under
@@ -1543,27 +1589,47 @@ UsbNcmHostDevice::RecoverOutPipeLocked(
     const USBD_STATUS triggerUsbd = InterlockedCompareExchange(&m_TxRecoveryTriggerUsbdStatus, 0, 0);
     const ULONG64 begin = KeQueryInterruptTime();
     const Apple1902::OutRecoveryDecision decision = Apple1902::DecideOutRecovery(
-        m_TxPipeRunning && m_DataBulkOutPipe != nullptr,
+        InterlockedCompareExchange(&m_TxRecoveryEnabled, 0, 0) != 0 &&
+            m_TxPipeRunning && m_DataBulkOutPipe != nullptr,
         m_TxRecoveryAttempts,
         begin,
         m_TxLastRecoveryTime);
 
+    if (decision == Apple1902::OutRecoveryDecision::Cooldown)
+    {
+        // Remember this actual XACT_ERROR: after a pipe fault subsequent
+        // completions may only time out and never produce a fresh trigger.
+        const ULONG64 due = m_TxLastRecoveryTime + Apple1902::OutRecoveryCooldown;
+        const ULONG64 remaining = due - begin;
+        if (m_TxRecoveryDueTime == 0)
+        {
+            DbgPrint("Sideline1902: OUT recovery deferred after status 0x%08X usbd 0x%08X; "
+                     "remaining %I64u ms, attempts %lu/%u\n",
+                     trigger, triggerUsbd, (remaining + 9999) / 10000,
+                     m_TxRecoveryAttempts, Apple1902::MaxOutRecoveriesPerD0);
+        }
+        m_TxRecoveryDueTime = due;
+        // One shot, never a periodic retry. Duplicate OUT faults coalesce;
+        // another worker (e.g. IN recovery) can only rearm to the same due.
+        WdfTimerStart(m_OutRecoveryTimer, -(LONGLONG)remaining);
+        return;
+    }
+
     if (decision != Apple1902::OutRecoveryDecision::Run)
     {
-        // Not acted on: the pipe stays as it is until a later error after
-        // the cooldown, a queue restart or a new D0 session. Nothing re-arms
-        // this attempt; no timer, no retry loop.
+        // Terminal for this fault: no automatic retry after a stopped pipe
+        // or an exhausted budget. A lifecycle start may reopen the pipe.
         const LONG skipped = InterlockedIncrement(&m_TxRecoverySkipped);
         if (ShouldLogOccurrence(skipped))
         {
             DbgPrint("Sideline1902: OUT recovery skipped (%s) #%ld after status 0x%08X usbd 0x%08X, "
                      "attempts %lu/%u\n",
                      decision == Apple1902::OutRecoveryDecision::NotRunning ? "pipe not running" :
-                     decision == Apple1902::OutRecoveryDecision::BudgetExhausted ? "budget exhausted" :
-                     "cooldown",
+                     "budget exhausted",
                      skipped, trigger, triggerUsbd,
                      m_TxRecoveryAttempts, Apple1902::MaxOutRecoveriesPerD0);
         }
+        m_TxRecoveryDueTime = 0;
         InterlockedExchange(&m_TxRecoveryQueued, 0);
         return;
     }
@@ -1577,6 +1643,7 @@ UsbNcmHostDevice::RecoverOutPipeLocked(
 
     CloseTxAdmissionLocked();
     m_TxPipeRunning = FALSE;
+    m_TxRecoveryDueTime = 0;
     InterlockedExchange64(&m_TxRestartTime, 0);
     const ULONG64 drained = KeQueryInterruptTime();
 
@@ -1605,6 +1672,10 @@ UsbNcmHostDevice::RecoverOutPipeLocked(
             InterlockedExchange64(&m_TxPostRestartFirstSend, 0);
             InterlockedExchange64(&m_TxRestartTime, (LONG64)started);
             InterlockedExchange(&m_TxFirstFailureLogged, 0);
+            // All pre-reset sends completed during Stop. Consume their
+            // fault before reopening; a fast new completion may immediately
+            // claim/enqueue a different fault while this callback returns.
+            InterlockedExchange(&m_TxRecoveryQueued, 0);
             OpenTxAdmissionLocked();
         }
     }
@@ -1621,5 +1692,8 @@ UsbNcmHostDevice::RecoverOutPipeLocked(
              ElapsedMs(begin, drained), ElapsedMs(drained, stopped),
              ElapsedMs(stopped, reset), ElapsedMs(reset, started));
 
-    InterlockedExchange(&m_TxRecoveryQueued, 0);
+    if (!m_TxPipeRunning)
+    {
+        InterlockedExchange(&m_TxRecoveryQueued, 0);
+    }
 }

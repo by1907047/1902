@@ -80,6 +80,36 @@ class LifecyclePolicyTests(unittest.TestCase):
         self.assertLess(recovery.index('StopPipe('), recovery.index('WdfWaitLockRelease('))
         self.assertLess(recovery.index('WdfWaitLockRelease('), recovery.index('WdfWorkItemFlush('))
 
+    def test_recovery_timer_drain_and_dispatch_contract(self):
+        body = function_body('StopTransmit')
+        recovery = body[body.index('else'):]
+        order = [recovery.index(s) for s in (
+            'WdfWaitLockAcquire(', 'm_TxRecoveryEnabled, 0)',
+            'CloseTxAdmissionLocked();', 'StopPipe(', 'WdfTimerStop(',
+            'm_TxRecoveryQueued, 0)', 'WdfWaitLockRelease(', 'WdfWorkItemFlush(')]
+        self.assertEqual(order, sorted(order))
+        timer = function_body('OutRecoveryTimer')
+        for call in ('WdfWaitLockAcquire', 'WdfIoTargetStop', 'WdfIoTargetStart',
+                     'WdfUsbTargetPipeResetSynchronously', 'WdfWorkItemFlush', 'WdfTimerStop'):
+            self.assertNotIn(call, timer)
+        self.assertIn('m_TxRecoveryEnabled', timer)
+        self.assertIn('m_TxRecoveryQueued', timer)
+        self.assertIn('WdfWorkItemEnqueue', timer)
+        create = function_body('InitializeDataPathControl')
+        self.assertIn('WDF_TIMER_CONFIG_INIT(&config, UsbNcmHostDevice::OutRecoveryTimer)', create)
+        self.assertIn('attributes.ExecutionLevel = WdfExecutionLevelDispatch;', create)
+        self.assertLess(create.rindex('config.AutomaticSerialization = FALSE;'),
+                        create.index('WdfTimerCreate('))
+
+    def test_success_never_consumes_pending_fault_and_reopen_does(self):
+        self.assertNotIn('m_TxRecoveryQueued', function_body('TransmitFramesCompetion'))
+        out = function_body('RecoverOutPipeLocked')
+        reopen = out.index('OpenTxAdmissionLocked();')
+        preceding = out[:reopen]
+        self.assertGreater(preceding.rindex('m_TxRecoveryQueued, 0)'),
+                           preceding.index('WdfIoTargetStart('))
+        self.assertIn('if (!m_TxPipeRunning)', out[reopen:])
+
     def test_recovery_never_escalates_and_keeps_order(self):
         for call in ('ResetPortSynchronously', 'CyclePortSynchronously', 'WdfUsbTargetDeviceReset'):
             self.assertNotIn(call, SOURCE)

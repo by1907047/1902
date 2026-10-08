@@ -2,6 +2,13 @@
 
 **Status:** experimental; this PR publishes source only, not a driver binary. Commit `d7fd6d67a680` passed offline x64 Debug/Release WDK builds and both INF validations, and its locally test-signed Release was installed for hardware tests on 2026-10-08. It is not Microsoft-signed. Existing native-analysis/dependency warnings remain.
 
+**2026-10-09 source revision:** a cooldown fault is now retained for one
+deferred attempt, and a new fault after admission reopens cannot be erased by
+the preceding recovery callback. This revision is default-off and is not yet
+WDK-built or hardware-qualified. The historical results below belong to
+`d7fd6d67a680`, not this revision. It addresses two recovery-state defects,
+not the cause of the first USB3 transaction error.
+
 Initial hardware results for that exact driver commit, on one USB3 connection
 (the later [six-run comparison](HARDWARE-AB-20261008.md) supersedes any suggestion
 of a stability advantage from this single clean mode-3 run):
@@ -52,7 +59,7 @@ The switch is a `REG_DWORD` named `Sideline1902DataPathDebug` in the device hard
 
 When the switch is off, the driver:
 
-- creates no wait lock and no work item;
+- creates no wait lock, work item or timer, and makes no timer calls;
 - makes no admission-gate (rundown) calls;
 - counts no requests as in flight;
 - keeps no timestamps or post-restart markers;
@@ -60,7 +67,10 @@ When the switch is off, the driver:
 
 `out_recovery_probe.py` compiles the frozen head's data-path functions and checks that switch 0 gives the same I/O trace. The modeled trace covers sends, completions, stops, starts, the framework's reader-recovery resets and buffer returns. The same run checks that no lock, rundown or in-flight operation happens. This is a check of the modeled trace, not of timing, code size or every WDF call.
 
-**If the recovery objects cannot be created** (the wait lock or the work item), recovery stays off, the failure is logged, and device add continues. Instrumentation, if selected, stays on.
+**If the recovery objects cannot be created** (the wait lock, work item or
+one-shot timer), recovery stays off, the failure is logged, and device add
+continues. No object is enqueued or armed before all allocations succeed.
+Instrumentation, if selected, stays on.
 
 ## Instrumentation (`0x1`)
 
@@ -120,21 +130,42 @@ Every status is still counted and logged.
 
 ### OUT sequence (work item, under the lock)
 
-1. **Decide.** The work item skips, with a log line, if the pipe is not running, the budget is used up, or the 10 s cooldown has not passed.
+1. **Decide.** The work item skips, with a log line, if recovery is stopped,
+   the pipe is not running or the budget is used up. A fault within the 10 s
+   cooldown is retained and delivered once at the cooldown deadline.
 2. **Close admission and drain.** `TransmitFrames` holds a rundown reference for its whole send section, at up to DISPATCH_LEVEL. `ExWaitForRundownProtectionRelease` refuses new sends and waits for sends already in progress. This step exists because a stopped KMDF target queues new sends (`STATUS_WDF_QUEUED`) instead of failing them, and no send may reach a pipe that is being reset.
 3. **Stop.** `WdfIoTargetStop(CancelSentIo)` returns after every sent request's completion routine has run.
 4. **Reset.** `WdfUsbTargetPipeResetSynchronously` issues `URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL` with a 2 s timeout.
-5. **Restart.** Only if the reset succeeded, call `WdfIoTargetStart`. Only if that start succeeded, mark the pipe running, set the post-restart markers and reopen admission.
+5. **Restart.** Only if the reset succeeded, call `WdfIoTargetStart`. Only if
+   that start succeeded, mark the pipe running, set the post-restart markers
+   and consume the old pending fault **before** reopening admission. There
+   is no trailing clear after reopening: a new completion may already have
+   recorded another fault while the original callback is returning.
 
 The log label after a successful start is `pipe restarted, data recovery unverified`, because a successful API call is not delivery. If the reset or the start fails, the failure is logged and kept: the pipe is not running, and sends are refused instead of being queued. Only a normal queue restart or device restart reopens the pipe.
 
-Recovery never resets or cycles the port, never resets the device, never retries a payload, and has no timer or retry loop.
+Recovery never resets or cycles the port, never resets the device and never
+retries a payload. A one-shot timer only delivers an actual fault retained
+during cooldown; it is not periodic polling or an automatic retry after a
+failed reset/start.
 
 **Budget.** 3 attempts per D0 session, at least 10 s apart.
 
 - The budget resets in `EnterWorkingState` (D0Entry), not on a queue restart.
-- An error that arrives during the cooldown, after the budget is used up, or while the pipe is not running is counted and logged as skipped (1st, 2nd, 4th... occurrence) and never acted on later.
-- An error that arrives while a recovery is pending is counted as coalesced.
+- An error after the budget is used up or while the pipe is not running is
+  counted and logged as skipped (1st, 2nd, 4th... occurrence).
+- An error during cooldown remains pending. A single-shot timer expires at
+  `lastAttempt + 10 s`, then enqueues the existing work item. The work item
+  checks lifecycle, budget and time again under the data-path lock. This
+  works even if subsequent completions only time out. An early timer
+  delivery is rearmed for the remaining time, not a new full cooldown.
+- Errors while a fault is queued, deferred or recovering are coalesced.
+  Neither a timeout nor an arbitrary successful completion consumes that
+  pending fault. A successful completion may belong to old/out-of-order I/O.
+- Admission and pipe state are unchanged while cooldown is pending. Further
+  sends/timeouts can therefore occur until the remembered recovery runs;
+  the fixed request pool still bounds outstanding requests. This revision
+  does not implement TX backpressure or change queue/drop behavior.
 
 **Offered traffic.** After a restart, the driver logs two events:
 
@@ -157,12 +188,28 @@ cross-check the data-progress window.
 1. Clears the running flag.
 2. Closes admission.
 3. Stops the pipe.
-4. Releases the lock.
-5. Flushes the work item. The flush must come after the lock is released, because the work item needs the lock. It runs even when there is no pipe.
+4. Drains the one-shot timer with `WdfTimerStop(TRUE)` and clears the pending
+   fault while still holding the data-path lock. Recovery was atomically
+   disabled before step 1, so the timer cannot establish new live work.
+5. Releases the lock.
+6. Flushes the work item. The flush must come after the lock is released,
+   because the work item needs the lock. It runs even when there is no pipe.
+
+The timer uses a nonblocking DPC callback with automatic serialization
+disabled. It only reads the atomic enabled/pending flags and enqueues work;
+it never takes the data-path lock or waits. Thus draining the timer while
+holding that lock does not wait on a callback which needs the lock. Duplicate
+stops are serialized by the lock; work-item flush remains outside it. A DPC
+which checked enabled immediately before stop may still enqueue, but the
+timer drain waits for that enqueue and the following flush consumes it.
+The stopped worker cannot rearm the timer. Normal successful queue start
+reenables recovery before reopening admission.
 
 After that flush nothing can enqueue the work item:
 
 - **OUT side.** The stop completed every completion routine, and admission is closed.
+- **Timer side.** Recovery is disabled and the synchronous timer drain
+  completed every timer callback, including a late work-item enqueue.
 - **IN side.** `StopReceive` stopped the reader pipe first. That stop waits for the framework reader work item, and the framework queues no new one while the pipe is stopped.
 
 D0Entry re-selects the alternate setting and fetches new pipe handles only after that. The work item reads a pipe only under the lock, and only while that pipe is marked running.
@@ -195,6 +242,13 @@ The probe covers:
 - buffer ownership;
 - failed reset and failed start;
 - budget and cooldown, and the D0-session versus queue-restart budget;
+- a cooldown fault followed only by timeouts, duplicate coalescing, an old
+  success which must not erase the fault, and an early timer delivery;
+- inline/fast fresh XACT_ERROR between admission reopening and the original
+  callback returning, including a second callback waiting on the lock;
+- deferred stop/D0Exit and a new D0 session without timer resurrection,
+  concurrent stops, and timer DPCs paused before their enabled check and
+  immediately before a late enqueue;
 - races between the work item and stop, D0Exit or a null pipe;
 - IN recovery: the `FALSE` handover, a disabled port, a failed reset, device gone, and a stop that comes first;
 - an IN/OUT/D0Exit race on threads, 150 rounds, checking that resets never overlap;
