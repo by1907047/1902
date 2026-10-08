@@ -237,6 +237,8 @@ public:
         size_t datagramPointerTableSize = (m_CurrentNdpDatagramCount + 1) * sizeof(DPE);
 
         NDP & ndpHeader = (NDP &) *(m_Buffer + ndpOffset);
+        // NDP32 reserved fields must be zero, including on TX buffer reuse.
+        RtlZeroMemory(&ndpHeader, sizeof(ndpHeader));
         ndpHeader.Signature = ndp_sig;
         ndpHeader.Length = (UINT16)(sizeof(NDP) + datagramPointerTableSize);
         ndpHeader.NextNdpIndex = 0;
