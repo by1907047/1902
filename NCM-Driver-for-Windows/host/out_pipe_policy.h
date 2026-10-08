@@ -63,22 +63,61 @@ inline TxCompletion ClassifyTxCompletion(unsigned status, unsigned usbdStatus)
     return TxCompletion::OtherFailure;
 }
 
-// Attempts are counted per D0 session, not per queue start, and spaced by a
-// cooldown. Times are KeQueryInterruptTime units (100 ns).
-constexpr unsigned MaxOutRecoveriesPerD0 = 3;
+// Continuous-credit bucket, not an irreversible lifetime D0 limit. All
+// mutations are made under DataPathLock. Times/credit use interrupt-time
+// units (100 ns): one token costs 60 s and elapsed time refills continuously.
+constexpr unsigned OutRecoveryCapacity = 3;
+constexpr unsigned long long OutRecoveryRefill = 60ull * 10000000ull;
+constexpr unsigned long long OutRecoveryCreditCapacity = OutRecoveryCapacity * OutRecoveryRefill;
 constexpr unsigned long long OutRecoveryCooldown = 10ull * 10000000ull;
 
-enum class OutRecoveryDecision { Run, NotRunning, BudgetExhausted, Cooldown };
-
-inline OutRecoveryDecision DecideOutRecovery(
-    bool running,
-    unsigned attempts,
-    unsigned long long now,
-    unsigned long long lastAttempt)
+struct OutRecoveryBudget
 {
-    if (!running) return OutRecoveryDecision::NotRunning;
-    if (attempts >= MaxOutRecoveriesPerD0) return OutRecoveryDecision::BudgetExhausted;
-    if (attempts > 0 && now - lastAttempt < OutRecoveryCooldown) return OutRecoveryDecision::Cooldown;
-    return OutRecoveryDecision::Run;
+    unsigned long long Credit = OutRecoveryCreditCapacity;
+    unsigned long long SampleTime = 0;
+    unsigned long long LastAttempt = 0;
+    bool HasAttempt = false;
+};
+
+inline void ResetOutRecoveryBudget(OutRecoveryBudget& budget, unsigned long long now)
+{
+    budget = { OutRecoveryCreditCapacity, now, 0, false };
+}
+
+enum class OutRecoveryDecision { Run, NotRunning, Deferred };
+
+struct OutRecoveryPlan
+{
+    OutRecoveryDecision Decision;
+    unsigned long long Wait;
+};
+
+// Run reserves exactly one token and records its start; Deferred reserves
+// none and supplies a positive bounded relative wait for the existing timer.
+// Unsigned subtraction tolerates one timestamp wrap. Add only available
+// space, not an unbounded elapsed value which could overflow before clamping.
+inline OutRecoveryPlan TryBeginOutRecovery(
+    bool running,
+    OutRecoveryBudget& budget,
+    unsigned long long now)
+{
+    if (!running) return { OutRecoveryDecision::NotRunning, 0 };
+    const unsigned long long elapsed = now - budget.SampleTime;
+    const unsigned long long space = OutRecoveryCreditCapacity - budget.Credit;
+    budget.Credit += elapsed < space ? elapsed : space;
+    budget.SampleTime = now;
+
+    const unsigned long long sinceAttempt = now - budget.LastAttempt;
+    const unsigned long long cooldown = budget.HasAttempt && sinceAttempt < OutRecoveryCooldown
+        ? OutRecoveryCooldown - sinceAttempt : 0;
+    const unsigned long long creditWait = budget.Credit < OutRecoveryRefill
+        ? OutRecoveryRefill - budget.Credit : 0;
+    const unsigned long long wait = cooldown > creditWait ? cooldown : creditWait;
+    if (wait != 0) return { OutRecoveryDecision::Deferred, wait };
+
+    budget.Credit -= OutRecoveryRefill;
+    budget.LastAttempt = now;
+    budget.HasAttempt = true;
+    return { OutRecoveryDecision::Run, 0 };
 }
 }

@@ -38,7 +38,7 @@ def main():
                   'adapter_lifecycle_probe.py', 'host_reprepare_probe.py',
                   'host_memory_probe.py', 'ntb_fit_probe.py',
                   'ntb_reserved_fields_probe.py',
-                  'host_diagnostics_probe.py', 'out_recovery_probe.py'):
+                  'host_diagnostics_probe.py', 'out_credit_probe.py', 'out_recovery_probe.py'):
         run([py, 'tests/' + probe])
     print('All portable suites passed; no Windows driver/device was exercised.')
 

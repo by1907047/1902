@@ -365,18 +365,19 @@ private:
     BOOLEAN
         m_RxPipeRunning = FALSE;
 
-    ULONG
+    // Diagnostic total only; never gates eligibility or refill.
+    ULONG64
         m_TxRecoveryAttempts = 0;
 
-    ULONG64
-        m_TxLastRecoveryTime = 0;
+    Apple1902::OutRecoveryBudget
+        m_TxRecoveryBudget;
 
-    // 1 while a genuine OUT fault remains unconsumed, including cooldown.
+    // 1 while a genuine OUT fault remains unconsumed, including cooldown or token wait.
     // Consume it while admission is closed, before offering new traffic.
     LONG
         m_TxRecoveryQueued = 0;
 
-    // Guarded by m_DataPathLock; zero when no cooldown delivery is pending.
+    // Guarded by m_DataPathLock; zero when no deferred delivery is pending.
     ULONG64
         m_TxRecoveryDueTime = 0;
 

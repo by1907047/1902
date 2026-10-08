@@ -581,7 +581,7 @@ static void RecoveryCycle(ULONG v){
  CHECK(SentCount(t)==0&&r->host->m_TxCancellations==3);             // three pending were cancelled
  CHECK(Running(r)&&r->host->m_TxAdmissionOpen&&r->host->m_TxRecoveryQueued==0);
  CHECK(r->host->m_TxRecoveryAttempts==1);
- CHECK(LogsWith("OUT recovery %lu/%u start")==1&&LogsWith("drain %I64u ms")==1);
+ CHECK(LogsWith("OUT recovery #%I64u start")==1&&LogsWith("drain %I64u ms")==1);
  CHECK(g_sendCalls==sends);                                          // no payload retried
  // API success is not delivery: nothing is claimed until traffic is offered.
  CHECK(LogsWith("OUT first send offered after pipe restart")==0&&LogsWith("OUT first success after pipe restart")==0);
@@ -602,7 +602,7 @@ static void FailedResetAndStart(){
  Reset();Rig* r=NewRig(true,2);FakeTarget* t=&r->pipe.target;U::StartTransmit(&r->dev);Send(&r->dev);
  g_resetResult=STATUS_IO_TIMEOUT;CompleteSent(t,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);
  CHECK(RunQueuedWorkItem(r->host->m_DataPathWorkItem));g_resetResult=STATUS_SUCCESS;
- CHECK(TraceCount("start")==1&&!Running(r)&&!r->host->m_TxAdmissionOpen&&LogsWith("OUT recovery %lu/%u %s")==1);
+ CHECK(TraceCount("start")==1&&!Running(r)&&!r->host->m_TxAdmissionOpen&&LogsWith("OUT recovery #%I64u %s")==1);
  int sends=g_sendCalls;CHECK(Send(&r->dev)==STATUS_DEVICE_NOT_READY&&g_sendCalls==sends&&t->queued.empty());
  CHECK(r->host->m_TxAdmissionRejects==1);
  U::StopTransmit(&r->dev);U::StartTransmit(&r->dev);                 // normal queue restart reopens
@@ -624,24 +624,40 @@ static void FailedResetAndStart(){
 
 static void Trigger(Rig* r){Send(&r->dev);CompleteSent(&r->pipe.target,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);RunQueuedWorkItem(r->host->m_DataPathWorkItem);}
 static void Budget(){
- Reset();Rig* r=NewRig(true,2);U::StartTransmit(&r->dev);r->host->BeginD0Session();
+ Reset();Rig* r=NewRig(true,2);r->host->BeginD0Session();U::StartTransmit(&r->dev);
+ const ULONG64 origin=g_clock;auto* timer=r->host->m_OutRecoveryTimer;auto* w=r->host->m_DataPathWorkItem;
  Trigger(r);CHECK(r->host->m_TxRecoveryAttempts==1);
- AdvanceSeconds(5);Trigger(r);                                        // inside the cooldown
+ AdvanceSeconds(5);Trigger(r);                                        // inside cooldown
  CHECK(r->host->m_TxRecoveryAttempts==1&&TraceCount("reset")==1&&LogsWith("OUT recovery deferred")==1);
- CHECK(Running(r)&&r->host->m_TxRecoveryQueued==1&&TimerArmed(r->host->m_OutRecoveryTimer));
- AdvanceSeconds(6);CHECK(FireTimer(r->host->m_OutRecoveryTimer));
- CHECK(RunQueuedWorkItem(r->host->m_DataPathWorkItem)&&r->host->m_TxRecoveryAttempts==2);
- AdvanceSeconds(11);Trigger(r);CHECK(r->host->m_TxRecoveryAttempts==3);
- AdvanceSeconds(11);Trigger(r);CHECK(r->host->m_TxRecoveryAttempts==3&&TraceCount("reset")==3);
- CHECK(r->host->m_TxRecoverySkipped==1);
- // Queue stop/start inside the D0 session does not replenish the budget.
- U::StopTransmit(&r->dev);U::StartTransmit(&r->dev);AdvanceSeconds(11);Trigger(r);
- CHECK(r->host->m_TxRecoveryAttempts==3&&TraceCount("reset")==3&&r->host->m_TxRecoverySkipped==2);
- // A new D0 session does.
+ CHECK(Running(r)&&r->host->m_TxRecoveryQueued==1&&TimerArmed(timer));
+ AdvanceSeconds(5);CHECK(FireTimer(timer)&&RunQueuedWorkItem(w));
+ CHECK(r->host->m_TxRecoveryAttempts==2);
+ AdvanceSeconds(10);Trigger(r);CHECK(r->host->m_TxRecoveryAttempts==3);
+ AdvanceSeconds(10);Trigger(r);                                       // third consumed the initial burst
+ CHECK(r->host->m_TxRecoveryAttempts==3&&TraceCount("reset")==3&&r->host->m_TxRecoverySkipped==0);
+ CHECK(r->host->m_TxRecoveryQueued==1&&TimerArmed(timer)&&timer->due==origin+60ull*10000000ull);
+ // Duplicate work/callbacks cannot spend credit or discard the pending fault.
+ const ULONG64 credit=r->host->m_TxRecoveryBudget.Credit;
+ for(int i=0;i<10;++i){WdfWorkItemEnqueue(w);CHECK(RunQueuedWorkItem(w));}
+ CHECK(r->host->m_TxRecoveryBudget.Credit==credit&&r->host->m_TxRecoveryAttempts==3);
+ CHECK(r->host->m_TxRecoveryQueued==1&&timer->due==origin+60ull*10000000ull);
+ // Queue Stop/Start clears delivery, not time credit; a fresh genuine fault
+ // must still wait. No later XACT is required to deliver that pending fault.
+ U::StopTransmit(&r->dev);U::StartTransmit(&r->dev);Trigger(r);
+ CHECK(r->host->m_TxRecoveryAttempts==3&&r->host->m_TxRecoveryQueued==1&&TimerArmed(timer));
+ Send(&r->dev);CompleteSent(&r->pipe.target,1,STATUS_IO_TIMEOUT,USBD_STATUS_CANCELED);
+ Send(&r->dev);CompleteSent(&r->pipe.target,1,STATUS_SUCCESS,0);
+ AdvanceSeconds(29);CHECK(!FireTimer(timer));
+ AdvanceSeconds(1);CHECK(FireTimer(timer)&&RunQueuedWorkItem(w));
+ CHECK(r->host->m_TxRecoveryAttempts==4&&TraceCount("reset")==4&&r->host->m_TxRecoveryQueued==0);
+ // Healthy idle only refills to cap; total attempts never gates eligibility.
+ AdvanceSeconds(180);r->host->m_TxRecoveryAttempts=0xffffffffull;Trigger(r);
+ CHECK(r->host->m_TxRecoveryAttempts==0x100000000ull&&TraceCount("reset")==5);
+ // Explicit D0 (not queue start) resets both burst and diagnostic total.
  U::StopTransmit(&r->dev);r->host->BeginD0Session();U::StartTransmit(&r->dev);Trigger(r);
- CHECK(r->host->m_TxRecoveryAttempts==1&&TraceCount("reset")==4);
+ CHECK(r->host->m_TxRecoveryAttempts==1&&TraceCount("reset")==6);
  U::StopTransmit(&r->dev);ExpectAllReturned(r);
- std::puts("budget: cooldown fault deferred, 3 per D0 session, queue restart does not replenish PASS");
+ std::puts("credit budget: 3 burst, 60s refill, 10s cooldown, duplicate work/token wait retained, queue restart no refill PASS");
 }
 
 static Rig* DeferredRig(){
@@ -672,7 +688,7 @@ static void DeferredWithoutFreshError(){
  Reset();r=DeferredRig();timer=r->host->m_OutRecoveryTimer;w=r->host->m_DataPathWorkItem;
  CHECK(FireTimer(timer,true)&&RunQueuedWorkItem(w));
  CHECK(r->host->m_TxRecoveryAttempts==1&&r->host->m_TxRecoveryQueued==1&&TimerArmed(timer));
- CHECK(timer->due==r->host->m_TxLastRecoveryTime+Apple1902::OutRecoveryCooldown);
+ CHECK(timer->due==r->host->m_TxRecoveryBudget.LastAttempt+Apple1902::OutRecoveryCooldown);
  AdvanceSeconds(9);CHECK(FireTimer(timer)&&RunQueuedWorkItem(w)&&r->host->m_TxRecoveryAttempts==2);
  U::StopTransmit(&r->dev);ExpectAllReturned(r);
  std::puts("deferred: timeout-only tail / old success cannot consume fault, duplicates coalesce, early timer rearmed PASS");
@@ -948,10 +964,109 @@ static void InFailureStormStops(){
  std::printf("IN failure storm: %d failures, %d pipe resets; modeled D0Exit quiesces callbacks and queued work PASS\n",failures.load(),resets);
 }
 
+// Exhaust the burst at 0/10/20s, then exercise the exact token-wait path.
+static Rig* TokenWaitRig(){
+ Rig* r=NewRig(true,3);r->host->BeginD0Session();U::StartTransmit(&r->dev);
+ Trigger(r);AdvanceSeconds(10);Trigger(r);AdvanceSeconds(10);Trigger(r);
+ AdvanceSeconds(10);Trigger(r);
+ CHECK(r->host->m_TxRecoveryAttempts==3&&r->host->m_TxRecoveryQueued==1);
+ CHECK(TimerArmed(r->host->m_OutRecoveryTimer));return r;
+}
+
+static void TokenWaitLifecycleAndReopen(){
+ // A newly accepted inline XACT during the fourth (refilled) restart must
+ // survive its callback's return and wait for the next token, not disappear.
+ Reset();Rig* r=TokenWaitRig();auto* timer=r->host->m_OutRecoveryTimer;auto* w=r->host->m_DataPathWorkItem;
+ int enq=Enqueues(w);AdvanceSeconds(30);
+ g_admissionOpenHook=[&]{
+  CHECK(r->host->m_TxRecoveryQueued==0);g_sendMode=SendMode::InlineXact;
+  CHECK(NT_SUCCESS(Send(&r->dev)));g_sendMode=SendMode::Pend;
+  CHECK(r->host->m_TxRecoveryQueued==1&&Enqueues(w)==enq+2); // timer + new fault
+ };
+ CHECK(FireTimer(timer)&&RunQueuedWorkItem(w));g_admissionOpenHook=nullptr;
+ CHECK(r->host->m_TxRecoveryAttempts==4&&r->host->m_TxRecoveryQueued==1);
+ CHECK(RunQueuedWorkItem(w)&&TimerArmed(timer));
+ AdvanceSeconds(59);CHECK(!FireTimer(timer));
+ AdvanceSeconds(1);CHECK(FireTimer(timer)&&RunQueuedWorkItem(w));
+ CHECK(r->host->m_TxRecoveryAttempts==5&&r->host->m_TxRecoveryQueued==0);
+ U::StopTransmit(&r->dev);ExpectAllReturned(r);
+ // Failed actual reset/start at token delivery is terminal; timer never
+ // makes it an API retry loop, even after more credit becomes available.
+ for(bool resetFailure:{true,false}){
+  Reset();r=TokenWaitRig();timer=r->host->m_OutRecoveryTimer;w=r->host->m_DataPathWorkItem;
+  if(resetFailure)g_resetResult=STATUS_UNSUCCESSFUL;else g_startResults={STATUS_UNSUCCESSFUL};
+  AdvanceSeconds(30);CHECK(FireTimer(timer)&&RunQueuedWorkItem(w));g_resetResult=STATUS_SUCCESS;
+  CHECK(r->host->m_TxRecoveryAttempts==4&&!Running(r)&&!r->host->m_TxAdmissionOpen);
+  CHECK(r->host->m_TxRecoveryQueued==0&&!TimerArmed(timer));
+  AdvanceSeconds(180);CHECK(!FireTimer(timer)&&!RunQueuedWorkItem(w)&&TraceCount("reset")==4);
+  CHECK(Send(&r->dev)==STATUS_DEVICE_NOT_READY);U::StopTransmit(&r->dev);ExpectAllReturned(r);
+ }
+ // Stop must drain the same single timer while waiting for a token.
+ Reset();r=TokenWaitRig();timer=r->host->m_OutRecoveryTimer;w=r->host->m_DataPathWorkItem;
+ U::StopTransmit(&r->dev);AdvanceSeconds(180);
+ CHECK(!TimerArmed(timer)&&!FireTimer(timer)&&!RunQueuedWorkItem(w)&&TraceCount("reset")==3);
+ CHECK(r->host->m_TxRecoveryQueued==0&&r->host->m_TxRecoveryDueTime==0);ExpectAllReturned(r);
+ std::puts("token wait: inline new fault preserved, failed reset/start terminal, stop drains timer PASS");
+}
+
+// Hardware Trial2 relative first-fault timings, rounded conservatively to
+// whole seconds: 0,17,218,243. Exercise actual sends/completions, then dense
+// faults until a retained token wait is delivered without another XACT.
+static void Trial2SequenceAndIdleCap(){
+ Reset();Rig* r=NewRig(true,3);r->host->BeginD0Session();U::StartTransmit(&r->dev);
+ const ULONG64 origin=g_clock;auto* timer=r->host->m_OutRecoveryTimer;auto* w=r->host->m_DataPathWorkItem;
+ const int times[]={0,17,218,243,253};int previous=0;
+ for(int i=0;i<5;++i){
+  AdvanceSeconds(times[i]-previous);previous=times[i];Trigger(r);
+  CHECK(r->host->m_TxRecoveryAttempts==ULONG64(i+1)&&TraceCount("reset")==i+1);
+  CHECK(Running(r)&&r->host->m_TxRecoveryQueued==0&&!TimerArmed(timer));
+  CHECK(NT_SUCCESS(Send(&r->dev)));CompleteSent(&r->pipe.target,1,STATUS_SUCCESS,0);
+  CHECK(LogsWith("OUT first send offered after pipe restart")==i+1);
+  CHECK(LogsWith("OUT first success after pipe restart")==i+1);
+ }
+ AdvanceSeconds(10);Trigger(r);                                       // t263: credit .75, wait 15s
+ CHECK(r->host->m_TxRecoveryAttempts==5&&TraceCount("reset")==5);
+ CHECK(r->host->m_TxRecoveryQueued==1&&TimerArmed(timer)&&timer->due==origin+278ull*10000000ull);
+ AdvanceSeconds(5);WdfWorkItemEnqueue(w);CHECK(RunQueuedWorkItem(w));    // t268: same delivery due
+ CHECK(r->host->m_TxRecoveryAttempts==5&&timer->due==origin+278ull*10000000ull);
+ AdvanceSeconds(9);CHECK(!FireTimer(timer));
+ AdvanceSeconds(1);CHECK(FireTimer(timer)&&RunQueuedWorkItem(w));       // t278: sixth succeeds
+ CHECK(r->host->m_TxRecoveryAttempts==6&&TraceCount("reset")==6&&r->host->m_TxRecoveryQueued==0);
+ CHECK(NT_SUCCESS(Send(&r->dev)));CompleteSent(&r->pipe.target,1,STATUS_SUCCESS,0);
+ CHECK(LogsWith("OUT first send offered after pipe restart")==6&&LogsWith("OUT first success after pipe restart")==6);
+ U::StopTransmit(&r->dev);ExpectAllReturned(r);
+ // Ten idle minutes cannot bank more than a three-token burst. Time does
+ // continue to refill while idle, but the cap never changes to a lifetime sum.
+ Reset();r=NewRig(true,3);r->host->BeginD0Session();U::StartTransmit(&r->dev);
+ AdvanceSeconds(600);const ULONG64 burstStart=g_clock;timer=r->host->m_OutRecoveryTimer;w=r->host->m_DataPathWorkItem;
+ Trigger(r);AdvanceSeconds(10);Trigger(r);AdvanceSeconds(10);Trigger(r);AdvanceSeconds(10);Trigger(r);
+ CHECK(r->host->m_TxRecoveryAttempts==3&&TraceCount("reset")==3&&r->host->m_TxRecoveryQueued==1);
+ CHECK(TimerArmed(timer)&&timer->due==burstStart+60ull*10000000ull);
+ AdvanceSeconds(30);CHECK(FireTimer(timer)&&RunQueuedWorkItem(w)&&r->host->m_TxRecoveryAttempts==4);
+ U::StopTransmit(&r->dev);ExpectAllReturned(r);
+ std::puts("Trial2: actual faults at +0/+17/+218/+243, new sends/successes, dense token wait +278, idle cap still 3 PASS");
+}
+
+static void CreditDriverWrap(){
+ Reset();g_clock=~ULONG64(0)-5ull*10000000ull+1;Rig* r=NewRig(true,3);
+ r->host->BeginD0Session();U::StartTransmit(&r->dev);Trigger(r);AdvanceSeconds(1);Trigger(r);
+ auto* timer=r->host->m_OutRecoveryTimer;auto* w=r->host->m_DataPathWorkItem;
+ CHECK(r->host->m_TxRecoveryAttempts==1&&TimerArmed(timer));
+ AdvanceSeconds(9);CHECK(FireTimer(timer,true)&&RunQueuedWorkItem(w)); // model clock ordering is not modular
+ CHECK(r->host->m_TxRecoveryAttempts==2&&r->host->m_TxRecoveryQueued==0);
+ U::StopTransmit(&r->dev);ExpectAllReturned(r);g_clock=1;
+ Reset();g_clock=0;r=NewRig(true,3);r->host->BeginD0Session();U::StartTransmit(&r->dev);
+ Trigger(r);Trigger(r);CHECK(r->host->m_TxRecoveryAttempts==1&&r->host->m_TxRecoveryQueued==1);
+ AdvanceSeconds(10);CHECK(FireTimer(r->host->m_OutRecoveryTimer)&&RunQueuedWorkItem(r->host->m_DataPathWorkItem));
+ CHECK(r->host->m_TxRecoveryAttempts==2);U::StopTransmit(&r->dev);ExpectAllReturned(r);g_clock=1;
+ std::puts("credit driver: timestamp zero and U64 wrapped cooldown timer retain pending PASS");
+}
+
 int main(){
  PoolInit(32);
  SwitchValues();NoRecoveryModes();Classification();
  RecoveryCycle(2);RecoveryCycle(3);FailedResetAndStart();Budget();
+ TokenWaitLifecycleAndReopen();Trial2SequenceAndIdleCap();CreditDriverWrap();
  DeferredWithoutFreshError();ReopenFaultRace();DeferredStopAndD0();TimerStopRace();
  StopAndRemovalRaces();InlineCompletion();AdmissionRace();InReaderRecovery();InOutRace();InFailureStormStops();PostRestartMarkerRace();Stress();
  std::printf("OUT recovery probe: %d checks, 0 failures\n",checks.load());

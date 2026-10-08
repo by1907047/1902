@@ -978,9 +978,9 @@ UsbNcmHostDevice::StopTransmit(
         WdfTimerStop(hostDevice->m_OutRecoveryTimer, TRUE);
         if (InterlockedExchange(&hostDevice->m_TxRecoveryQueued, 0) != 0)
         {
-            DbgPrint("Sideline1902: OUT pending recovery cancelled by stop; deferred %d, attempts %lu/%u\n",
+            DbgPrint("Sideline1902: OUT pending recovery cancelled by stop; deferred %d, total attempts %I64u\n",
                      hostDevice->m_TxRecoveryDueTime != 0,
-                     hostDevice->m_TxRecoveryAttempts, Apple1902::MaxOutRecoveriesPerD0);
+                     hostDevice->m_TxRecoveryAttempts);
         }
         hostDevice->m_TxRecoveryDueTime = 0;
         WdfWaitLockRelease(hostDevice->m_DataPathLock);
@@ -1369,7 +1369,10 @@ UsbNcmHostDevice::BeginD0Session(
         // Queue stop/start inside one D0 session does not come here.
         WdfWaitLockAcquire(m_DataPathLock, nullptr);
         m_TxRecoveryAttempts = 0;
-        m_TxLastRecoveryTime = 0;
+        Apple1902::ResetOutRecoveryBudget(m_TxRecoveryBudget, KeQueryInterruptTime());
+        DbgPrint("Sideline1902: OUT recovery credit: burst %u, refill %I64u ms, cooldown %I64u ms\n",
+                 Apple1902::OutRecoveryCapacity, Apple1902::OutRecoveryRefill / 10000,
+                 Apple1902::OutRecoveryCooldown / 10000);
         m_TxRecoveryDueTime = 0;
         InterlockedExchange64(&m_TxRestartTime, 0);
         WdfWaitLockRelease(m_DataPathLock);
@@ -1588,58 +1591,51 @@ UsbNcmHostDevice::RecoverOutPipeLocked(
     const NTSTATUS trigger = InterlockedCompareExchange(&m_TxRecoveryTriggerStatus, 0, 0);
     const USBD_STATUS triggerUsbd = InterlockedCompareExchange(&m_TxRecoveryTriggerUsbdStatus, 0, 0);
     const ULONG64 begin = KeQueryInterruptTime();
-    const Apple1902::OutRecoveryDecision decision = Apple1902::DecideOutRecovery(
+    const Apple1902::OutRecoveryPlan plan = Apple1902::TryBeginOutRecovery(
         InterlockedCompareExchange(&m_TxRecoveryEnabled, 0, 0) != 0 &&
             m_TxPipeRunning && m_DataBulkOutPipe != nullptr,
-        m_TxRecoveryAttempts,
-        begin,
-        m_TxLastRecoveryTime);
+        m_TxRecoveryBudget,
+        begin);
 
-    if (decision == Apple1902::OutRecoveryDecision::Cooldown)
+    if (plan.Decision == Apple1902::OutRecoveryDecision::Deferred)
     {
-        // Remember this actual XACT_ERROR: after a pipe fault subsequent
-        // completions may only time out and never produce a fresh trigger.
-        const ULONG64 due = m_TxLastRecoveryTime + Apple1902::OutRecoveryCooldown;
-        const ULONG64 remaining = due - begin;
+        // Preserve the actual XACT_ERROR during cooldown OR token wait:
+        // later completions may only time out, without a fresh trigger.
         if (m_TxRecoveryDueTime == 0)
         {
             DbgPrint("Sideline1902: OUT recovery deferred after status 0x%08X usbd 0x%08X; "
-                     "remaining %I64u ms, attempts %lu/%u\n",
-                     trigger, triggerUsbd, (remaining + 9999) / 10000,
-                     m_TxRecoveryAttempts, Apple1902::MaxOutRecoveriesPerD0);
+                     "remaining %I64u ms, total attempts %I64u\n",
+                     trigger, triggerUsbd, (plan.Wait + 9999) / 10000,
+                     m_TxRecoveryAttempts);
         }
-        m_TxRecoveryDueTime = due;
-        // One shot, never a periodic retry. Duplicate OUT faults coalesce;
-        // another worker (e.g. IN recovery) can only rearm to the same due.
-        WdfTimerStart(m_OutRecoveryTimer, -(LONGLONG)remaining);
+        m_TxRecoveryDueTime = begin + plan.Wait;
+        // Same one shot and lifecycle as cooldown; duplicate callbacks only
+        // re-evaluate elapsed credit. No token is spent while deferred.
+        WdfTimerStart(m_OutRecoveryTimer, -(LONGLONG)plan.Wait);
         return;
     }
 
-    if (decision != Apple1902::OutRecoveryDecision::Run)
+    if (plan.Decision != Apple1902::OutRecoveryDecision::Run)
     {
-        // Terminal for this fault: no automatic retry after a stopped pipe
-        // or an exhausted budget. A lifecycle start may reopen the pipe.
+        // A stopped pipe is terminal for this fault. A lifecycle start may
+        // reopen it, but an empty bucket is NEVER a terminal discard.
         const LONG skipped = InterlockedIncrement(&m_TxRecoverySkipped);
         if (ShouldLogOccurrence(skipped))
         {
-            DbgPrint("Sideline1902: OUT recovery skipped (%s) #%ld after status 0x%08X usbd 0x%08X, "
-                     "attempts %lu/%u\n",
-                     decision == Apple1902::OutRecoveryDecision::NotRunning ? "pipe not running" :
-                     "budget exhausted",
-                     skipped, trigger, triggerUsbd,
-                     m_TxRecoveryAttempts, Apple1902::MaxOutRecoveriesPerD0);
+            DbgPrint("Sideline1902: OUT recovery skipped (pipe not running) #%ld after status "
+                     "0x%08X usbd 0x%08X, total attempts %I64u\n",
+                     skipped, trigger, triggerUsbd, m_TxRecoveryAttempts);
         }
         m_TxRecoveryDueTime = 0;
         InterlockedExchange(&m_TxRecoveryQueued, 0);
         return;
     }
 
-    const ULONG attempt = ++m_TxRecoveryAttempts;
-    m_TxLastRecoveryTime = begin;
+    const ULONG64 attempt = ++m_TxRecoveryAttempts;
     WDFUSBPIPE pipe = m_DataBulkOutPipe;
     WDFIOTARGET target = WdfUsbTargetPipeGetIoTarget(pipe);
-    DbgPrint("Sideline1902: OUT recovery %lu/%u start after status 0x%08X usbd 0x%08X\n",
-             attempt, Apple1902::MaxOutRecoveriesPerD0, trigger, triggerUsbd);
+    DbgPrint("Sideline1902: OUT recovery #%I64u start after status 0x%08X usbd 0x%08X\n",
+             attempt, trigger, triggerUsbd);
 
     CloseTxAdmissionLocked();
     m_TxPipeRunning = FALSE;
@@ -1682,9 +1678,9 @@ UsbNcmHostDevice::RecoverOutPipeLocked(
 
     // API success is not delivery: data progress is judged only from OUT
     // successes after a send offered after this restart.
-    DbgPrint("Sideline1902: OUT recovery %lu/%u %s: reset 0x%08X start 0x%08X; "
+    DbgPrint("Sideline1902: OUT recovery #%I64u %s: reset 0x%08X start 0x%08X; "
              "drain %I64u ms, stop %I64u ms, reset %I64u ms, start %I64u ms\n",
-             attempt, Apple1902::MaxOutRecoveriesPerD0,
+             attempt,
              m_TxPipeRunning ? "pipe restarted, data recovery unverified" :
              !NT_SUCCESS(resetStatus) ? "reset failed, OUT closed until queue or device restart" :
              "start failed, OUT closed until queue or device restart",

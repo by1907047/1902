@@ -67,12 +67,16 @@ class LifecyclePolicyTests(unittest.TestCase):
                         body.index('EvtUsbNcmAdapterSetLinkState('),
                         'The first link-up indication must carry the queried speed')
 
-    def test_out_recovery_budget_resets_only_per_d0_session(self):
+    def test_out_recovery_credit_resets_only_per_d0_session(self):
         body = function_body('EnterWorkingState')
         self.assertLess(body.index('BeginD0Session();'), body.index('SelectSetting()'))
         for name in ('StartTransmit', 'StopTransmit', 'RecoverDataPipes', 'RecoverOutPipeLocked'):
             self.assertNotIn('m_TxRecoveryAttempts = 0', function_body(name))
         self.assertIn('m_TxRecoveryAttempts = 0;', function_body('BeginD0Session'))
+        for name in ('StartTransmit', 'StopTransmit', 'RecoverDataPipes', 'RecoverOutPipeLocked'):
+            self.assertNotIn('ResetOutRecoveryBudget(', function_body(name))
+        self.assertIn('ResetOutRecoveryBudget(', function_body('BeginD0Session'))
+        self.assertIn('TryBeginOutRecovery(', function_body('RecoverOutPipeLocked'))
 
     def test_stop_transmit_flushes_outside_the_data_path_lock(self):
         body = function_body('StopTransmit')

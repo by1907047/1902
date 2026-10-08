@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased - renewable OUT recovery budget
+
+- Keep genuine OUT transaction faults pending while a capped time-credit
+  bucket refills: capacity three, one token per experimental 60 seconds, with
+  the existing ten-second minimum attempt-start interval. Replace the
+  irreversible three-per-D0 barrier; retain the lifetime count for diagnostics.
+- Reuse the existing one-shot timer and lifecycle drains. Queue restart does
+  not grant tokens; elapsed time still accrues. Failed reset/start remains
+  terminal, mode 0/1 is unchanged, and payloads are never replayed.
+- Portable production-code tests cover the observed four-fault sequence,
+  dense token wait, saturation/wrap and late/duplicate delivery; five genuine
+  mutations are rejected. Native qualification of this revision is pending.
+  This does not prevent the initiating USB transaction error.
+
 ## Unreleased
 
 Source changes after the frozen candidate. **Not built with the WDK and not hardware-tested**; the 0.1.0-alpha.1 hardware results do not apply to them.

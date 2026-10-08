@@ -2,12 +2,17 @@
 
 **Status:** experimental; this PR publishes source only, not a driver binary. Commit `d7fd6d67a680` passed offline x64 Debug/Release WDK builds and both INF validations, and its locally test-signed Release was installed for hardware tests on 2026-10-08. It is not Microsoft-signed. Existing native-analysis/dependency warnings remain.
 
-**2026-10-09 source revision:** a cooldown fault is now retained for one
-deferred attempt, and a new fault after admission reopens cannot be erased by
-the preceding recovery callback. This revision is default-off and is not yet
-WDK-built or hardware-qualified. The historical results below belong to
-`d7fd6d67a680`, not this revision. It addresses two recovery-state defects,
-not the cause of the first USB3 transaction error.
+**2026-10-09 source revision:** cooldown faults remain pending, reopen races
+cannot erase fresh faults, and the old three-attempt lifetime limit is replaced
+by a capped, renewable time-credit budget. This latest revision is default-off
+and not yet WDK-built or hardware-qualified. Its predecessor 81fb3e6 was
+native-built and installed: one 300 s run completed despite a real fault and
+pipe recovery; another failed when a fourth fault exhausted its three-per-D0
+limit after three successful restarts. These observations are pending native
+ETW cross-check, not first-error prevention or long-session qualification.
+The separate NTB header correction 9d3f3cb passed native builds and a single
+256 MiB C-file UD/readback checksum probe; that is only a smoke check.
+Historical tables below belong to d7fd6d67a680, not the latest revision.
 
 Initial hardware results for that exact driver commit, on one USB3 connection
 (the later [six-run comparison](HARDWARE-AB-20261008.md) supersedes any suggestion
@@ -130,9 +135,9 @@ Every status is still counted and logged.
 
 ### OUT sequence (work item, under the lock)
 
-1. **Decide.** The work item skips, with a log line, if recovery is stopped,
-   the pipe is not running or the budget is used up. A fault within the 10 s
-   cooldown is retained and delivered once at the cooldown deadline.
+1. **Decide.** The work item skips, with a log line, if recovery is stopped
+   or the pipe is not running. A fault within the 10 s cooldown or waiting
+   for time credit remains pending until both conditions permit an attempt.
 2. **Close admission and drain.** `TransmitFrames` holds a rundown reference for its whole send section, at up to DISPATCH_LEVEL. `ExWaitForRundownProtectionRelease` refuses new sends and waits for sends already in progress. This step exists because a stopped KMDF target queues new sends (`STATUS_WDF_QUEUED`) instead of failing them, and no send may reach a pipe that is being reset.
 3. **Stop.** `WdfIoTargetStop(CancelSentIo)` returns after every sent request's completion routine has run.
 4. **Reset.** `WdfUsbTargetPipeResetSynchronously` issues `URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL` with a 2 s timeout.
@@ -146,26 +151,42 @@ The log label after a successful start is `pipe restarted, data recovery unverif
 
 Recovery never resets or cycles the port, never resets the device and never
 retries a payload. A one-shot timer only delivers an actual fault retained
-during cooldown; it is not periodic polling or an automatic retry after a
+during cooldown or token wait; it is not periodic polling or an automatic retry after a
 failed reset/start.
 
-**Budget.** 3 attempts per D0 session, at least 10 s apart.
+**Budget.** Capacity three tokens, one token per experimental 60 s, and at
+least 10 s between attempt starts (before drain, not a physical USB reset
+spacing guarantee). These are conservative experiment parameters, not
+measured optimal values or a prevention claim.
 
-- The budget resets in `EnterWorkingState` (D0Entry), not on a queue restart.
-- An error after the budget is used up or while the pipe is not running is
-  counted and logged as skipped (1st, 2nd, 4th... occurrence).
-- An error during cooldown remains pending. A single-shot timer expires at
-  `lastAttempt + 10 s`, then enqueues the existing work item. The work item
-  checks lifecycle, budget and time again under the data-path lock. This
+- A new D0 session initializes a full bucket. A queue restart does not refill
+  it directly; elapsed interrupt time still accrues while idle or stopped.
+- Credit is continuous in 100 ns units, saturates at three tokens and is
+  debited only when an actual attempt starts, including a failed attempt.
+  The 64-bit lifetime attempt counter is diagnostic, never a gate.
+- An error while the pipe is not running is terminal and logged. An empty
+  bucket never discards an authentic pending fault.
+- A single-shot timer expires after the later of the remaining cooldown and
+  next-token wait, then enqueues the existing work item. The work item
+  checks lifecycle, credit and time again under the data-path lock. This
   works even if subsequent completions only time out. An early timer
-  delivery is rearmed for the remaining time, not a new full cooldown.
+  delivery is rearmed for the remaining time, not a new full period.
 - Errors while a fault is queued, deferred or recovering are coalesced.
   Neither a timeout nor an arbitrary successful completion consumes that
   pending fault. A successful completion may belong to old/out-of-order I/O.
-- Admission and pipe state are unchanged while cooldown is pending. Further
+- Admission and pipe state are unchanged while deferred. Further
   sends/timeouts can therefore occur until the remembered recovery runs;
   the fixed request pool still bounds outstanding requests. This revision
   does not implement TX backpressure or change queue/drop behavior.
+- Within a continuous D0 session, any interval of length L permits at most
+  three plus ceil(L / 60 s) attempts; the ten-second attempt spacing also
+  applies. Saturation cannot bank additional idle credit. The existing
+  timer/stop drains and IN/OUT reset ownership are unchanged.
+- Residual risks: an empty bucket may leave a halted pipe waiting up to
+  about a minute, so a TCP/application flow can fail before eventual recovery.
+  If reset/start APIs repeatedly succeed without useful data, infrequent
+  resets may continue indefinitely at the bounded rate. There is no new
+  sustained-progress circuit breaker, no payload replay and no prevention fix.
 
 **Offered traffic.** After a restart, the driver logs two events:
 
@@ -241,7 +262,10 @@ The probe covers:
 - admission racing the drain, and sends during a reset;
 - buffer ownership;
 - failed reset and failed start;
-- budget and cooldown, and the D0-session versus queue-restart budget;
+- time credit and cooldown, D0 reset versus queue persistence, timestamp zero,
+  unsigned wrap and saturating long-idle refill;
+- more than three recoveries in one modeled D0, the observed Trial2 fault
+  sequence followed by dense token wait, and new sends/successes after each;
 - a cooldown fault followed only by timeouts, duplicate coalescing, an old
   success which must not erase the fault, and an early timer delivery;
 - inline/fast fresh XACT_ERROR between admission reopening and the original
@@ -261,7 +285,11 @@ The probe covers:
 
 ## Hardware acceptance (owner's local decision)
 
-Run with circular USB ETW and DebugView, the Mac unlocked, and the existing harness unchanged. The harness stops on the first failed pair. That pair and that run stay failed and are never converted to a pass.
+Run with circular USB ETW and DebugView and the existing harness unchanged.
+Record actual lock/lid/power state; do not silently change accessory security.
+The harness stops on the first failed pair. That pair and that run stay failed
+and are never converted to a pass. DebugView buffering can hide live markers:
+online "not seen" is not evidence of absence; inspect the flushed log and ETW.
 
 **R0: switch absent.** A short smoke test with the candidate build:
 
@@ -284,13 +312,16 @@ Run with circular USB ETW and DebugView, the Mac unlocked, and the existing harn
 - an OUT completion succeeds within 1 s of that first offered send;
 - the post-restart probe passes;
 - ETW shows no PnP removal and no hub port reset or warm reset for the device;
-- there are at most 3 attempts.
+- attempts obey the renewable credit and ten-second attempt-start interval;
+- separately qualify more than three successful recovery epochs in one D0,
+  and a token-wait episode delivered without another XACT. If those cases do
+  not occur naturally, native coverage is incomplete despite portable tests.
 
 **Data progress is refuted if any of these happen:**
 
 - no OUT completion succeeds within 5 s of the first offered send;
 - the reset fails or times out;
-- the error recurs until the budget is used up;
+- the error recurs and fresh checked traffic still cannot progress;
 - the post-restart probe fails.
 
 If no traffic was offered after the restart, there is no conclusion either way.
@@ -300,7 +331,8 @@ If no traffic was offered after the restart, there is no conclusion either way.
 - a bugcheck;
 - a stop that hangs longer than 30 s;
 - any port reset or cycle attributable to the driver;
-- more than 3 OUT attempts in one D0 session.
+- an attempt outside the capped refill/cooldown policy, a lost pending fault,
+  or a failed reset/start followed by an automatic API retry.
 
 To roll back, delete the value or set it to 0, then restart the device. If that is not enough, reinstall the frozen build.
 
