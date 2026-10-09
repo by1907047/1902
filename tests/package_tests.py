@@ -53,6 +53,11 @@ def model_rows(target_build=26200):
     return result
 
 class PackageTests(unittest.TestCase):
+    def test_stable_professional_display_names(self):
+        self.assertEqual(resolve('%ProviderName%'), 'Sideline')
+        self.assertEqual(resolve('%DeviceDesc%'), 'Apple USB NCM Network Adapter')
+        self.assertEqual(resolve('%ServiceDesc%'), 'Apple USB NCM Driver')
+        self.assertEqual(resolve('%DiskName%'), 'Apple USB NCM Driver Package')
     def test_does_not_target_older_windows_than_the_build_kit(self):
         self.assertEqual(model_rows(26099), [])
         self.assertEqual(len(model_rows(26100)), 1)

@@ -1,10 +1,12 @@
-# Apple 1902 USB NCM for Windows
+# Apple USB NCM Driver for Windows
 
 [简体中文](README.zh-CN.md) · [Build](docs/BUILDING.md) · [Test results](docs/TESTING.md) · [Known issues](docs/KNOWN_ISSUES.md)
 
-An experimental Windows x64 USB network driver for the Apple `05AC:1902` composite device exposed by a Mac over a USB data cable. It builds a custom KMDF/NetAdapterCx `.sys`; this is **not** an INF wrapper around Windows' built-in `UsbNcm.sys`.
+A Windows x64 USB network driver for Mac-to-PC connections using the Apple `05AC:1902` composite device. The driver implements the USB Network Control Model (NCM) with KMDF and NetAdapterCx; it is **not** an INF wrapper around Windows' built-in `UsbNcm.sys`.
 
-**Alpha, laboratory use only.** `v0.1.0-alpha.2` provides a neutral-path, test-signed x64 package with revision-specific short hardware checks. The maintainer attributes the earlier USB3 fault to the old cable and locked reconnect to Mac accessory approval; this is not a qualification of every transport or power transition. There is no Microsoft signature, WHQL certification, or production support. Keep an independent management connection.
+The current release is a **test-signed laboratory build**, not a Microsoft-signed or WHQL-certified driver. It has revision-specific checks on one Mac/workstation setup. Keep an independent management connection and review [installation requirements](docs/INSTALLING.md) before use.
+
+The current source uses **Apple USB NCM Network Adapter** as the Windows display name and Sideline as provider. Alpha.2 retains its original display names; the renamed package is awaiting hardware validation. This is an independent project, not an official Apple or Microsoft driver. See [device naming](docs/DEVICE_NAMING.md).
 
 ## Scope
 

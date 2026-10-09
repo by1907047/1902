@@ -1,4 +1,4 @@
-; Experimental 05AC:1902 composite-parent driver. Build-only, not production signed.
+; Apple USB NCM composite-parent driver for 05AC:1902. Build template.
 ; Derived from Microsoft NCM sample; upstream copyright/license retained in source.
 [Version]
 Signature="$WINDOWS NT$"
@@ -63,7 +63,7 @@ SidelineAppleNcm1902.sys=1,,
 SidelineAppleNcm1902.sys
 
 [Strings]
-ProviderName="Sideline Experimental"
-DeviceDesc="Sideline Apple 1902 USB NCM (experimental)"
-ServiceDesc="Sideline Apple 1902 NCM Experiment"
-DiskName="Sideline Apple 1902 build"
+ProviderName="Sideline"
+DeviceDesc="Apple USB NCM Network Adapter"
+ServiceDesc="Apple USB NCM Driver"
+DiskName="Apple USB NCM Driver Package"

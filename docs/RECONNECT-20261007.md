@@ -1,7 +1,7 @@
 # PR #1 native reconnect test and delayed recovery
 
 This is a sanitized laboratory report, not a driver fix or a hardware approval.
-It supplements [PR #1](https://github.com/by1907047/1902/pull/1).
+It supplements [PR #1](https://github.com/by1907047/apple-usb-ncm/pull/1).
 Raw traces, device serials, interface GUIDs, local usernames, management addresses,
 binaries and signing material remain private. This documentation PR does not
 change the tested source or either source-snapshot manifest.
