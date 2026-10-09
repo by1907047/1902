@@ -23,7 +23,8 @@ def main():
     run([py, 'tests/source_identity_tests.py'])
     run([py, 'tests/package_tests.py',
          'NCM-Driver-for-Windows/host/SidelineAppleNcm1902.inf'])
-    for test in ('build_policy_tests.py', 'lifecycle_policy_tests.py'):
+    for test in ('build_policy_tests.py', 'lifecycle_policy_tests.py',
+                 'source_identity_tests.py'):
         run([py, 'tests/' + test])
     with tempfile.TemporaryDirectory(prefix='apple1902-validation-') as temp:
         binary = str(Path(temp) / 'validation')

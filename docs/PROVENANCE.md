@@ -17,7 +17,7 @@ At tag `v0.1.0-alpha.1`, the public Windows source and tests are byte-preserved 
 | Claim | Evidence | Meaning |
 | --- | --- | --- |
 | Baseline provenance | `docs/source-snapshot.json`, whose SHA256 (`bdc2c2ce874cc5e8fb5a66067f2a1e421fa916a327c36daba458f5e939159221`) is pinned in the verifier; every record is compared with the file contents at tag `v0.1.0-alpha.1` (mandatory in CI) | The tagged files are the exported archived candidate |
-| Current-source integrity | `docs/source-current.json` lists every file in `NCM-Driver-for-Windows/` and `tests/` that changed, was added or was removed after the baseline; every other tracked file in that scope must still match the baseline | Describes the current tree only. That source is **unreleased, not built with the WDK and not hardware-tested**; it does not inherit the candidate's hardware results |
+| Current-source integrity | `docs/source-current.json` lists every file in `NCM-Driver-for-Windows/` and `tests/` that changed, was added or was removed after the baseline; every other tracked file in that scope must still match the baseline | Describes the current unreleased tree only. Native builds and hardware results apply to exact revisions, not automatically to later commits; see [OUT-PIPE-RECOVERY.md](OUT-PIPE-RECOVERY.md) |
 
 The current-source list is maintained with `python3 tools/update_source_current.py` and reviewed with each change. It is an integrity record, not provenance: the identity of post-baseline source is the Git commit. `tools/export_snapshot.py` only regenerates the baseline from the private archive and fails if any baseline file was modified.
 
@@ -27,6 +27,6 @@ The upstream Linux subtree and its root README, private project notes, credentia
 
 Later public commits change some baseline files; see the CHANGELOG "Unreleased" section and `docs/source-current.json`. To inspect the exact candidate source, check out the `v0.1.0-alpha.1` tag.
 
-The 0.1.0-alpha.1 release merged no later observation-only or link-speed proposal. No compiled driver function is changed for publication. The original working tree, historical artifacts and private rollback materials remain outside this clean public checkout.
+The initial publication did not include the later observation-only or link-speed proposals and did not change compiled driver functions merely for publication. This is a historical baseline statement, not the status of subsequent commits. For the independent NTB changes and their revision-specific qualification boundary, see [NTB-HARDENING.md](NTB-HARDENING.md). The original working tree, historical artifacts and private rollback materials remain outside this public checkout.
 
 The archived driver contains personal build-path strings. A neutral-path rebuild will change artifact identity and needs fresh verification, signatures and hardware tests; it must not inherit the old binary's test status automatically.

@@ -1,5 +1,7 @@
 # Testing and historical results
 
+For the separately tested PR #1 candidate, see the [2026-10-07 reconnect report](RECONNECT-20261007.md): one PnP restart failed the 600-second recovery window, followed by a later passively observed and USB-ping-verified recovery. That result is not a fix or long-term qualification, and does not belong to the historical candidate below.
+
 This is a sanitized summary of archived **2026-10-02** laboratory records. It is not a new hardware test for the 2026-10-07 publication. Private logs, serial numbers, interface GUIDs, remote-management addresses and trace captures are deliberately excluded.
 
 ## Candidate identity

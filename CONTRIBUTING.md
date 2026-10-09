@@ -2,7 +2,7 @@
 
 Open a focused issue or pull request with the source commit, a reproducible case, expected behavior and actual result. Separate driver changes, build changes and documentation. Preserve upstream license headers.
 
-Run `python3 tools/run_portable_tests.py` before proposing a change. `docs/source-snapshot.json` is the immutable baseline for tag `v0.1.0-alpha.1`; never edit it. If you change, add or remove a file under `NCM-Driver-for-Windows/` or `tests/`, document why and run `python3 tools/update_source_current.py` to record it in `docs/source-current.json` as part of the reviewed patch. Do not regenerate that list merely to hide an unexplained mismatch.
+Run `python3 tools/run_portable_tests.py` before proposing a change. Keep `docs/source-snapshot.json` unchanged: it pins the historical initial candidate. Document source/test changes, stage any newly added source/test files, then run `python3 tools/update_source_current.py` and stage `docs/source-current.json`. The snapshot check verifies the immutable baseline and the current tracked delta. Do not regenerate hashes merely to hide an unexplained mismatch; the generated manifest is not build or hardware-test evidence.
 
 Changes touching USB parsing, NTB bounds, queues or lifecycle behavior need regression fixtures. Changes that depend on WDF scheduling, power transitions or hardware must also provide real-device results; portable shims are not substitutes. Report build warnings and failed tests, not just successes.
 
