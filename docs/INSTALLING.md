@@ -1,6 +1,6 @@
 # Laboratory installation and rollback
 
-There is no installable package in this source-only release. These notes describe the checks required for a future laboratory build; they are not a one-click installer or a recommendation to weaken a daily-use computer's security settings.
+Alpha.2 includes a test-signed laboratory package, not a Microsoft-signed production driver. These notes are not a one-click installer or a recommendation to weaken a daily-use computer's security settings. Check [the exact validation record](2026-10-10-alpha2-validation.md) first.
 
 ## Before installation
 
@@ -18,7 +18,9 @@ For an administrator on the intended laboratory machine, the normal package-inst
 pnputil /add-driver "C:\build\apple1902\package\SidelineAppleNcm1902.inf" /install
 ```
 
-The path is an example, not a file supplied by this release. Successful staging does not prove the device has bound or the kernel has loaded the driver. Check the selected driver, running service, device problem code and Code Integrity events. Reject a wrong-device binding or a trust failure; a consent dialog cannot override kernel Code Integrity.
+The path is an example; use your verified extracted package path. Successful staging does not prove the device has bound or the kernel has loaded the driver. Check the selected driver, running service, device problem code and Code Integrity events. Reject a wrong-device binding or a trust failure; a consent dialog cannot override kernel Code Integrity.
+
+For alpha.2, verify every file against `SHA256SUMS`, and verify SYS/CAT signer identity and catalog membership. Use an authorized test machine with an established test-signing policy and an explicit trust plan; importing `Test.cer` changes machine trust and is not an automatic installation step. Do not disable Secure Boot, HVCI or other protections merely to try this release. No private key is needed for installation. The test certificate is short-lived and the package has no timestamp.
 
 IP addresses and MTU must be configured on both ends deliberately. Do not add a default route or enable internet sharing just to test this link. Start with mutually supported settings; the historical MTU 8000 tests do not establish a universal default. When testing throughput, verify that payloads actually use USB rather than an Ethernet SMB multichannel fallback.
 

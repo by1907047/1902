@@ -3,10 +3,20 @@
 Current experimental status is in [OUT pipe recovery](OUT-PIPE-RECOVERY.md).
 Older observations below are labeled historical; they are not results
 for every later source revision. Recovery remains experimental, default-off
-and source-only, including after a source merge. Finite business passes do not establish fault-free
+even in the alpha.2 test-signed package. Finite business passes do not establish fault-free
 transport or long-term qualification.
 
 ## Open issues
+
+**2026-10-10 status update:** the maintainer identifies the old cable as the
+cause of the initiating USB3 fault, and Mac accessory approval as the cause
+of locked reconnect. Current policy is Always Allow. Historical failures below
+are retained, not retroactively marked passed. The alpha.2 exact package has
+its own [finite default-mode0 validation](2026-10-10-alpha2-validation.md).
+Experimental recovery modes 2/3 and their terminal-failure callbacks remain
+unqualified on this exact package. Function idle suspend remains disabled:
+the tested configuration reports no remote wake from a suspended state;
+see [power-management plan](POWER_MANAGEMENT.zh-CN.md).
 
 The [2026-10-10 integration note](2026-10-10-lessons-and-source-integration.zh-CN.md)
 records a newer default-mode0 600 s pass after both cable and Mac port changed.
@@ -24,7 +34,7 @@ also not surfaced as disconnected. Terminal reporting here is mode2/3 only.
 4. **Upload/download asymmetry.** USB3 memory upload was slower than download in short measurements. No function-level cause or validated optimization has been established. File-upload measurements also include hashing, disk writes, flushing and acknowledgements.
 5. **SMB can use the wrong path.** A USB-addressed share may still use an Ethernet multichannel fallback. Existing SMB observations cannot be presented as USB throughput. This repository does not disable SMB security or global multichannel behavior.
 6. **Limited compatibility and trust coverage.** Only one Mac/workstation setup was tested. No Microsoft signature, WHQL/HLK qualification or normal Secure Boot + TESTSIGNING-off load result exists. Source INF architecture/build restrictions must not be broadened without testing.
-7. **Build warnings, signing and binary publication.** Native build summaries for `9d3f3cb`, `59d64b7` and `38709d3` all retain 70 Debug / 68 Release warnings; strict, consistently normalized comparisons found no new warnings. Earlier 53/51 summaries used a different counting method and are not evidence of a reduction. Neutral-path native rebuilds and private test-signed installations now exist, but are not warning-free builds or certification. No binary is publicly released; exact package verification, applicable qualification and an authorized Microsoft-signing route remain separate release gates.
+7. **Build warnings and production signing.** Native build summaries for `9d3f3cb`, `59d64b7` and `38709d3` retain 70 Debug / 68 Release warnings; normalized comparisons found no new warnings. Earlier 53/51 summaries used a different counting method and do not prove a reduction. Alpha.2 is a neutral-path test-signed package with finite default-mode0 checks, not a warning-free build or certification. Its short-lived certificate expires on 2026-11-08 without a timestamp. Microsoft signing, normal Secure Boot load, experimental terminal-failure qualification and broader compatibility remain separate gates.
 
 ## Next milestones
 
