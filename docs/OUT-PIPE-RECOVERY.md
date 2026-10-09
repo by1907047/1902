@@ -1,9 +1,16 @@
 # Experimental data-pipe diagnostics and pipe-only recovery
 
 **Status:** experimental, default-off and source-only; no public driver binary
-or Microsoft signature. This PR is still draft and unmerged. Native build,
+or Microsoft signature. Source integration does not confer hardware qualification. Native build,
 installation, business traffic and recovery qualification are separate gates.
 Existing native-analysis/dependency warnings remain.
+
+**2026-10-10 integration:** see the [experience and integration note](2026-10-10-lessons-and-source-integration.zh-CN.md).
+In recovery mode, a terminal pipe reset/start failure now reports link down
+once; successful starts of both pipes restore the indication. No idle-traffic
+watchdog, payload replay, broadened OUT error classification or PnP reset is
+added. Mode0/1 does not execute this reporting. The new reporting is modeled
+in portable regression but has not been exercised on hardware.
 
 **2026-10-09 revision status:**
 

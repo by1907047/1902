@@ -50,6 +50,8 @@ DATA_PATH_FUNCTIONS = [
     'NTSTATUS\nUsbNcmHostDevice::TransmitFrames(',
 ]
 NEW_FUNCTIONS = ['static\nULONG64\nElapsedMs('] + DATA_PATH_FUNCTIONS + [
+    'void\nUsbNcmHostDevice::SetDataPathFailedLocked(',
+    'void\nUsbNcmHostDevice::RestoreDataPathLinkLocked(',
     'NTSTATUS\nUsbNcmHostDevice::LeaveWorkingState(',
     'void\nUsbNcmHostDevice::InitializeDataPathControl(',
     'void\nUsbNcmHostDevice::BeginD0Session(',
@@ -364,7 +366,7 @@ using PWDF_MEMORY_DESCRIPTOR=void*;
 struct NTB_PARAMETERS{UINT32 dwNtbInMaxSize;};
 constexpr int ETH_LENGTH_OF_ADDRESS=6;
 struct USBNCM_DEVICE_EVENT_CALLBACKS{ULONG Size;};
-struct USBNCM_ADAPTER_EVENT_CALLBACKS{void(*EvtUsbNcmAdapterNotifyTransmitCompletion)(NETADAPTER,TX_BUFFER_REQUEST*);};
+struct USBNCM_ADAPTER_EVENT_CALLBACKS{void(*EvtUsbNcmAdapterNotifyTransmitCompletion)(NETADAPTER,TX_BUFFER_REQUEST*);void(*EvtUsbNcmAdapterSetLinkState)(NETADAPTER,BOOLEAN);};
 typedef BOOLEAN EVT_WDF_USB_READERS_FAILED(WDFUSBPIPE,NTSTATUS,USBD_STATUS);
 '''
 
@@ -391,7 +393,8 @@ static void PoolReturn(TX_BUFFER_REQUEST* b){Trace("return "+std::to_string(b->R
  std::lock_guard<std::mutex> l(g_poolLock);g_pool.push_back(b);}
 static size_t PoolFree(){std::lock_guard<std::mutex> l(g_poolLock);return g_pool.size();}
 static void NotifyTransmitCompletion(NETADAPTER,TX_BUFFER_REQUEST* b){PoolReturn(b);}
-static USBNCM_ADAPTER_EVENT_CALLBACKS g_adapterCallbacks{NotifyTransmitCompletion};
+static void SetLinkState(NETADAPTER,BOOLEAN up){AssertPassive();Trace(up?"link-up":"link-down");}
+static USBNCM_ADAPTER_EVENT_CALLBACKS g_adapterCallbacks{NotifyTransmitCompletion,SetLinkState};
 
 // One packet through the production send path, as NcmTxQueue::Advance calls it.
 static NTSTATUS Send(FakeDevice* dev,size_t length=100){
@@ -599,25 +602,34 @@ static void RecoveryCycle(ULONG v){
 
 static void FailedResetAndStart(){
  // Reset fails: never started, never reopened; sends are refused, not queued.
- Reset();Rig* r=NewRig(true,2);FakeTarget* t=&r->pipe.target;U::StartTransmit(&r->dev);Send(&r->dev);
+ Reset();Rig* r=NewRig(true,2);FakeTarget* t=&r->pipe.target;U::StartReceive(&r->dev);U::StartTransmit(&r->dev);Send(&r->dev);
  g_resetResult=STATUS_IO_TIMEOUT;CompleteSent(t,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);
  CHECK(RunQueuedWorkItem(r->host->m_DataPathWorkItem));g_resetResult=STATUS_SUCCESS;
  CHECK(TraceCount("start")==1&&!Running(r)&&!r->host->m_TxAdmissionOpen&&LogsWith("OUT recovery #%I64u %s")==1);
+ CHECK(TraceCount("link-down")==1&&r->host->m_DataPathLinkFailed);
+ AdvanceSeconds(120);CHECK(TraceCount("link-down")==1&&TraceCount("link-up")==0);
  int sends=g_sendCalls;CHECK(Send(&r->dev)==STATUS_DEVICE_NOT_READY&&g_sendCalls==sends&&t->queued.empty());
  CHECK(r->host->m_TxAdmissionRejects==1);
  U::StopTransmit(&r->dev);U::StartTransmit(&r->dev);                 // normal queue restart reopens
  CHECK(Running(r)&&NT_SUCCESS(Send(&r->dev)));CompleteSent(t,1,STATUS_SUCCESS,0);
+ CHECK(TraceCount("link-up")==1&&!r->host->m_DataPathLinkFailed);
  U::StopTransmit(&r->dev);ExpectAllReturned(r);
  // Start after a good reset fails: same, the failure is kept.
  Reset();r=NewRig(true,2);t=&r->pipe.target;U::StartTransmit(&r->dev);Send(&r->dev);
  CompleteSent(t,1,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR);
  g_startResults={STATUS_INSUFFICIENT_RESOURCES};CHECK(RunQueuedWorkItem(r->host->m_DataPathWorkItem));
  CHECK(TraceCount("reset")==1&&!Running(r)&&!r->host->m_TxAdmissionOpen);
+ CHECK(TraceCount("link-down")==1&&TraceCount("link-up")==0);
  CHECK(Send(&r->dev)==STATUS_DEVICE_NOT_READY);
  // A queue start whose pipe start fails is not marked running either.
  U::StopTransmit(&r->dev);g_startResults={STATUS_INSUFFICIENT_RESOURCES};U::StartTransmit(&r->dev);
  CHECK(!Running(r)&&!r->host->m_TxAdmissionOpen&&Send(&r->dev)==STATUS_DEVICE_NOT_READY);
  CHECK(LogsWith("OUT pipe start failed")==1);
+ CHECK(TraceCount("link-down")==1); // repeated failure is not a notification storm
+ U::StartTransmit(&r->dev); // OUT alone is insufficient to declare both pipes ready
+ CHECK(TraceCount("link-up")==0&&r->host->m_DataPathLinkFailed);
+ U::StartReceive(&r->dev);
+ CHECK(TraceCount("link-up")==1&&!r->host->m_DataPathLinkFailed);
  U::StopTransmit(&r->dev);ExpectAllReturned(r);
  std::puts("failed reset or start: not running, admission stays closed, nothing queued, queue restart reopens PASS");
 }
@@ -885,6 +897,7 @@ static void Stress(){
 // pipe stop, reset and start runs under the one data-path lock.
 static void InReaderRecovery(){
  Reset();Rig* r=NewRig(true,2);auto* w=r->host->m_DataPathWorkItem;
+ U::StartTransmit(&r->dev);
  U::StartReceive(&r->dev);CHECK(ReadersActive(r)&&r->host->m_RxPipeRunning);
  CHECK(KmdfReaderFailure(r,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR)==0);   // FALSE: framework does nothing
  CHECK(TraceCount("kmdf-")==0&&!ReadersActive(r)&&Enqueues(w)==1&&LogsWith("RX readers failed")==1);
@@ -896,16 +909,25 @@ static void InReaderRecovery(){
  g_inResetResult=STATUS_UNSUCCESSFUL;CHECK(RunQueuedWorkItem(w));g_inResetResult=STATUS_SUCCESS;
  CHECK(TraceCount("kmdf-")==0&&TraceCount("in-reset")==2&&TraceCount("in-start")==2);
  CHECK(!ReadersActive(r)&&!r->host->m_RxPipeRunning);                         // stopped, logged, no escalation
+ CHECK(TraceCount("link-down")==1&&r->host->m_DataPathLinkFailed);
  U::StopReceive(&r->dev);U::StartReceive(&r->dev);CHECK(ReadersActive(r));      // normal restart recovers
+ CHECK(TraceCount("link-up")==1&&!r->host->m_DataPathLinkFailed);
  // Device gone: no reset at all.
  CHECK(KmdfReaderFailure(r,STATUS_NO_SUCH_DEVICE,USBD_STATUS_DEVICE_GONE)==0);
  CHECK(RunQueuedWorkItem(w)&&TraceCount("in-reset")==2&&!ReadersActive(r)&&LogsWith("device gone")==1);
+ CHECK(!r->host->m_RxPipeRunning&&TraceCount("link-down")==2);
  // Failure handed over, then the queue stops first: the item skips the pipe.
  U::StopReceive(&r->dev);U::StartReceive(&r->dev);
+ CHECK(TraceCount("link-up")==2);
  CHECK(KmdfReaderFailure(r,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR)==0);
  U::StopReceive(&r->dev);r->in.valid=false;
  CHECK(RunQueuedWorkItem(w)&&TraceCount("in-reset")==2&&LogsWith("IN recovery #%ld skipped (pipe not running)")==1);
  CHECK(KmdfReaderFailure(r,STATUS_UNSUCCESSFUL,USBD_STATUS_XACT_ERROR)==-1);  // stopped: framework queues nothing
+ CHECK(TraceCount("link-down")==2); // intentional stop is not a failed link
+ r->in.valid=true;g_startResults={STATUS_INSUFFICIENT_RESOURCES};U::StartReceive(&r->dev);
+ CHECK(TraceCount("link-down")==3&&!r->host->m_RxPipeRunning);
+ U::StartReceive(&r->dev);CHECK(TraceCount("link-up")==3);
+ U::StopReceive(&r->dev);U::StopTransmit(&r->dev);
  std::puts("IN: readers-failed returns FALSE without lock or stop; work item stops, resets, restarts "
            "under the data-path lock; no framework pipe or port reset; failure keeps readers stopped PASS");
 }

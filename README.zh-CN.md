@@ -27,7 +27,7 @@ python3 tools/run_portable_tests.py
 
 Windows 构建见 [构建说明](docs/BUILDING.md)。安装前请读 [安装与回滚](docs/INSTALLING.md)、[签名状态](docs/SIGNING.md) 和 [已知问题](docs/KNOWN_ISSUES.md)。源码 INF 的版本字段尚需构建工具生成，不能直接安装。
 
-`v0.1.0-alpha.1` 标签是经过实机测试的冻结候选版源码导出。此后的提交加入了尚未用 WDK 构建、也未经实机测试的修复，详见 [更新记录](CHANGELOG.md)，不能沿用旧版的实测结果。`tools/check_snapshot.py` 分别核对两件事：基线文件与该标签一致；当前源码相对基线的每处改动都记录在 `docs/source-current.json` 中。
+`v0.1.0-alpha.1` 标签是经过实机测试的冻结候选版源码导出。后续修复见 [更新记录](CHANGELOG.md)，各版本构建与实机结果见 [管道恢复记录](docs/OUT-PIPE-RECOVERY.md)，不能自动沿用旧版实测结果。本轮情况与边界见 [经验总结](docs/2026-10-10-lessons-and-source-integration.zh-CN.md)。`tools/check_snapshot.py` 分别核对基线与标签，以及当前源码清单中的全部改动。
 
 实测速度、失败记录和证据范围见 [测试记录](docs/TESTING.md)，源码来源与哈希见 [版本溯源](docs/PROVENANCE.md)。上传速度不对称、属性显示错误、真正睡眠后的恢复，以及 Secure Boot 正常策略加载都还在待办范围内。
 

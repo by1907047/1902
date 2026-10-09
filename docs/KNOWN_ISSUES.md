@@ -2,11 +2,18 @@
 
 Current experimental status is in [OUT pipe recovery](OUT-PIPE-RECOVERY.md).
 Older observations below are labeled historical; they are not results
-for every later source revision. The PR remains draft/unmerged and
-source-only. Finite business passes do not establish fault-free
+for every later source revision. Recovery remains experimental, default-off
+and source-only, including after a source merge. Finite business passes do not establish fault-free
 transport or long-term qualification.
 
 ## Open issues
+
+The [2026-10-10 integration note](2026-10-10-lessons-and-source-integration.zh-CN.md)
+records a newer default-mode0 600 s pass after both cable and Mac port changed.
+It does not isolate the old cable or qualify the current source on hardware.
+Recovery-mode terminal pipe failures now indicate disconnected; both pipes
+must successfully start before the indication is restored. This is readiness,
+not a packet-delivery watchdog or automatic device restart.
 
 1. **Initiating USB3 OUT transaction error remains unexplained.** Historical reconnect tests stalled both directions after upload/download, and a successful PnP call did not ensure an immediately usable adapter. Later native captures identify a real OUT transaction error followed by canceled send-timeout tails. Experimental pipe-only recovery now exists; `81fb3e6` has one native-plus-SHA supported recovery and `59d64b7` has two finite 600 s business passes, with five narrow native-plus-SHA recovery chains in T1. T2 has no observed payload OUT XACT, but both traces retain startup pairing exceptions and global analysis-quality failure. This does not fix the initiating error or establish unconditional reconnect. See [revision-specific status](OUT-PIPE-RECOVERY.md).
 2. **Long-duration qualification remains incomplete.** The two 600 s originals belong to `59d64b7`; newer RX revision `38709d3` passed its own 600 s original, with one narrowly supported native old-request-drain/reset/new-OUT/SHA recovery chain, and a separate default-mode0 C-file smoke. Its global analysis-quality gap remains. Natural credit Deferred wait and exhaustive ordinary queue-stop continuity are not natively covered. Overnight transfers, repeated hot-plug, genuine sleep/wake, port changes, memory/leak checks and power transitions remain open. See [revision-specific limits](OUT-PIPE-RECOVERY.md).

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased - source integration and terminal link reporting
+
+- Preserve main's independent NTB hardening while integrating PR1 diagnostics
+  and PR3 default-off pipe recovery. Default mode remains zero; no binary release.
+- Recovery mode reports terminal IN/OUT reset/start failure as disconnected,
+  suppresses duplicate indications and restores connected only after both pipes
+  successfully start. Idle traffic and intentional queue stops are not failures.
+- Add IN/OUT failure and restart indication regression checks. Source merge,
+  portable model results and exact native/hardware qualification remain separate.
+- Document cable/port confounds, the current host's 5Gbps ceiling, descriptor
+  burst metadata, USB2 controls, power/throughput direction and capture limits.
+
 ## Unreleased - renewable OUT recovery budget
 
 - Keep genuine OUT transaction faults pending while a capped time-credit

@@ -166,6 +166,16 @@ private:
     EVT_WDF_TIMER
         OutRecoveryTimer;
 
+    // Called only at PASSIVE_LEVEL with m_DataPathLock held in recovery
+    // mode. A terminal pipe failure, not idle traffic, indicates link down.
+    PAGED
+    void
+    SetDataPathFailedLocked(void);
+
+    PAGED
+    void
+    RestoreDataPathLinkLocked(void);
+
     PAGED
     void
     RecoverDataPipes(
@@ -327,6 +337,8 @@ private:
         m_TxFirstFailureLogged = 0;
 
     // Recovery only (bit 0x2); everything below is unused otherwise.
+    BOOLEAN
+        m_DataPathLinkFailed = FALSE;
     //
     // Admission gate for bulk-OUT sends: TransmitFrames holds a reference
     // for its whole send section, at up to DISPATCH_LEVEL. It is closed,

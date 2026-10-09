@@ -874,7 +874,9 @@ UsbNcmHostDevice::StartReceive(
         if (!NT_SUCCESS(status))
         {
             DbgPrint("Sideline1902: IN pipe start failed 0x%08X\n", status);
+            hostDevice->SetDataPathFailedLocked();
         }
+        hostDevice->RestoreDataPathLinkLocked();
     }
     WdfWaitLockRelease(hostDevice->m_DataPathLock);
 }
@@ -936,11 +938,13 @@ UsbNcmHostDevice::StartTransmit(
             hostDevice->m_TxPipeRunning = TRUE;
             InterlockedExchange(&hostDevice->m_TxRecoveryEnabled, 1);
             hostDevice->OpenTxAdmissionLocked();
+            hostDevice->RestoreDataPathLinkLocked();
         }
         else
         {
             // Not marked running; sends stay closed.
             DbgPrint("Sideline1902: OUT pipe start failed 0x%08X\n", status);
+            hostDevice->SetDataPathFailedLocked();
         }
     }
     WdfWaitLockRelease(hostDevice->m_DataPathLock);
@@ -1368,6 +1372,7 @@ UsbNcmHostDevice::BeginD0Session(
         // D0Exit stopped both pipes and flushed the work item before this.
         // Queue stop/start inside one D0 session does not come here.
         WdfWaitLockAcquire(m_DataPathLock, nullptr);
+        m_DataPathLinkFailed = FALSE;
         m_TxRecoveryAttempts = 0;
         Apple1902::ResetOutRecoveryBudget(m_TxRecoveryBudget, KeQueryInterruptTime());
         DbgPrint("Sideline1902: OUT recovery credit: burst %u, refill %I64u ms, cooldown %I64u ms\n",
@@ -1488,6 +1493,43 @@ UsbNcmHostDevice::OutRecoveryTimer(
 PAGEDX
 _Use_decl_annotations_
 void
+UsbNcmHostDevice::SetDataPathFailedLocked(void)
+{
+    PAGED_CODE();
+    if (!m_DataPathLinkFailed)
+    {
+        m_DataPathLinkFailed = TRUE;
+        if (m_NcmAdapterCallbacks != nullptr)
+        {
+            m_NcmAdapterCallbacks->EvtUsbNcmAdapterSetLinkState(m_NetAdapter, FALSE);
+        }
+        DbgPrint("Sideline1902: terminal data-pipe failure; link disconnected (no PnP reset)\n");
+    }
+}
+
+PAGEDX
+_Use_decl_annotations_
+void
+UsbNcmHostDevice::RestoreDataPathLinkLocked(void)
+{
+    PAGED_CODE();
+    // Queue starts, not packet success, restore the indication. Waiting for
+    // a successful packet while disconnected could prevent that very send.
+    // This is pipe readiness only; it does not prove delivery or repair PHY.
+    if (m_DataPathLinkFailed && m_RxPipeRunning && m_TxPipeRunning)
+    {
+        m_DataPathLinkFailed = FALSE;
+        if (m_NcmAdapterCallbacks != nullptr)
+        {
+            m_NcmAdapterCallbacks->EvtUsbNcmAdapterSetLinkState(m_NetAdapter, TRUE);
+        }
+        DbgPrint("Sideline1902: both data pipes restarted; link connected, delivery unverified\n");
+    }
+}
+
+PAGEDX
+_Use_decl_annotations_
+void
 UsbNcmHostDevice::RecoverDataPipes(
     void
 )
@@ -1535,6 +1577,8 @@ UsbNcmHostDevice::RecoverInPipeLocked(
     {
         DbgPrint("Sideline1902: IN recovery #%ld skipped (device gone, status 0x%08X usbd 0x%08X); "
                  "readers stay stopped\n", attempt, trigger, triggerUsbd);
+        m_RxPipeRunning = FALSE;
+        SetDataPathFailedLocked();
         return;
     }
 
@@ -1560,6 +1604,15 @@ UsbNcmHostDevice::RecoverInPipeLocked(
         startStatus = WdfIoTargetStart(target);
         started = KeQueryInterruptTime();
         m_RxPipeRunning = NT_SUCCESS(startStatus);
+    }
+
+    if (!m_RxPipeRunning)
+    {
+        SetDataPathFailedLocked();
+    }
+    else
+    {
+        RestoreDataPathLinkLocked();
     }
 
     if (!m_RxPipeRunning || ShouldLogOccurrence(attempt))
@@ -1691,5 +1744,10 @@ UsbNcmHostDevice::RecoverOutPipeLocked(
     if (!m_TxPipeRunning)
     {
         InterlockedExchange(&m_TxRecoveryQueued, 0);
+        SetDataPathFailedLocked();
+    }
+    else
+    {
+        RestoreDataPathLinkLocked();
     }
 }

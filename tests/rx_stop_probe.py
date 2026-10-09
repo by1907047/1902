@@ -76,6 +76,8 @@ struct UsbNcmHostDevice {
   WDFUSBPIPE m_DataBulkInPipe;
   FakeLock* m_DataPathLock=nullptr; bool m_RxPipeRunning=false;
   bool IsRecoveryMode() const { return false; }
+  void SetDataPathFailedLocked() { std::abort(); }
+  void RestoreDataPathLinkLocked() { std::abort(); }
   static void StartReceive(WDFDEVICE);
   static void StopReceive(WDFDEVICE);
 };
