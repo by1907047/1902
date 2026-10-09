@@ -67,8 +67,17 @@ static void WdfIoTargetStop(WDFIOTARGET h,int action) {
   }
   targetStopped=true;
 }
+// Switch 0: the recovery-mode branches must not run (their DDIs abort).
+struct FakeLock;
+static void WdfWaitLockAcquire(FakeLock*,void*) { std::abort(); }
+static void WdfWaitLockRelease(FakeLock*) { std::abort(); }
+static int DbgPrint(const char*,...) { return 0; }
 struct UsbNcmHostDevice {
   WDFUSBPIPE m_DataBulkInPipe;
+  FakeLock* m_DataPathLock=nullptr; bool m_RxPipeRunning=false;
+  bool IsRecoveryMode() const { return false; }
+  void SetDataPathFailedLocked() { std::abort(); }
+  void RestoreDataPathLinkLocked() { std::abort(); }
   static void StartReceive(WDFDEVICE);
   static void StopReceive(WDFDEVICE);
 };

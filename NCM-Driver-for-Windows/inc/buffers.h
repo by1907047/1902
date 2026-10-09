@@ -90,6 +90,14 @@ RxBufferQueueDequeueBuffer(
     _Outptr_ RX_BUFFER ** rxBuffer
 );
 
+// Return a received buffer that was not enqueued to its owner.
+_IRQL_requires_max_(DISPATCH_LEVEL)
+void
+RxBufferQueueDiscardBuffer(
+    _In_opt_ PUCHAR buffer,
+    _In_opt_ WDFOBJECT returnContext
+);
+
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
 RxBufferQueueReturnBuffer(

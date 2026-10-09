@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "unreleased: not built with the WDK and not hardware-tested",
+  "status": "unreleased source delta; revision-specific native and hardware qualification is documented in docs/OUT-PIPE-RECOVERY.md",
   "baseline": {
     "tag": "v0.1.0-alpha.1",
     "candidate": "d522ef2-dirty-469555eaf6648073",
@@ -13,26 +13,126 @@
   ],
   "changed_from_baseline": [
     {
+      "Path": "NCM-Driver-for-Windows/adapter/adapter.cpp",
+      "Bytes": 10155,
+      "SHA256": "0b7874151efbcebf570438a77545a5d9ba13cb15724983bab72ed0cacd1bd589"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/adapter/rxqueue.h",
+      "Bytes": 4088,
+      "SHA256": "9c49385fefb3253e0d01c87f57143e24b689ef0aacbc67299856285fab9f6c56"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/common/buffers.cpp",
+      "Bytes": 8283,
+      "SHA256": "8a55b406ac1d5ec973e1b3ca6ab374483297da89cceb4509c44407414e19a0d8"
+    },
+    {
       "Path": "NCM-Driver-for-Windows/common/ntb.cpp",
       "Bytes": 18997,
       "SHA256": "eb94d60663a788c5b35250093e928dcd6fc7b6177473e9f81265b9e69a1ddad9"
     },
     {
+      "Path": "NCM-Driver-for-Windows/host/apple1902_validation.h",
+      "Bytes": 8405,
+      "SHA256": "531132fd7b9f6d4b705516e1b469b165ab8228d402fe40fb210848e7edde4bad"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/device.cpp",
+      "Bytes": 58551,
+      "SHA256": "233f74f748480b808d3022e3f98691ec0fb74940f5905abfd96665ea693ba3e3"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/device.h",
+      "Bytes": 8628,
+      "SHA256": "51800b67e02841c8ba036f8b516a0fd33bdb70ab372b4b1199421e4a7e072eb1"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/host/driver.cpp",
+      "Bytes": 5234,
+      "SHA256": "f760ae1937b8169f6786ea098e690c85794032e11758dcf0f97cf5a2e5afa75d"
+    },
+    {
+      "Path": "NCM-Driver-for-Windows/inc/buffers.h",
+      "Bytes": 2146,
+      "SHA256": "2d16929f391eaa173df287fa7eb7ebb6f62b54fdc1c985014e2f4a2eb71a7fac"
+    },
+    {
+      "Path": "tests/adapter_lifecycle_probe.py",
+      "Bytes": 7241,
+      "SHA256": "cab4351e4831f0b146add1b991e02c733a0840c60c0f9d92227d9c13d1911089"
+    },
+    {
+      "Path": "tests/buffer_creation_probe.py",
+      "Bytes": 8929,
+      "SHA256": "b3340c193f6a4e4b3611acaba9cd633063caab4ccd06cfd9b30b0feaa4f04bc5"
+    },
+    {
+      "Path": "tests/lifecycle_policy_tests.py",
+      "Bytes": 8158,
+      "SHA256": "688ec5b97b8c0c8331eee3736b4a4b56f268bb4249674e4f8f3d314a734b440d"
+    },
+    {
       "Path": "tests/ntb_review_probe.py",
       "Bytes": 11809,
       "SHA256": "e80cda70f30a3872e5e9af342a5a3384d6a55448cf7ffd259e6d6d1d2937ab34"
+    },
+    {
+      "Path": "tests/rx_completion_probe.py",
+      "Bytes": 10914,
+      "SHA256": "997f191c304683045007efba9b3453837a1f7a5aa11b3bcb2140514e94b7b9bd"
+    },
+    {
+      "Path": "tests/rx_stop_probe.py",
+      "Bytes": 7523,
+      "SHA256": "f4bd382c718564ba49fa602196ba54c1846a370f6cde2531b8d10112f9d62634"
+    },
+    {
+      "Path": "tests/validation_tests.cpp",
+      "Bytes": 8107,
+      "SHA256": "a0c4e44d86c130a2913d04d863cfab3a0569f40233fef311566977821ad5d7af"
     }
   ],
   "added_after_baseline": [
+    {
+      "Path": "NCM-Driver-for-Windows/host/out_pipe_policy.h",
+      "Bytes": 5319,
+      "SHA256": "3a98db7c7e707855e5fa50a850c08fae5e8a8682119a801b07982e4a52d58e8d"
+    },
+    {
+      "Path": "tests/host_diagnostics_probe.py",
+      "Bytes": 10072,
+      "SHA256": "70965187f326bb9209a097d390ffb1db6d5b594ecc56a78efb401b5c1e6bec34"
+    },
+    {
+      "Path": "tests/host_memory_probe.py",
+      "Bytes": 9825,
+      "SHA256": "135c13c5aa9982879bc14873fb16db5a210a0e90b48bb6c5f92a57e0c5147f4f"
+    },
     {
       "Path": "tests/ntb_chain_probe.py",
       "Bytes": 5799,
       "SHA256": "a7841da1938a9db35322415ca3b6791667149c1680c6bbdf791367133ccd34ff"
     },
     {
+      "Path": "tests/ntb_fit_probe.py",
+      "Bytes": 3950,
+      "SHA256": "f211fc4137128ae26195219ee23b22935029bc8b635d1798f23c4cc69dc05e82"
+    },
+    {
       "Path": "tests/ntb_reserved_fields_probe.py",
       "Bytes": 3899,
       "SHA256": "19c2a1f9fb41fd3f4608d030cbe68d21718d6bc19bf594e2b9ed2e2651afb588"
+    },
+    {
+      "Path": "tests/out_credit_probe.py",
+      "Bytes": 6051,
+      "SHA256": "6f98bdd9e1a468b116f3cf4a423f711931f8e84b55c080b175e84678822458e1"
+    },
+    {
+      "Path": "tests/out_recovery_probe.py",
+      "Bytes": 73741,
+      "SHA256": "2d22699939914a16327979c46c78b16a94da825dc705f8395050a10fded9c234"
     },
     {
       "Path": "tests/source_identity_tests.py",

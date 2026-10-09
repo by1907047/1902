@@ -41,7 +41,7 @@ docs/                    build, safety, results, limitations and provenance
 .github/                 portable CI and issue templates
 ```
 
-The code is a frozen export of the hardware-tested reconnect candidate, not the later unbuilt observation or link-rate proposals. [PROVENANCE](docs/PROVENANCE.md) records the exact source and historical binary hashes. CI checks selected source behavior with operating-system shims; it cannot establish kernel or hardware safety.
+Release `v0.1.0-alpha.1` is a frozen export of the hardware-tested reconnect candidate. Later changes in the [CHANGELOG](CHANGELOG.md) have revision-specific native and hardware results in [OUT-PIPE-RECOVERY](docs/OUT-PIPE-RECOVERY.md); results do not carry forward automatically. See the [integration lessons](docs/2026-10-10-lessons-and-source-integration.zh-CN.md). [PROVENANCE](docs/PROVENANCE.md) records source identities. CI uses operating-system shims; it cannot establish kernel or hardware safety.
 
 ## Contribute
 

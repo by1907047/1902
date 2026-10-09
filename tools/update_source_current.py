@@ -32,7 +32,7 @@ def main():
     removed = sorted(set(baseline) - tracked)
     current = {
         'schema': 1,
-        'status': 'unreleased: not built with the WDK and not hardware-tested',
+        'status': 'unreleased source delta; revision-specific native and hardware qualification is documented in docs/OUT-PIPE-RECOVERY.md',
         'baseline': {
             'tag': BASELINE_TAG,
             'candidate': BASELINE_CANDIDATE,

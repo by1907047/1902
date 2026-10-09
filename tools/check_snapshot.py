@@ -10,8 +10,9 @@ Two separate claims are checked:
 * Current-source integrity. docs/source-current.json lists every tracked file
   in the baseline scope that changed, was added or was removed after the
   baseline. Unlisted files must still be byte-identical to the baseline. These
-  records only describe the current tree; that source is unreleased, not built
-  with the WDK and not hardware-tested.
+  records only describe the current unreleased source delta. Native and
+  hardware qualification is revision-specific and documented separately
+  in docs/OUT-PIPE-RECOVERY.md.
 """
 import hashlib
 import json

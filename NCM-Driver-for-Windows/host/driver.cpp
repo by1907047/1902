@@ -94,7 +94,11 @@ UsbNcmHostEvtDeviceAdd(
         WdfDeviceCreate(&DeviceInit, &attribs, &wdfDevice),
         "WdfDeviceCreate failed");
 
-    new (NcmGetHostDeviceFromHandle(wdfDevice)) UsbNcmHostDevice(wdfDevice);
+    UsbNcmHostDevice * hostDevice =
+        new (NcmGetHostDeviceFromHandle(wdfDevice)) UsbNcmHostDevice(wdfDevice);
+
+    // Never fails device add; recovery stays off if its objects cannot be created.
+    hostDevice->InitializeDataPathControl();
 
     // Disable idle power management to prevent USB disconnects during display changes
     WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS idleSettings;
@@ -132,12 +136,6 @@ UsbNcmHostEvtDevicePrepareHardware(
     {
         DbgPrint("USBNCM: InitializeDevice failed 0x%08X\n", status);
         return status;
-    }
-    
-    // Skip adapter creation for placeholder instances
-    if (hostDevice->IsDataInterfaceOnly())
-    {
-        return STATUS_SUCCESS;
     }
 
     status = hostDevice->CreateAdapter();

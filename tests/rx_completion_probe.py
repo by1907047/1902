@@ -29,6 +29,7 @@ buffer_header = (root / 'inc/buffers.h').read_text()
 rx_struct = buffer_header[buffer_header.index('struct RX_BUFFER'):buffer_header.index('struct TX_BUFFER_REQUEST')]
 functions = '\n'.join([
     function_from_source(root / 'common/buffers.cpp', 'NTSTATUS\nRxBufferQueueEnqueueBuffer('),
+    function_from_source(root / 'common/buffers.cpp', 'void\nRxBufferQueueDiscardBuffer('),
     function_from_source(root / 'adapter/adapter.cpp', 'inline\nvoid\nNcmAdapter::NotifyReceive('),
     function_from_source(root / 'host/device.cpp', 'VOID\nUsbNcmHostDevice::DataBulkInPipeReadCompletetionRoutine('),
     function_from_source(root / 'common/buffers.cpp', 'void\nRxBufferQueueReturnBuffer('),
@@ -65,11 +66,16 @@ static void DMF_BufferQueue_Enqueue(DMFMODULE q, RX_BUFFER*) {
 static void DMF_BufferQueue_Reuse(DMFMODULE q, RX_BUFFER*) {
   static_cast<Queue*>(q)->enqueued=false;
 }
-static void DMF_ContinuousRequestTarget_BufferPut(DMFMODULE, PUCHAR) {}
+static int bufferPuts=0; static DMFMODULE lastPutModule=nullptr; static PUCHAR lastPutBuffer=nullptr;
+static void DMF_ContinuousRequestTarget_BufferPut(DMFMODULE m, PUCHAR b) {
+  ++bufferPuts; lastPutModule=m; lastPutBuffer=b;
+}
 NTSTATUS RxBufferQueueEnqueueBuffer(RX_BUFFER_QUEUE, PUCHAR, size_t, WDFMEMORY, WDFOBJECT);
 struct RxQueue {
   RX_BUFFER_QUEUE m_RxBufferQueue;
+  int drops=0;
   void NotifyReceive() { ++static_cast<Queue*>(m_RxBufferQueue)->notifications; }
+  void CountDroppedNtb(NTSTATUS) { ++drops; }
 };
 struct NcmAdapter {
   RxQueue* m_RxQueue;
@@ -162,9 +168,31 @@ static int FailedEnqueueDoesNotNotify() {
   AdapterCallbacks callbacks{NcmAdapter::NotifyReceive};
   UsbNcmHostDevice host{128,&callbacks,&adapter};
   UsbNcmHostDevice::DataBulkInPipeReadCompletetionRoutine(nullptr,&memory,64,&host);
-  const bool clean=!queue.enqueued && heldReferences==0 && queue.notifications==0;
-  std::printf("failed-enqueue notifications=%d expected=0, held-references=%d\n",queue.notifications,heldReferences);
+  const bool clean=!queue.enqueued && heldReferences==0 && queue.notifications==0 &&
+                   rxQueue.drops==1 && bufferPuts==0;
+  std::printf("failed-enqueue notifications=%d expected=0, held-references=%d, drops=%d, puts=%d\n",
+              queue.notifications,heldReferences,rxQueue.drops,bufferPuts);
   return !clean;
+}
+// Continuous-request-target buffers (function driver) are owned by the
+// receiver once delivered: a drop must hand them back or reads starve.
+static int DroppedContinuousBuffersReturnToOwner() {
+  uint8_t data[64]={}; auto* owner=reinterpret_cast<DMFMODULE>(uintptr_t(0x77));
+  Queue full; full.fetchStatus=STATUS_INSUFFICIENT_RESOURCES;
+  RxQueue rxQueue{&full}; NcmAdapter adapter{&rxQueue};
+  bufferPuts=0; NcmAdapter::NotifyReceive(&adapter,data,sizeof(data),nullptr,owner);
+  assert(bufferPuts==1 && lastPutModule==owner && lastPutBuffer==data);
+  assert(rxQueue.drops==1 && full.notifications==0 && !full.enqueued);
+  NcmAdapter detached{nullptr};
+  bufferPuts=0; NcmAdapter::NotifyReceive(&detached,data,sizeof(data),nullptr,owner);
+  assert(bufferPuts==1 && lastPutBuffer==data);
+  Queue open; RxQueue openQueue{&open}; NcmAdapter accepting{&openQueue};
+  bufferPuts=0; NcmAdapter::NotifyReceive(&accepting,data,sizeof(data),nullptr,owner);
+  assert(bufferPuts==0 && open.enqueued && open.notifications==1 && openQueue.drops==0);
+  RxBufferQueueReturnBuffer(&open,&open.buffer);
+  assert(bufferPuts==1 && lastPutBuffer==data && !open.enqueued);
+  std::puts("dropped/detached continuous-target buffers returned exactly once PASS");
+  return 0;
 }
 static int DetachedQueueDoesNotEnqueue() {
   Memory memory; memory.bytes.resize(128);
@@ -179,7 +207,8 @@ static int DetachedQueueDoesNotEnqueue() {
 int main() {
   const auto result16=Check<Test16>(false), result32=Check<Test32>(true);
   const auto invalid=InvalidBorrowedExtent(), failed=FailedEnqueueDoesNotNotify();
-  return result16 || result32 || invalid || failed || DetachedQueueDoesNotEnqueue();
+  return result16 || result32 || invalid || failed || DetachedQueueDoesNotEnqueue() ||
+         DroppedContinuousBuffersReturnToOwner();
 }
 '''
 

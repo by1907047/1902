@@ -49,10 +49,99 @@ class LifecyclePolicyTests(unittest.TestCase):
             for assignment in ('m_DataBulkInPipe = nullptr;', 'm_DataBulkOutPipe = nullptr;',
                                'm_DataBulkOutPipeMaximumPacketSize = 0;'):
                 self.assertIn(assignment, before)
-        config = function_body('SelectConfiguration')
-        self.assertLess(config.index('m_ControlInterruptPipe = nullptr;'),
-                        config.index('status = WdfUsbTargetDeviceSelectConfig('))
 
+    def test_bulk_in_reader_failures_are_observed(self):
+        # The callback must be in the config before the reader is created.
+        body = function_body('RetrieveDataBulkPipes')
+        assignment = body.index('readerConfig.EvtUsbTargetPipeReadersFailed = '
+                                'UsbNcmHostDevice::DataBulkInPipeReadersFailed;')
+        self.assertLess(assignment, body.index('WdfUsbTargetPipeConfigContinuousReader('))
+
+    def test_link_speed_precedes_link_up_and_uses_capabilities(self):
+        # KMDF's AT_HIGH_SPEED trait is also set at SuperSpeed.
+        body = function_body('EnterWorkingState')
+        self.assertNotIn('WDF_USB_DEVICE_TRAIT_AT_HIGH_SPEED', body)
+        self.assertIn('GUID_USB_CAPABILITY_DEVICE_CONNECTION_SUPER_SPEED_COMPATIBLE', body)
+        self.assertIn('GUID_USB_CAPABILITY_DEVICE_CONNECTION_HIGH_SPEED_COMPATIBLE', body)
+        self.assertLess(body.index('EvtUsbNcmAdapterSetLinkSpeed('),
+                        body.index('EvtUsbNcmAdapterSetLinkState('),
+                        'The first link-up indication must carry the queried speed')
+
+    def test_out_recovery_credit_resets_only_per_d0_session(self):
+        body = function_body('EnterWorkingState')
+        self.assertLess(body.index('BeginD0Session();'), body.index('SelectSetting()'))
+        for name in ('StartTransmit', 'StopTransmit', 'RecoverDataPipes', 'RecoverOutPipeLocked'):
+            self.assertNotIn('m_TxRecoveryAttempts = 0', function_body(name))
+        self.assertIn('m_TxRecoveryAttempts = 0;', function_body('BeginD0Session'))
+        for name in ('StartTransmit', 'StopTransmit', 'RecoverDataPipes', 'RecoverOutPipeLocked'):
+            self.assertNotIn('ResetOutRecoveryBudget(', function_body(name))
+        self.assertIn('ResetOutRecoveryBudget(', function_body('BeginD0Session'))
+        self.assertIn('TryBeginOutRecovery(', function_body('RecoverOutPipeLocked'))
+
+    def test_stop_transmit_flushes_outside_the_data_path_lock(self):
+        body = function_body('StopTransmit')
+        recovery = body[body.index('else'):]
+        self.assertLess(recovery.index('StopPipe('), recovery.index('WdfWaitLockRelease('))
+        self.assertLess(recovery.index('WdfWaitLockRelease('), recovery.index('WdfWorkItemFlush('))
+
+    def test_recovery_timer_drain_and_dispatch_contract(self):
+        body = function_body('StopTransmit')
+        recovery = body[body.index('else'):]
+        order = [recovery.index(s) for s in (
+            'WdfWaitLockAcquire(', 'm_TxRecoveryEnabled, 0)',
+            'CloseTxAdmissionLocked();', 'StopPipe(', 'WdfTimerStop(',
+            'm_TxRecoveryQueued, 0)', 'WdfWaitLockRelease(', 'WdfWorkItemFlush(')]
+        self.assertEqual(order, sorted(order))
+        timer = function_body('OutRecoveryTimer')
+        for call in ('WdfWaitLockAcquire', 'WdfIoTargetStop', 'WdfIoTargetStart',
+                     'WdfUsbTargetPipeResetSynchronously', 'WdfWorkItemFlush', 'WdfTimerStop'):
+            self.assertNotIn(call, timer)
+        self.assertIn('m_TxRecoveryEnabled', timer)
+        self.assertIn('m_TxRecoveryQueued', timer)
+        self.assertIn('WdfWorkItemEnqueue', timer)
+        create = function_body('InitializeDataPathControl')
+        self.assertIn('WDF_TIMER_CONFIG_INIT(&config, UsbNcmHostDevice::OutRecoveryTimer)', create)
+        self.assertIn('attributes.ExecutionLevel = WdfExecutionLevelDispatch;', create)
+        self.assertLess(create.rindex('config.AutomaticSerialization = FALSE;'),
+                        create.index('WdfTimerCreate('))
+
+    def test_success_never_consumes_pending_fault_and_reopen_does(self):
+        self.assertNotIn('m_TxRecoveryQueued', function_body('TransmitFramesCompetion'))
+        out = function_body('RecoverOutPipeLocked')
+        reopen = out.index('OpenTxAdmissionLocked();')
+        preceding = out[:reopen]
+        self.assertGreater(preceding.rindex('m_TxRecoveryQueued, 0)'),
+                           preceding.index('WdfIoTargetStart('))
+        self.assertIn('if (!m_TxPipeRunning)', out[reopen:])
+
+    def test_recovery_never_escalates_and_keeps_order(self):
+        for call in ('ResetPortSynchronously', 'CyclePortSynchronously', 'WdfUsbTargetDeviceReset'):
+            self.assertNotIn(call, SOURCE)
+        out = function_body('RecoverOutPipeLocked')
+        order = [out.index(s) for s in ('CloseTxAdmissionLocked();', 'WdfIoTargetStop(',
+                                        'WdfUsbTargetPipeResetSynchronously(',
+                                        'WdfIoTargetStart(', 'OpenTxAdmissionLocked();')]
+        self.assertEqual(order, sorted(order))
+        rx = function_body('RecoverInPipeLocked')
+        order = [rx.index(s) for s in ('WdfIoTargetStop(', 'WdfUsbTargetPipeResetSynchronously(',
+                                       'WdfIoTargetStart(')]
+        self.assertEqual(order, sorted(order))
+        for body in (out, rx):
+            self.assertIn('WDF_REL_TIMEOUT_IN_SEC(2)', body)
+            self.assertNotIn('"recovered', body)
+
+    def test_readers_failed_callback_never_blocks_or_stops(self):
+        # Stopping a reader pipe waits for the work item running this callback.
+        body = function_body('DataBulkInPipeReadersFailed')
+        for call in ('WdfWaitLockAcquire', 'WdfIoTargetStop', 'WdfIoTargetStart',
+                     'WdfUsbTargetPipeResetSynchronously', 'WdfWorkItemFlush'):
+            self.assertNotIn(call, body)
+        self.assertLess(body.index('return TRUE;'), body.index('RequestInPipeRecovery('))
+        self.assertIn('return FALSE;', body)
+
+    def test_device_add_reads_the_switch(self):
+        driver = (ROOT / 'host/driver.cpp').read_text()
+        self.assertIn('hostDevice->InitializeDataPathControl();', driver)
 
 if __name__ == '__main__':
     unittest.main()

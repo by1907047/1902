@@ -168,11 +168,15 @@ RxBufferQueueCreate(
         &bufferQueueConfig,
         &moduleAttributes);
 
+    // Each queued entry pins one received transfer (up to 64 KiB). Without a
+    // lookaside the 128 entries cap that backlog: once the OS falls this far
+    // behind, Fetch fails and the newest NTB is dropped instead of growing
+    // non-paged memory without bound.
     bufferQueueConfig.SourceSettings.BufferContextSize = 0;
     bufferQueueConfig.SourceSettings.BufferSize = sizeof(RX_BUFFER);
     bufferQueueConfig.SourceSettings.BufferCount = 128;
     bufferQueueConfig.SourceSettings.CreateWithTimer = FALSE;
-    bufferQueueConfig.SourceSettings.EnableLookAside = TRUE;
+    bufferQueueConfig.SourceSettings.EnableLookAside = FALSE;
     bufferQueueConfig.SourceSettings.PoolType = NonPagedPoolNx;
 
     NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
@@ -271,6 +275,23 @@ RxBufferQueueDequeueBuffer(
         &bufferContext);
 
     return status;
+}
+
+_Use_decl_annotations_
+void
+RxBufferQueueDiscardBuffer(
+    PUCHAR buffer,
+    WDFOBJECT returnContext
+)
+{
+    // Only continuous-request-target buffers are owned by the receiver; a
+    // WDFMEMORY that was never enqueued holds no reference of ours.
+    if (buffer != nullptr && returnContext != nullptr)
+    {
+        DMF_ContinuousRequestTarget_BufferPut(
+            (DMFMODULE)returnContext,
+            buffer);
+    }
 }
 
 _Use_decl_annotations_

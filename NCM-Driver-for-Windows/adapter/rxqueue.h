@@ -109,6 +109,21 @@ private:
         }
     }
 
+    _IRQL_requires_max_(DISPATCH_LEVEL)
+    inline
+    void
+    CountDroppedNtb(
+        _In_ NTSTATUS status
+    )
+    {
+        // Diagnostics only. Log the 1st, 2nd, 4th... drop to bound output.
+        const LONG drops = InterlockedIncrement(&m_DroppedNtbs);
+        if (drops > 0 && (drops & (drops - 1)) == 0)
+        {
+            DbgPrint("USBNCM: RX NTB dropped #%ld status 0x%08X\n", drops, status);
+        }
+    }
+
     PAGED
     NcmRxQueue(
         _In_ NcmAdapter * ncmAdapter,
@@ -179,6 +194,10 @@ private:
 
     LONG
         m_NotificationEnabled = 0;
+
+    // NTBs dropped because the receive backlog was full; read with a debugger.
+    LONG
+        m_DroppedNtbs = 0;
 
     NcmAdapter *
         m_NcmAdapter = nullptr;

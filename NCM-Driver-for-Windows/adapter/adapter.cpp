@@ -330,6 +330,7 @@ NcmAdapter::NotifyReceive(
     if (ncmAdapter->m_RxQueue == nullptr ||
         ncmAdapter->m_RxQueue->m_RxBufferQueue == nullptr)
     {
+        RxBufferQueueDiscardBuffer(buffer, returnContext);
         return;
     }
 
@@ -343,6 +344,12 @@ NcmAdapter::NotifyReceive(
     if (NT_SUCCESS(status))
     {
         ncmAdapter->m_RxQueue->NotifyReceive();
+    }
+    else
+    {
+        // Backlog full or invalid extent: drop this NTB like a full NIC ring.
+        RxBufferQueueDiscardBuffer(buffer, returnContext);
+        ncmAdapter->m_RxQueue->CountDroppedNtb(status);
     }
 }
 

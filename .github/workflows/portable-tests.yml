@@ -11,7 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 0
           persist-credentials: false
+          # check_snapshot.py compares the baseline manifest with tag v0.1.0-alpha.1.
+          fetch-depth: 0
       - name: Run snapshot, source-contract and sanitized C++ probes
         run: python3 tools/run_portable_tests.py

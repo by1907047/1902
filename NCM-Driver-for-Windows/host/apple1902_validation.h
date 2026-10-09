@@ -122,21 +122,73 @@ inline bool ParseMac(const Character* text, size_t count, unsigned char* result)
     return true;
 }
 
+inline size_t AlignUp(size_t value, size_t powerOfTwo)
+{ return (value + powerOfTwo-1) & ~(powerOfTwo-1); }
+
+// Bytes ntb.cpp CopyNextDatagram needs to place one mtu-sized datagram in an
+// empty OUT NTB: NTH, payload divisor/remainder padding, NDP alignment, NDP
+// header, the datagram DPE and the terminating null DPE.
+inline size_t FirstDatagramNtbSize(bool ntb32, unsigned mtu, unsigned divisor,
+                                   unsigned remainder, unsigned alignment)
+{
+    const size_t nth = ntb32 ? 16 : 12, ndp = ntb32 ? 16 : 8, dpe = ntb32 ? 8 : 4;
+    const size_t datagram = AlignUp(nth+14, divisor) + remainder - 14;
+    return AlignUp(datagram+mtu, alignment) + ndp + 2*dpe;
+}
+
+// Largest NTB the host accepts in either direction for the chosen format.
+inline unsigned NtbSizeLimit(bool ntb32)
+{ return ntb32 ? 0x10000u : 0xffffu; }
+
+// IN NTB size the host reads with and requests via SET_NTB_INPUT_SIZE when
+// the device advertises more than the host accepts.
+inline unsigned SelectNtbInMaxSize(unsigned advertised, bool ntb32)
+{
+    const unsigned limit = NtbSizeLimit(ntb32);
+    return advertised < limit ? advertised : limit;
+}
+
 inline bool ValidateNtb(const unsigned char* data, size_t size, unsigned mtu)
 {
     if (!data || size != 28 || Read16(data) != 28 || !(Read16(data+2) & 1) ||
         mtu <= 14 || mtu > 9014) return false;
-    const unsigned limit = (Read16(data+2) & 2) ? 0x10000u : 0xffffu;
+    // The host selects NTB32 whenever the device advertises it.
+    const bool ntb32 = (Read16(data+2) & 2) != 0;
+    const unsigned limit = NtbSizeLimit(ntb32);
     // Experimental bounds: reject device-advertised excessive allocations.
+    // A larger IN size is negotiated down; a larger OUT size cannot be.
     for (unsigned offset = 4; offset <= 16; offset += 12) {
-        const unsigned maximum = Read32(data+offset);
+        const unsigned advertised = Read32(data+offset);
+        const unsigned maximum = offset == 4 ? SelectNtbInMaxSize(advertised, ntb32) : advertised;
         const unsigned divisor = Read16(data+offset+4);
         const unsigned remainder = Read16(data+offset+6);
         const unsigned alignment = Read16(data+offset+8);
         if (divisor == 0 || (divisor & (divisor-1)) || remainder >= divisor ||
             alignment < 4 || (alignment & (alignment-1)) ||
             maximum > limit || maximum < mtu+64+divisor+alignment) return false;
+        // Otherwise TX silently drops every maximum-size frame as unfit.
+        if (offset == 16 &&
+            maximum < FirstDatagramNtbSize(ntb32, mtu, divisor, remainder, alignment))
+            return false;
     }
     return true;
+}
+
+// Result of one USBD connection-speed capability query.
+enum class Capability { Supported, NotSupported, QueryFailed };
+
+// Matches NDIS_LINK_SPEED_UNKNOWN.
+constexpr unsigned long long UnknownLinkSpeed = ~0ull;
+
+// Each capability means "operating at this speed or faster". KMDF's
+// AT_HIGH_SPEED trait is also set at SuperSpeed, so it cannot tell USB2 from
+// USB3. SuperSpeedPlus is not distinguished and reports the Gen 1 rate.
+inline unsigned long long LinkSpeedFromCapabilities(Capability superSpeed, Capability highSpeed)
+{
+    if (superSpeed == Capability::Supported) return 5000000000ull;
+    if (superSpeed == Capability::QueryFailed) return UnknownLinkSpeed;
+    if (highSpeed == Capability::Supported) return 480000000ull;
+    if (highSpeed == Capability::QueryFailed) return UnknownLinkSpeed;
+    return 12000000ull;
 }
 }

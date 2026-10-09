@@ -20,10 +20,10 @@ def main():
         raise SystemExit('clang++ is required for the ASan/UBSan probes')
     py = sys.executable
     run([py, 'tools/check_snapshot.py'])
+    run([py, 'tests/source_identity_tests.py'])
     run([py, 'tests/package_tests.py',
          'NCM-Driver-for-Windows/host/SidelineAppleNcm1902.inf'])
-    for test in ('build_policy_tests.py', 'lifecycle_policy_tests.py',
-                 'source_identity_tests.py'):
+    for test in ('build_policy_tests.py', 'lifecycle_policy_tests.py'):
         run([py, 'tests/' + test])
     with tempfile.TemporaryDirectory(prefix='apple1902-validation-') as temp:
         binary = str(Path(temp) / 'validation')
@@ -36,7 +36,9 @@ def main():
     for probe in ('rx_completion_probe.py', 'rx_ring_probe.py', 'rx_stop_probe.py',
                   'tx_advance_probe.py', 'buffer_creation_probe.py',
                   'adapter_lifecycle_probe.py', 'host_reprepare_probe.py',
-                  'ntb_reserved_fields_probe.py', 'ntb_chain_probe.py'):
+                  'host_memory_probe.py', 'ntb_fit_probe.py',
+                  'ntb_reserved_fields_probe.py', 'ntb_chain_probe.py',
+                  'host_diagnostics_probe.py', 'out_credit_probe.py', 'out_recovery_probe.py'):
         run([py, 'tests/' + probe])
     print('All portable suites passed; no Windows driver/device was exercised.')
 
