@@ -4,7 +4,7 @@
 
 An experimental Windows x64 USB network driver for the Apple `05AC:1902` composite device exposed by a Mac over a USB data cable. It builds a custom KMDF/NetAdapterCx `.sys`; this is **not** an INF wrapper around Windows' built-in `UsbNcm.sys`.
 
-**Alpha, source-only release.** Short transfers have worked on one M1 Mac / Windows workstation setup, but a USB3 download stall and unreliable recovery remain unresolved. There is no Microsoft-signed binary, WHQL certification, or production support. Do not depend on this link as your only remote-management connection.
+**Alpha, laboratory use only.** `v0.1.0-alpha.2` provides a neutral-path, test-signed x64 package with revision-specific short hardware checks. The maintainer attributes the earlier USB3 fault to the old cable and locked reconnect to Mac accessory approval; this is not a qualification of every transport or power transition. There is no Microsoft signature, WHQL certification, or production support. Keep an independent management connection.
 
 ## Scope
 
@@ -14,7 +14,7 @@ An experimental Windows x64 USB network driver for the Apple `05AC:1902` composi
 | USB device | Exactly `USB\VID_05AC&PID_1902`, composite parent; not an `MI_XX` child |
 | Mac | One M1 MacBook Pro tested; other models and macOS versions need verification |
 | Cables | One USB2 High-Speed and one USB3 SuperSpeed setup tested; charging-only cables cannot work |
-| Signing | Historical private test-signed build only; normal Secure Boot policy has not been validated |
+| Signing | Test-signed laboratory package; normal Secure Boot policy has not been validated |
 | Non-goals | Thunderbolt networking, iPhone tethering, general Apple-device support, automatic internet sharing |
 
 The cable, port, Mac USB device mode, driver, and IP configuration all have to work. The driver does not create Mac device mode, repair a charging-only cable, or automatically configure routing, SMB, firewall rules, or sleep settings. A USB cable's advertised rate is not the achieved network throughput.
@@ -29,7 +29,9 @@ python3 tools/run_portable_tests.py
 
 For a Windows build, follow [BUILDING](docs/BUILDING.md). Before any laboratory installation, read [INSTALLING](docs/INSTALLING.md) and [SIGNING](docs/SIGNING.md). The source INF contains build-time placeholders and is **not** an installable driver package.
 
-No installable `.sys`/`.cat` is distributed in this release. The previous binary embeds a personal build directory. It is deliberately withheld; a neutral-path rebuild will be a new artifact requiring signing and regression testing, not a byte-identical repack of the old file.
+The alpha.2 release asset contains SYS/INF/CAT and a **public test certificate**, not its private key. It is not for normal Secure Boot systems; no security-policy-changing installer is supplied. The personal-path historical package remains withheld. See [alpha.2 validation and boundaries](docs/2026-10-10-alpha2-validation.md), [installation](docs/INSTALLING.md) and [signing](docs/SIGNING.md).
+
+Function-level idle suspend remains disabled: the tested Mac configuration does not declare the remote-wake capability needed to preserve inbound access. USB link low-power behavior remains under Windows/hardware control. See the [power-management plan](docs/POWER_MANAGEMENT.zh-CN.md).
 
 ## Project layout
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.0-alpha.2 — 2026-10-10
+
+- Publish the neutral-path x64 Release package built from `5ed5a1a`, with
+  a short-lived **test signature**, public certificate and SHA256 manifest.
+  No Microsoft signature or normal Secure Boot load claim.
+- Independently validate exact-package default mode0: eight 64 MiB transfers
+  with SHA256, a 32 MiB C-file write/flush/readback, and one PnP restart.
+  See [revision-specific evidence](docs/2026-10-10-alpha2-validation.md).
+- Keep experimental recovery default-off. Historical failures are preserved;
+  the maintainer attributes the earlier USB3 fault to the old cable and
+  locked reconnect to Mac accessory approval.
+- Document the cloud-reviewed idle/wake design. Current hardware fails the
+  remote-wake capability gate, so function idle remains disabled; no forced
+  sleep or Windows power-plan modification is included.
+
+The following Unreleased sections retain their historical stage wording.
+Their cumulative driver source is included in alpha.2; later native/finite
+hardware results do not qualify every experimental recovery path.
+
 ## Unreleased - source integration and terminal link reporting
 
 - Preserve main's independent NTB hardening while integrating PR1 diagnostics
