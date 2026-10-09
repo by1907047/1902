@@ -1,10 +1,12 @@
-# Apple 1902 USB 网卡驱动
+# Apple USB NCM Windows 驱动
 
 [English](README.md)
 
-通过一根 USB 数据线，让 Windows 使用 Mac 暴露的 `05AC:1902` USB 网口。本项目包含自行编译的 KMDF / NetAdapterCx 驱动源码，不是给 Windows 自带的 `UsbNcm.sys` 加一个 INF。
+通过 USB 数据线连接 Mac 和 Windows，使用 Mac 提供的 `05AC:1902` USB 网口传输数据。本项目基于 KMDF / NetAdapterCx 实现 USB 网络控制模型（NCM），不是给 Windows 自带的 `UsbNcm.sys` 加一个 INF。
 
-目前是 **Alpha 实验版**。`v0.1.0-alpha.2` 提供中性路径构建、测试签名的 x64 包，并单独记录新版短时实测。维护者已将此前 USB3 故障归因为旧线材，将锁屏重连归因为 Mac 配件授权；这不代表所有连接与电源转换都已验收。没有微软正式签名，也没有 WHQL 认证，请保留独立管理通道。
+当前发布包为**测试签名版本**，尚无微软正式签名或 WHQL 认证。已有一套 Mac/工作站的分版本实测记录；使用前请阅读 [安装要求](docs/INSTALLING.md)，并保留独立管理通道。
+
+Windows 显示名称统一为 **Apple USB NCM Network Adapter**，提供方为 Sideline。本项目独立维护，不是 Apple 或微软官方驱动。名称与标识见 [设备命名](docs/DEVICE_NAMING.md)。
 
 ## 支持范围
 

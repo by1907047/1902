@@ -1,9 +1,9 @@
 """Run production SetDeviceFriendlyName/SelectConfiguration with WDF shims.
 
 Injects a failure at every fallible WDF/USB call in turn and checks that no
-WDFMEMORY created by either function is still alive on return. Both buffers are
-parented to the long-lived WDFDEVICE, so a live object is one copy leaked per
-PrepareHardware. Does not simulate KMDF object trees, IRQL or real USB I/O.
+WDFMEMORY created by either function is still alive on return. The naming path
+must assign a stable, terminated adapter name without querying USB strings or
+allocating memory. Does not simulate KMDF object trees, IRQL or real USB I/O.
 """
 from pathlib import Path
 import subprocess
@@ -154,7 +154,7 @@ static int Sweep(const char* name,Run run,Success success){
 int main(){
  int checks=0;
  checks+=Sweep("SetDeviceFriendlyName",[](UsbNcmHostDevice& h){return h.SetDeviceFriendlyName();},
-  [](UsbNcmHostDevice&){assert(assigned==L"Apple Inc. Mac");});
+  [](UsbNcmHostDevice&){assert(assigned==L"Apple USB NCM Network Adapter"&&calls==1);});
  checks+=Sweep("SelectConfiguration",[](UsbNcmHostDevice& h){return h.SelectConfiguration();},
   [](UsbNcmHostDevice& h){
    assert(h.m_MaxDatagramSize==1514&&h.m_Use32BitNtb&&h.m_HostSelectedNtbInMaxSize==0x10000);

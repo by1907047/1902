@@ -95,100 +95,22 @@ UsbNcmHostDevice::SetDeviceFriendlyName(
     void
 )
 {
-    //  Update the device name with the model from the USB descriptor
-    USB_DEVICE_DESCRIPTOR deviceDescriptor;
-    PWSTR friendlyName = nullptr;
-    WDFMEMORY friendlyNameMemory;
-    WDF_OBJECT_ATTRIBUTES objectAttribs;
-
-    WdfUsbTargetDeviceGetDeviceDescriptor(m_WdfUsbTargetDevice, &deviceDescriptor);
-
-    USHORT manufacturerStringLength = 0;
-    USHORT productStringLength = 0;
+    // Use the package's stable adapter identity, not optional Mac firmware
+    // strings. WdfDeviceAssignProperty copies the null-terminated value;
+    // there is no retained allocation and no USB request for display naming.
+    WCHAR friendlyName[] = L"Apple USB NCM Network Adapter";
+    WDF_DEVICE_PROPERTY_DATA propertyData;
+    WDF_DEVICE_PROPERTY_DATA_INIT(&propertyData, &DEVPKEY_Device_FriendlyName);
+    propertyData.Flags = PLUGPLAY_PROPERTY_PERSISTENT;
 
     NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
-        WdfUsbTargetDeviceQueryString(
-            m_WdfUsbTargetDevice,
-            nullptr,
-            nullptr,
-            nullptr,
-            &manufacturerStringLength,
-            deviceDescriptor.iManufacturer,
-            0),
-        "WdfUsbTargetDeviceQueryString failed");
-
-    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
-        WdfUsbTargetDeviceQueryString(
-            m_WdfUsbTargetDevice,
-            nullptr,
-            nullptr,
-            nullptr,
-            &productStringLength,
-            deviceDescriptor.iProduct,
-            0),
-        "WdfUsbTargetDeviceQueryString failed");
-
-    ULONG friendlyNameByteCount = sizeof(WCHAR) * 
-        (manufacturerStringLength + 1 +  // 1 white space
-         productStringLength + 1);       // allocate 1 more char to make sure string would be null-terminated
-   
-    WDF_OBJECT_ATTRIBUTES_INIT(&objectAttribs);
-    objectAttribs.ParentObject = m_WdfDevice;
-
-    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(
-        WdfMemoryCreate(
-            &objectAttribs,
-            PagedPool,
-            0,
-            friendlyNameByteCount,
-            &friendlyNameMemory,
-            (PVOID *)&friendlyName),
-        "WdfMemoryCreate failed");
-
-    RtlZeroMemory(friendlyName, friendlyNameByteCount);
-
-    // The buffer is parented to the long-lived WDFDEVICE; delete it on every
-    // path so repeated PrepareHardware does not accumulate copies.
-    NTSTATUS status = WdfUsbTargetDeviceQueryString(
-        m_WdfUsbTargetDevice,
-        nullptr,
-        nullptr,
-        friendlyName,
-        &manufacturerStringLength,
-        deviceDescriptor.iManufacturer,
-        0);
-
-    if (NT_SUCCESS(status))
-    {
-        friendlyName[manufacturerStringLength] = L' ';
-
-        status = WdfUsbTargetDeviceQueryString(
-            m_WdfUsbTargetDevice,
-            nullptr,
-            nullptr,
-            &friendlyName[manufacturerStringLength + 1],
-            &productStringLength,
-            deviceDescriptor.iProduct,
-            0);
-    }
-
-    if (NT_SUCCESS(status))
-    {
-        WDF_DEVICE_PROPERTY_DATA propertyData;
-        WDF_DEVICE_PROPERTY_DATA_INIT(&propertyData, &DEVPKEY_Device_FriendlyName);
-        propertyData.Flags = PLUGPLAY_PROPERTY_PERSISTENT;
-
-        status = WdfDeviceAssignProperty(
+        WdfDeviceAssignProperty(
             m_WdfDevice,
             &propertyData,
             DEVPROP_TYPE_STRING,
-            friendlyNameByteCount,
-            friendlyName);
-    }
-
-    WdfObjectDelete(friendlyNameMemory);
-
-    NCM_RETURN_IF_NOT_NT_SUCCESS_MSG(status, "Friendly name query/assignment failed");
+            sizeof(friendlyName),
+            friendlyName),
+        "Friendly name assignment failed");
 
     return STATUS_SUCCESS;
 }

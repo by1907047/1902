@@ -33,14 +33,19 @@
       "SHA256": "eb94d60663a788c5b35250093e928dcd6fc7b6177473e9f81265b9e69a1ddad9"
     },
     {
+      "Path": "NCM-Driver-for-Windows/host/SidelineAppleNcm1902.inf",
+      "Bytes": 1531,
+      "SHA256": "c0478d0dde991bb72ef56ca34da3474ddd4135681696510e930cdc2dda08cac6"
+    },
+    {
       "Path": "NCM-Driver-for-Windows/host/apple1902_validation.h",
       "Bytes": 8405,
       "SHA256": "531132fd7b9f6d4b705516e1b469b165ab8228d402fe40fb210848e7edde4bad"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.cpp",
-      "Bytes": 58551,
-      "SHA256": "233f74f748480b808d3022e3f98691ec0fb74940f5905abfd96665ea693ba3e3"
+      "Bytes": 56322,
+      "SHA256": "2bab6116eea5f61a1f63a5c1e0b6a6023d8015531acaa0068e9a6b6ae080780e"
     },
     {
       "Path": "NCM-Driver-for-Windows/host/device.h",
@@ -78,6 +83,11 @@
       "SHA256": "e80cda70f30a3872e5e9af342a5a3384d6a55448cf7ffd259e6d6d1d2937ab34"
     },
     {
+      "Path": "tests/package_tests.py",
+      "Bytes": 4790,
+      "SHA256": "86c8d639d093f36e0f8216ebddc6935f6432c9de7baca0b63e7ec6b6d776bfaf"
+    },
+    {
       "Path": "tests/rx_completion_probe.py",
       "Bytes": 10914,
       "SHA256": "997f191c304683045007efba9b3453837a1f7a5aa11b3bcb2140514e94b7b9bd"
@@ -106,8 +116,8 @@
     },
     {
       "Path": "tests/host_memory_probe.py",
-      "Bytes": 9825,
-      "SHA256": "135c13c5aa9982879bc14873fb16db5a210a0e90b48bb6c5f92a57e0c5147f4f"
+      "Bytes": 9851,
+      "SHA256": "2d02bdb0d4e613dfd7f6c57240689368355f8adc83b69f00bdbbde8ca8eeea79"
     },
     {
       "Path": "tests/ntb_chain_probe.py",

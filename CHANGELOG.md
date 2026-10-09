@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - consistent device and project names
+
+- Rename the repository to `apple-usb-ncm` and use Apple USB NCM Driver for Windows
+  as the project title. Keep independent-project and signing requirements explicit.
+- Use Apple USB NCM Network Adapter consistently for the INF device description
+  and runtime friendly name, instead of optional Mac firmware strings that produced
+  a blank name. Use Sideline as provider and Apple USB NCM Driver as service label.
+- Preserve internal service, SYS, hardware and registry identifiers. No change to
+  transfer behavior, idle policy or operating-system security settings.
+- Add exact display-name and allocation-free naming regression checks.
+
 ## 0.1.0-alpha.2 — 2026-10-10
 
 - Publish the neutral-path x64 Release package built from `5ed5a1a`, with
