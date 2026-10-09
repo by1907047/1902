@@ -1,20 +1,61 @@
 # Experimental data-pipe diagnostics and pipe-only recovery
 
-**Status:** experimental; this PR publishes source only, not a driver binary. Commit `d7fd6d67a680` passed offline x64 Debug/Release WDK builds and both INF validations, and its locally test-signed Release was installed for hardware tests on 2026-10-08. It is not Microsoft-signed. Existing native-analysis/dependency warnings remain.
+**Status:** experimental, default-off and source-only; no public driver binary
+or Microsoft signature. This PR is still draft and unmerged. Native build,
+installation, business traffic and recovery qualification are separate gates.
+Existing native-analysis/dependency warnings remain.
 
-**2026-10-09 source revision:** cooldown faults remain pending, reopen races
-cannot erase fresh faults, and the old three-attempt lifetime limit is replaced
-by a capped, renewable time-credit budget. This latest revision is default-off
-and not yet WDK-built or hardware-qualified. Its predecessor 81fb3e6 was
-native-built and installed: one 300 s run completed despite a real fault and
-pipe recovery; another failed when a fourth fault exhausted its three-per-D0
-limit after three successful restarts. These observations are pending native
-ETW cross-check, not first-error prevention or long-session qualification.
-The separate NTB header correction 9d3f3cb passed native builds and a single
-256 MiB C-file UD/readback checksum probe; that is only a smoke check.
-Historical tables below belong to d7fd6d67a680, not the latest revision.
+**2026-10-09 revision status:**
 
-Initial hardware results for that exact driver commit, on one USB3 connection
+- `81fb3e6`: one original 300 s checked run continued after a real OUT
+  transaction error and pipe-only recovery, corroborated by native ETW and
+  application SHA progress. Another run failed when a fourth fault exhausted
+  the old three-attempt-per-D0 budget. Both original results are retained.
+- `59d64b7`: renewable time-credit recovery passed x64 Debug/Release WDK
+  builds, both INF validations and local test-signed installation. Two fixed
+  mode-2 600 s originals passed: 1130/1170 UD pairs and 2260/2340 checked
+  transfers (4600 total). Business PASS does not mean fault-free transport.
+  T1 has five independently matched native OUT transaction errors, each
+  followed by current-device ResetEndpoint/SetTRDequeue success, a new
+  post-reset OUT offer and its paired success, plus subsequent checked
+  bidirectional SHA progress. This supports five narrow recovery chains,
+  not a strict >3-uninterrupted-epoch qualification: old-request drain
+  before each reset is not yet individually timed, and ordinary empty
+  queue stops are not exhaustively logged in mode2. T2 records zero
+  observed payload OUT XACT and only successful observed payload bulk
+  statuses. Both captures pass capture-quality checks but retain global
+  analysis-quality failure for eight startup unmatched IN completions
+  each; neither is labeled transport-clean. Natural Deferred credit-wait
+  was not exercised; portable coverage is not native coverage.
+- `38709d3`: adds [cyclic RX NDP preflight](RX-NDP-CYCLE-HARDENING.md).
+  Native Debug/Release builds, INF validation and local test-signed install
+  passed (Release SYS SHA-256 `20AFD6D8E3AED4AE204FE71907C36AC2E71F0A5CA81D2A8E553782039D1A54C1`).
+  Its separately identified corrected-tool mode-2 600 s original passed
+  1174 UD pairs / 2348 complete SHA checks, 78,785,806,336 bytes per direction.
+  One native OUT XACT was followed by cancellation of all 25 traced old
+  outstanding OUT requests before reset start, successful current-endpoint
+  ResetEndpoint/SetTRDequeue commands, and a genuinely new post-reset OUT
+  offer and paired success. Fresh post-arm rundown binds the current slot;
+  subsequent original full-SHA pairs pass. This supports one narrow recovery
+  chain, not prevention or a latency guarantee. Capture quality passes, but
+  global analysis quality remains false for eight unmatched startup IN
+  cancellations; EOF retains eight IN requests. Natural credit wait and
+  exhaustive ordinary-stop continuity remain unqualified. The earlier
+  attempt stopped before payload at a
+  capture-helper guard; it is neither a driver-traffic failure nor a
+  payload pass. Do not transfer `59d64b7`'s native qualification to this binary.
+  A separate default-mode0 256 MiB C-file UD/flush/reopen-readback smoke passed
+  all five complete SHA checks. Upload receiver pipeline was 225.85 MB/s
+  (199.09 MB/s through flush), and download Mac-receiver goodput 333.47 MB/s.
+  This short checked pipeline is not a raw physical-disk benchmark,
+  long-session qualification or demonstrated throughput improvement.
+
+The [NTB reserved-field correction](NTB-RESERVED-FIELDS.md) in `9d3f3cb`
+also passed a 256 MiB C-file UD/readback checksum probe; that was a smoke
+check, not a cause determination. Historical tables below belong to
+`d7fd6d67a680`, not the current revision.
+
+Historical initial hardware results for `d7fd6d67a680`, on one USB3 connection
 (the later [six-run comparison](HARDWARE-AB-20261008.md) supersedes any suggestion
 of a stability advantage from this single clean mode-3 run):
 
@@ -28,7 +69,7 @@ A separate fresh mode-3 pair also passed. The experimental switch was then resto
 
 Offline ETW correlation from two failed runs found requested/completed lengths of 7924/6144 and 32136/21504 bytes. Those requested lengths also appeared in 1477 and 6399 successful OUT transfers before their respective failures. Neither request was an exact multiple of the 1024-byte maximum packet size. This does not support a failure unique to either length or an exact-MPS request; it does not identify or exclude a link, controller, cable or timing cause. Small IN completions near the errors do not establish heavy bidirectional payload load. No nearby non-bulk stack event was found in the captured windows; absence from this capture does not rule out a link event.
 
-**Scope:** recovery only restarts a halted pipe. It does not address whatever causes the first USB3 bulk-OUT transaction error, and that cause is still unknown. Later hardware tests showed transient new OUT completions after restart, but repeat errors during cooldown left transfers timing out. Durable end-to-end recovery acceptance remains incomplete; see the [six-run comparison](HARDWARE-AB-20261008.md).
+**Scope:** pipe-only recovery addresses the stopped-OUT consequence, not the initiating USB3 bulk-OUT transaction error; that cause is still unknown. Earlier revisions showed transient new completions followed by cooldown/budget failures (the [historical six-run comparison](HARDWARE-AB-20261008.md)). Later finite business passes and positively correlated native recovery chains are progress, not long-term stability, prevention, natural credit-wait or normal Secure Boot qualification.
 
 ## Why
 
@@ -54,13 +95,18 @@ The switch is a `REG_DWORD` named `Sideline1902DataPathDebug` in the device hard
 | `2` | Data-pipe recovery only, with its own logs |
 | `3` | Both |
 
-**What still differs from `2327f448cf6c` when the switch is off.** It is not "nothing", so the full list:
+**What still differs from `2327f448cf6c` when the switch is off.**
+Off disables experimental recovery/instrumentation; it does not restore
+whole-driver equivalence with the older source. Documented differences
+include the following:
 
 - **Device add** opens the device hardware key and reads one value. A failed read just selects off.
 - **Unknown bits** in the value produce one log line.
 - **TX timeouts** are logged as `TX timed out` instead of `TX completion failed`, and counted in their own counter. KMDF reports a request that was cancelled by its own send timer as `STATUS_IO_TIMEOUT`. `TX cancelled` now means `STATUS_CANCELLED` only.
 - **Per completion and per send**, the driver classifies the status with plain arithmetic and makes a few mode checks on a constant read once at device add.
 - **Code size** grows.
+- **Always-on NTB formatting:** [NDP reserved-field initialization](NTB-RESERVED-FIELDS.md) clears the NDP header before assigning its fields, independently of this switch.
+- **Always-on RX parsing:** [cyclic NDP header preflight](RX-NDP-CYCLE-HARDENING.md) rejects malformed cycles before delivery, independently of this switch.
 
 When the switch is off, the driver:
 

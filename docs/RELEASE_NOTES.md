@@ -1,5 +1,7 @@
 # v0.1.0-alpha.1 — source-only preview
 
+This is the historical release entry, not a statement that later experimental revisions remain unbuilt. See [current revision-specific native and hardware status](OUT-PIPE-RECOVERY.md); the current PR is draft/unmerged and source-only, without a public binary or Microsoft signature.
+
 First public export of the frozen Apple `05AC:1902` Windows USB NCM reconnect candidate, with vendored DMF, retained MIT notices, English/Chinese documentation, provenance hashes and portable CI.
 
 **No installable SYS/CAT or signing certificate is included.** The old test-signed binary embeds a personal build path and is withheld. A neutral-path rebuild, signing and fresh hardware regression are required before a binary release.
