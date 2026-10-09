@@ -12,6 +12,13 @@ watchdog, payload replay, broadened OUT error classification or PnP reset is
 added. Mode0/1 does not execute this reporting. The new reporting is modeled
 in portable regression but has not been exercised on hardware.
 
+`5ed5a1a` passed offline x64 Debug/Release EWDK builds and both InfVerif
+checks, with native and wrapper exits zero. The existing 70/68 warnings
+match `38709d3` under full-multiset/root/unchanged-line normalization (no
+added or removed warnings). The new Release SYS is unsigned and uninstalled;
+its SHA256 and evidence boundary are in the integration note. Later
+documentation-only commits do not represent new native binary builds.
+
 **2026-10-09 revision status:**
 
 - `81fb3e6`: one original 300 s checked run continued after a real OUT
