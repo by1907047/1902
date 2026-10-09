@@ -60,8 +60,7 @@ struct NcmPacketIterator { std::vector<uint8_t> packet; };
 static size_t NcmGetPacketDataLength(NcmPacketIterator* p) { return p->packet.size(); }
 static void NcmCopyPacketDataToBuffer(uint8_t* d,NcmPacketIterator* p,size_t n) { std::memcpy(d,p->packet.data(),n); }
 '''
-main = r'''
-using Test16=NcmTransferBlock<NcmTransferHeader16,NcmDatagramPointerTable16,NcmDatagramPointer16,
+main = r'''using Test16=NcmTransferBlock<NcmTransferHeader16,NcmDatagramPointerTable16,NcmDatagramPointer16,
                             UINT16,0x484d434e,0x304d434e,0x314d434e>;
 using Test32=NcmTransferBlock<NcmTransferHeader32,NcmDatagramPointerTable32,NcmDatagramPointer32,
                             UINT32,0x686d636e,0x306d636e,0x316d636e>;
@@ -150,7 +149,18 @@ int main(int argc,char** argv) {
     }
     auto* entry=reinterpret_cast<NcmDatagramPointer32*>(buffer.data()+48);
     if(cycle && !emptycycle){entry->DatagramIndex=16; entry->DatagramLength=14;}
-    assert(ntb.ReInitializeBuffer(buffer.data(),buffer.size(),NTB_RX)==0);
+    const auto init=ntb.ReInitializeBuffer(buffer.data(),buffer.size(),NTB_RX);
+    if(cycle) {
+      if(init!=STATUS_BAD_DATA){std::printf("FAIL: cyclic header preflight actual=%d expected=%d\n",init,STATUS_BAD_DATA);return 1;}
+      // A rejected NTB exposes zero DPEs; subsequent object reuse stays valid.
+      ndp->NextNdpIndex=0;entry->DatagramIndex=16;entry->DatagramLength=14;
+      assert(ntb.ReInitializeBuffer(buffer.data(),buffer.size(),NTB_RX)==STATUS_SUCCESS);
+      PUCHAR data=nullptr;size_t length=0;
+      assert(ntb.GetNextDatagram(&data,&length)==STATUS_SUCCESS && data==buffer.data()+16 && length==14);
+      assert(ntb.GetNextDatagram(&data,&length)==STATUS_NO_MORE_ENTRIES && data==nullptr && length==0);
+      std::puts("cyclic header rejected before DPE, valid reuse PASS");return 0;
+    }
+    assert(init==STATUS_SUCCESS);
     PUCHAR datagram=reinterpret_cast<PUCHAR>(uintptr_t(1)); size_t size=999;
     if(skip){
       assert(ntb.GetNextDatagram(&datagram,&size)==0 && datagram==buffer.data()+16 && size==14);

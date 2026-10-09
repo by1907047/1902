@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "status": "unreleased: not built with the WDK and not hardware-tested",
+  "baseline": {
+    "tag": "v0.1.0-alpha.1",
+    "candidate": "d522ef2-dirty-469555eaf6648073",
+    "manifest": "docs/source-snapshot.json",
+    "manifest_sha256": "bdc2c2ce874cc5e8fb5a66067f2a1e421fa916a327c36daba458f5e939159221"
+  },
+  "scope": [
+    "NCM-Driver-for-Windows",
+    "tests"
+  ],
+  "changed_from_baseline": [
+    {
+      "Path": "NCM-Driver-for-Windows/common/ntb.cpp",
+      "Bytes": 18997,
+      "SHA256": "eb94d60663a788c5b35250093e928dcd6fc7b6177473e9f81265b9e69a1ddad9"
+    },
+    {
+      "Path": "tests/ntb_review_probe.py",
+      "Bytes": 11809,
+      "SHA256": "e80cda70f30a3872e5e9af342a5a3384d6a55448cf7ffd259e6d6d1d2937ab34"
+    }
+  ],
+  "added_after_baseline": [
+    {
+      "Path": "tests/ntb_chain_probe.py",
+      "Bytes": 5799,
+      "SHA256": "a7841da1938a9db35322415ca3b6791667149c1680c6bbdf791367133ccd34ff"
+    },
+    {
+      "Path": "tests/ntb_reserved_fields_probe.py",
+      "Bytes": 3899,
+      "SHA256": "19c2a1f9fb41fd3f4608d030cbe68d21718d6bc19bf594e2b9ed2e2651afb588"
+    },
+    {
+      "Path": "tests/source_identity_tests.py",
+      "Bytes": 5877,
+      "SHA256": "74e994175a794b241f63136a1a05c941465d6152fba9932755a018c4f616e3b7"
+    }
+  ],
+  "removed_after_baseline": []
+}
