@@ -6,7 +6,7 @@ A Windows x64 USB network driver for Mac-to-PC connections using the Apple `05AC
 
 The current release is a **test-signed laboratory build**, not a Microsoft-signed or WHQL-certified driver. It has revision-specific checks on one Mac/workstation setup. Keep an independent management connection and review [installation requirements](docs/INSTALLING.md) before use.
 
-Windows display name: **Apple USB NCM Network Adapter**. The provider is Sideline; this is an independent project, not an official Apple or Microsoft driver. See [device naming](docs/DEVICE_NAMING.md).
+The current source uses **Apple USB NCM Network Adapter** as the Windows display name and Sideline as provider. Alpha.2 retains its original display names; the renamed package is awaiting hardware validation. This is an independent project, not an official Apple or Microsoft driver. See [device naming](docs/DEVICE_NAMING.md).
 
 ## Scope
 

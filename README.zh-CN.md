@@ -6,7 +6,7 @@
 
 当前发布包为**测试签名版本**，尚无微软正式签名或 WHQL 认证。已有一套 Mac/工作站的分版本实测记录；使用前请阅读 [安装要求](docs/INSTALLING.md)，并保留独立管理通道。
 
-Windows 显示名称统一为 **Apple USB NCM Network Adapter**，提供方为 Sideline。本项目独立维护，不是 Apple 或微软官方驱动。名称与标识见 [设备命名](docs/DEVICE_NAMING.md)。
+当前源码的 Windows 显示名称统一为 **Apple USB NCM Network Adapter**，提供方为 Sideline。alpha.2 保留旧名称，命名修正版等待实机验收。本项目独立维护，不是 Apple 或微软官方驱动。名称与标识见 [设备命名](docs/DEVICE_NAMING.md)。
 
 ## 支持范围
 
