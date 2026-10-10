@@ -1,8 +1,10 @@
-# Apple USB NCM Windows 驱动
+# Mac–Windows USB 直连网卡驱动（Apple USB NCM）
 
 [English](README.md)
 
-通过 USB 数据线连接 Mac 和 Windows，使用 Mac 提供的 `05AC:1902` USB 网口传输数据。本项目基于 KMDF / NetAdapterCx 实现 USB 网络控制模型（NCM），不是给 Windows 自带的 `UsbNcm.sys` 加一个 INF。
+英文名为 **Apple USB NCM Driver for Windows**，仓库名为 `apple-usb-ncm`。
+
+通过 USB-C 数据线在 Mac 和 Windows 电脑之间建立以太网式网络连接，用于文件传输和远程管理，无需外接 USB 转网线适配器。使用 Mac 提供的 `05AC:1902` USB 网口，基于 KMDF / NetAdapterCx 实现 USB 网络控制模型（CDC-NCM），不是给 Windows 自带的 `UsbNcm.sys` 加一个 INF。
 
 当前发布包为**测试签名版本**，尚无微软正式签名或 WHQL 认证。已有一套 Mac/工作站的分版本实测记录；使用前请阅读 [安装要求](docs/INSTALLING.md)，并保留独立管理通道。
 

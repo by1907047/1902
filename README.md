@@ -1,8 +1,10 @@
 # Apple USB NCM Driver for Windows
 
+**Mac–Windows USB 直连网卡驱动**
+
 [简体中文](README.zh-CN.md) · [Build](docs/BUILDING.md) · [Test results](docs/TESTING.md) · [Known issues](docs/KNOWN_ISSUES.md)
 
-A Windows x64 USB network driver for Mac-to-PC connections using the Apple `05AC:1902` composite device. The driver implements the USB Network Control Model (NCM) with KMDF and NetAdapterCx; it is **not** an INF wrapper around Windows' built-in `UsbNcm.sys`.
+A Windows x64 driver for direct Mac-to-PC USB-C Ethernet networking using the Apple `05AC:1902` composite device. The driver implements the USB Network Control Model (CDC-NCM) with KMDF and NetAdapterCx; it is **not** an INF wrapper around Windows' built-in `UsbNcm.sys`.
 
 The current release is a **test-signed laboratory build**, not a Microsoft-signed or WHQL-certified driver. It has revision-specific checks on one Mac/workstation setup. Keep an independent management connection and review [installation requirements](docs/INSTALLING.md) before use.
 
